@@ -207,6 +207,43 @@ void main() {
     expect(find.text('Privacy Policy'), findsOneWidget);
   });
 
+  double moreBelowOpacity(WidgetTester tester) =>
+      tester.widget<AnimatedOpacity>(find.byKey(PrivacyNoticeSheet.moreBelowKey)).opacity;
+
+  testWidgets('cut-off notice text shows a scrollbar and a line until the end', (tester) async {
+    tester.view.physicalSize = const Size(390, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(app());
+
+    await tapText(tester, 'Post');
+
+    final scrollbar = tester.widget<Scrollbar>(
+      find.descendant(of: notice, matching: find.byType(Scrollbar)),
+    );
+    expect(scrollbar.thumbVisibility, isTrue);
+    expect(moreBelowOpacity(tester), 1);
+
+    await tester.drag(
+      find.descendant(of: notice, matching: find.byType(SingleChildScrollView)),
+      const Offset(0, -3000),
+    );
+    await tester.pumpAndSettle();
+
+    expect(moreBelowOpacity(tester), 0);
+  });
+
+  testWidgets('no line when the whole notice fits', (tester) async {
+    tester.view.physicalSize = const Size(1200, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(app());
+
+    await tapText(tester, 'Post');
+
+    expect(moreBelowOpacity(tester), 0);
+  });
+
   for (final (name, theme) in [('light', ThemeData.light()), ('dark', ThemeData.dark())]) {
     testWidgets('both sheets lay out without overflow in $name mode', (tester) async {
       tester.view.physicalSize = const Size(390, 700);

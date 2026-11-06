@@ -17,6 +17,10 @@ class PrivacyNoticeSheet extends StatelessWidget {
     this.onOpenPrivacyPolicy,
   });
 
+  /// The line above the buttons that shows while more text is below.
+  @visibleForTesting
+  static const moreBelowKey = ValueKey('community_privacy_more_below');
+
   final String? anonId;
 
   /// Opens the full Privacy Policy. Null hides the sentence with the link.
@@ -51,7 +55,7 @@ class PrivacyNoticeSheet extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: SingleChildScrollView(
+          child: _ScrollHint(
             padding: const EdgeInsets.fromLTRB(19, 0, 19, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,6 +116,73 @@ class PrivacyNoticeSheet extends StatelessWidget {
           TextSpan(text: text, style: body),
         ],
       ),
+    );
+  }
+}
+
+/// Scrolls [child] with a scrollbar that is always visible, and draws a
+/// line under it while more text is below, so cut-off text above the
+/// buttons doesn't look like the end of the notice.
+class _ScrollHint extends StatefulWidget {
+  const _ScrollHint({required this.padding, required this.child});
+
+  final EdgeInsets padding;
+  final Widget child;
+
+  @override
+  State<_ScrollHint> createState() => _ScrollHintState();
+}
+
+class _ScrollHintState extends State<_ScrollHint> {
+  final _controller = ScrollController();
+  final _moreBelow = ValueNotifier(false);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _moreBelow.dispose();
+    super.dispose();
+  }
+
+  // ScrollMetricsNotification arrives after the first layout and whenever
+  // the content size changes; ScrollNotification on every scroll.
+  bool _update(ScrollMetrics metrics) {
+    _moreBelow.value = metrics.extentAfter > 0;
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: NotificationListener<ScrollMetricsNotification>(
+            onNotification: (n) => _update(n.metrics),
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (n) => _update(n.metrics),
+              child: Scrollbar(
+                controller: _controller,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _controller,
+                  padding: widget.padding,
+                  child: widget.child,
+                ),
+              ),
+            ),
+          ),
+        ),
+        ValueListenableBuilder<bool>(
+          valueListenable: _moreBelow,
+          builder: (context, moreBelow, _) => AnimatedOpacity(
+            key: PrivacyNoticeSheet.moreBelowKey,
+            opacity: moreBelow ? 1 : 0,
+            duration: const Duration(milliseconds: 150),
+            child: Divider(height: 1, thickness: 1, color: CommunityColors.border(context)),
+          ),
+        ),
+      ],
     );
   }
 }
