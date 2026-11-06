@@ -49,6 +49,7 @@ void main() {
                 },
                 child: const Text('Heart'),
               ),
+              TextButton(onPressed: () => gate.openRules(context), child: const Text('Rules')),
             ],
           ),
         ),
@@ -149,6 +150,31 @@ void main() {
 
     expect(notice, findsNothing);
     expect(rules, findsOneWidget);
+  });
+
+  testWidgets('the rules link asks first, without the privacy notice', (tester) async {
+    await tester.pumpWidget(app());
+
+    await tapText(tester, 'Rules');
+    expect(notice, findsNothing);
+    expect(rules, findsOneWidget);
+    await tapText(tester, 'agree');
+
+    expect(rules, findsNothing);
+    expect((await identity.load()).rulesAgreed, isTrue);
+    expect(source.creates, 0);
+  });
+
+  testWidgets('once agreed, the rules link shows the rules with close only', (tester) async {
+    SharedPreferences.setMockInitialValues({IdentityRepository.rulesAgreedKey: true});
+    await tester.pumpWidget(app());
+
+    await tapText(tester, 'Rules');
+    expect(rules, findsOneWidget);
+    expect(find.text('agree'), findsNothing);
+    await tapText(tester, 'close');
+
+    expect(rules, findsNothing);
   });
 
   testWidgets('a heart only needs the privacy notice, never the rules', (tester) async {

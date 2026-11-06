@@ -14,12 +14,16 @@ import 'rules_sheet.dart';
 /// anything is posted or hearted, and the rules before the first feedback
 /// or comment. Each is asked until the user agrees, then never again.
 class PostGate {
-  const PostGate({required this.identity, this.privacyPolicyUrl});
+  const PostGate({required this.identity, this.privacyPolicyUrl, this.snackBarClearance = 0});
 
   final IdentityRepository identity;
 
   /// Linked from the privacy notice when set.
   final String? privacyPolicyUrl;
+
+  /// Lifts error messages above buttons at the bottom of the screen that
+  /// uses this gate. See [showCommunitySnackBar].
+  final double snackBarClearance;
 
   /// Before a heart. True when the action may go ahead.
   Future<bool> ensureIdentity(BuildContext context) async {
@@ -35,6 +39,22 @@ class PostGate {
     if (!await ensureIdentity(context)) return false;
     if ((await _current()).rulesAgreed) return true;
     if (!context.mounted) return false;
+    return _askRules(context);
+  }
+
+  /// The rules link on the forms: asks when the user has not agreed yet,
+  /// otherwise shows the rules with a close button.
+  Future<void> openRules(BuildContext context) async {
+    final agreed = (await _current()).rulesAgreed;
+    if (!context.mounted) return;
+    if (!agreed) {
+      await _askRules(context);
+      return;
+    }
+    await showCommunitySheet<void>(context, builder: (_) => const RulesSheet(agreed: true));
+  }
+
+  Future<bool> _askRules(BuildContext context) async {
     final agreed = await showCommunitySheet<bool>(context, builder: (_) => const RulesSheet());
     if (agreed != true || !context.mounted) return false;
     try {
@@ -95,7 +115,11 @@ class PostGate {
     return () => CommunityNavigator.openExternalUrl(context, url);
   }
 
-  static void _showError(BuildContext context, AppError error) {
-    showCommunitySnackBar(context, errorMessage(CommunityLocalizations.of(context), error));
+  void _showError(BuildContext context, AppError error) {
+    showCommunitySnackBar(
+      context,
+      errorMessage(CommunityLocalizations.of(context), error),
+      bottomClearance: snackBarClearance,
+    );
   }
 }

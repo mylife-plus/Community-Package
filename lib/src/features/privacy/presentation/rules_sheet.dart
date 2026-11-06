@@ -7,9 +7,11 @@ import '../../../core/widgets/community_popups.dart';
 import '../../../core/widgets/emoji_text.dart';
 
 /// The community rules. Agree closes the sheet with true; dragging it down
-/// closes it with null.
+/// closes it with null. Once [agreed], it only has a close button.
 class RulesSheet extends StatelessWidget {
-  const RulesSheet({super.key});
+  const RulesSheet({super.key, this.agreed = false});
+
+  final bool agreed;
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +63,11 @@ class RulesSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 30),
-          Center(child: CommunityButton(label: l.agree, onPressed: () => closePopup(context, true))),
+          Center(
+            child: agreed
+                ? CommunityButton(label: l.close, onPressed: () => closePopup(context))
+                : CommunityButton(label: l.agree, onPressed: () => closePopup(context, true)),
+          ),
         ],
       ),
     );
