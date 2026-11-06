@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "community-dev",
+  "main": "src/index.ts",
+  // Latest date the bundled workerd (1.20261104.1) supports.
+  "compatibility_date": "2026-11-04",
+  "workers_dev": true,
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "community-dev",
+      "database_id": "7265c297-ce0d-4ff7-a3ff-2f6985ac9c1d",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
