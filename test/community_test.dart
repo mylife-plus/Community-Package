@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:community_package/community_package.dart';
 import 'package:community_package/src/core/di/community_dependencies.dart';
+import 'package:community_package/src/features/community_home/presentation/community_home_screen.dart';
 import 'package:community_package/src/features/feedback_list/presentation/feedback_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'helpers/fake_anon_id_source.dart';
 import 'helpers/fake_backend.dart';
 import 'helpers/feedback_json.dart';
 
@@ -23,6 +25,7 @@ void main() {
       const CommunityConfig(
         backendUrl: 'https://community-dev.qureshicreatives.workers.dev',
         appId: 'inventory',
+        privacyPolicyUrl: 'https://example.com/privacy',
       ),
     );
 
@@ -31,6 +34,7 @@ void main() {
       CommunityPackage.config.backendUrl,
       'https://community-dev.qureshicreatives.workers.dev',
     );
+    expect(CommunityDependencies.config.privacyPolicyUrl, 'https://example.com/privacy');
   });
 
   test('init can run again, for example after a hot restart', () async {
@@ -77,11 +81,16 @@ void main() {
   group('openCommunity', () {
     const config = CommunityConfig(backendUrl: 'https://example.com', appId: 'inventory');
     late BuildContext context;
+    late FakeBackend backend;
 
     Future<void> open(WidgetTester tester) async {
-      final backend = FakeBackend()..answer(pageJson([1]));
+      backend = FakeBackend();
       await CommunityPackage.init(config);
-      CommunityDependencies.register(config, httpClient: backend.client);
+      CommunityDependencies.register(
+        config,
+        httpClient: backend.client,
+        anonIdSource: FakeAnonIdSource(),
+      );
       await tester.pumpWidget(
         MaterialApp(
           home: Builder(
@@ -96,31 +105,69 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    Future<void> openList(WidgetTester tester) async {
+      await open(tester);
+      backend.answer(pageJson([1]));
+      await tester.tap(find.text('all Feedback'));
+      await tester.pumpAndSettle();
+    }
+
     // skipOffstage: false also counts a screen hidden under another one.
+    final homeScreens = find.byType(CommunityHomeScreen, skipOffstage: false);
     final listScreens = find.byType(FeedbackListScreen, skipOffstage: false);
 
-    testWidgets('pushes exactly one feedback list', (tester) async {
+    testWidgets('opens exactly one Community App screen', (tester) async {
       await open(tester);
 
-      expect(listScreens, findsOneWidget);
+      expect(homeScreens, findsOneWidget);
+      expect(listScreens, findsNothing);
+      expect(backend.requests, isEmpty);
     });
 
-    testWidgets('the back arrow closes the flow', (tester) async {
-      await open(tester);
+    testWidgets('all Feedback opens the list on top', (tester) async {
+      await openList(tester);
+
+      expect(listScreens, findsOneWidget);
+      expect(homeScreens, findsOneWidget);
+      expect(find.text('Feedback 1'), findsOneWidget);
+    });
+
+    testWidgets('the back arrow on the list returns to the Community App screen', (tester) async {
+      await openList(tester);
 
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
 
       expect(listScreens, findsNothing);
+      expect(find.byType(CommunityHomeScreen), findsOneWidget);
     });
 
-    testWidgets('system back closes the flow', (tester) async {
-      await open(tester);
+    testWidgets('system back on the list returns to the Community App screen', (tester) async {
+      await openList(tester);
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
 
       expect(listScreens, findsNothing);
+      expect(find.byType(CommunityHomeScreen), findsOneWidget);
+    });
+
+    testWidgets('the back arrow on the Community App screen closes the flow', (tester) async {
+      await open(tester);
+
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+
+      expect(homeScreens, findsNothing);
+    });
+
+    testWidgets('system back on the Community App screen closes the flow', (tester) async {
+      await open(tester);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(homeScreens, findsNothing);
     });
   });
 

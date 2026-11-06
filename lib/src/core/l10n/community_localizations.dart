@@ -30,6 +30,9 @@ class CommunityLocalizations {
     required this.errorGeneric,
     required this.retry,
     required this.loadMoreFailed,
+    required this.communityTitle,
+    required this.communityIntro,
+    required this.allFeedback,
     required this.privacyNotice,
     required this.privacyIntro,
     required this.privacyWhyTitle,
@@ -95,6 +98,11 @@ class CommunityLocalizations {
   final String errorGeneric;
   final String retry;
   final String loadMoreFailed;
+
+  // Community App screen.
+  final String communityTitle;
+  final String communityIntro;
+  final String allFeedback;
 
   // Privacy notice. Each heading is bold, followed by its body text.
   final String privacyNotice;

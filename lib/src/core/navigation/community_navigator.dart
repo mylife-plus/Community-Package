@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../features/community_home/presentation/community_home_screen.dart';
 import '../../features/feedback_list/presentation/feedback_list_screen.dart';
 import '../di/community_dependencies.dart';
 import '../l10n/community_localizations.dart';
@@ -8,6 +9,7 @@ import '../widgets/community_popups.dart';
 
 /// Route names inside the package's own Navigator.
 abstract final class CommunityRoutes {
+  static const home = '/community';
   static const feedbackList = '/feedback';
 }
 
@@ -24,6 +26,10 @@ class CommunityNavigator extends StatefulWidget {
       MaterialPageRoute<void>(builder: (_) => CommunityNavigator(initialRoute: initialRoute)),
     );
   }
+
+  /// All Feedback, on top of the current package screen.
+  static Future<void> openFeedbackList(BuildContext context) =>
+      Navigator.of(context).pushNamed(CommunityRoutes.feedbackList);
 
   /// Opens [url] in the browser or the app that handles it. Tells the user
   /// when nothing could open it.
@@ -88,10 +94,15 @@ class _CommunityNavigatorState extends State<CommunityNavigator> {
   static Route<void> _route(RouteSettings settings) {
     switch (settings.name) {
       case CommunityRoutes.feedbackList:
-      default:
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => const FeedbackListScreen(),
+        );
+      case CommunityRoutes.home:
+      default:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const CommunityHomeScreen(),
         );
     }
   }

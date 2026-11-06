@@ -25,6 +25,11 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
         errorGeneric: 'Something went wrong. Please try again.',
         retry: 'Try again',
         loadMoreFailed: 'Could not load more feedback.',
+        communityTitle: 'Community App',
+        communityIntro:
+            'This app is a 100% open source and community driven project. '
+            'We try to be as transparent as possible with everything going on.',
+        allFeedback: 'all Feedback',
         privacyNotice: 'Privacy Notice',
         privacyIntro:
             'When you submit your first feedback, we generate one unique identifier (UUID) '

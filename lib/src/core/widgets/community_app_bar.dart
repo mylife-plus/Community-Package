@@ -39,12 +39,16 @@ class CommunityAppBar extends StatelessWidget implements PreferredSizeWidget {
         children: [
           EmojiText(emoji, size: 27),
           const SizedBox(width: 8),
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: color,
+          Flexible(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
             ),
           ),
         ],

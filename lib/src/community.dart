@@ -32,12 +32,12 @@ abstract final class CommunityPackage {
     return config;
   }
 
-  /// Opens the community screens full screen, from the host's Settings.
+  /// Opens the Community App screen full screen, from the host's Settings.
   static Future<void> openCommunity(BuildContext context) {
     if (_config == null) {
       throw StateError('Call CommunityPackage.init before opening the community screens.');
     }
-    return CommunityNavigator.open(context, initialRoute: CommunityRoutes.feedbackList);
+    return CommunityNavigator.open(context, initialRoute: CommunityRoutes.home);
   }
 
   @visibleForTesting
