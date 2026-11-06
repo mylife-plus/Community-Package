@@ -28,3 +28,5 @@ dev_dependencies:
   json_serializable: ^6.15.2
 
 flutter:
+  assets:
+    - assets/icons/
