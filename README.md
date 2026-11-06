@@ -35,8 +35,9 @@ await CommunityPackage.init(const CommunityConfig(
 // MaterialApp / GetMaterialApp (optional; without it the labels are English)
 localizationsDelegates: [CommunityLocalizations.delegate, ...],
 
-// Settings row
-onTap: () => CommunityPackage.openCommunity(context),
+// Settings rows
+onTap: () => CommunityPackage.openCommunity(context),   // "Community app"
+onTap: () => CommunityPackage.openNewFeedback(context), // "Give feedback"
 ```
 
 - Without `privacyPolicyUrl` the privacy notice leaves out the "Read our full Privacy Policy" sentence.
@@ -57,6 +58,8 @@ npm run deploy      # deploy to Cloudflare
 ```
 
 Run `npm run cf-typegen` after changing `wrangler.jsonc`, and commit the updated `worker-configuration.d.ts`.
+
+Writes are rate-limited per anonymous ID and per IP with the Workers Rate Limiting binding. The limits are set in `wrangler.jsonc` (`ratelimits`); each `namespace_id` must be unique within the Cloudflare account.
 
 ### Endpoints
 
