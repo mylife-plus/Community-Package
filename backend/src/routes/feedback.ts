@@ -3,6 +3,7 @@ import { type AppEnv, requireAnonId } from '../lib/context';
 import { decodeCursor, encodeCursor } from '../lib/cursor';
 import { ApiError } from '../lib/errors';
 import { FEEDBACK_SELECT, type FeedbackRow, toFeedbackJson } from '../lib/feedback';
+import { writeRateLimit } from '../lib/rateLimit';
 
 export const PAGE_SIZE = 20;
 
@@ -39,7 +40,7 @@ feedback.get('/', async (c) => {
 // Create. The number is the app's next one; taking it, saving the post and
 // its "created" timeline event run in one batch, which D1 runs as one
 // transaction (https://developers.cloudflare.com/d1/worker-api/d1-database/#batch).
-feedback.post('/', requireAnonId, async (c) => {
+feedback.post('/', requireAnonId, writeRateLimit, async (c) => {
   const { type, text } = await readCreateBody(c.req.raw);
   const lang = c.req.query('lang');
   if (!lang || !LANG_PATTERN.test(lang)) {

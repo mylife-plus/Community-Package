@@ -7,15 +7,17 @@ type Item = Record<string, unknown> & { number: number };
 
 function post(
   body: unknown,
-  { app = 'inventory', anonId = newAnonId(), lang = 'en' }: {
+  { app = 'inventory', anonId = newAnonId(), lang = 'en', ip }: {
     app?: string | null;
     anonId?: string | null;
     lang?: string | null;
+    ip?: string;
   } = {},
 ) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (app) headers['X-App-Id'] = app;
   if (anonId) headers['X-Anon-Id'] = anonId;
+  if (ip) headers['CF-Connecting-IP'] = ip;
   const url = lang === null ? BASE : `${BASE}?lang=${lang}`;
   return exports.default.fetch(url, {
     method: 'POST',
@@ -31,6 +33,17 @@ function newAnonId() {
 async function nextNumber(app: string) {
   const row = await env.DB.prepare('SELECT next_number FROM apps WHERE id = ?').bind(app).first<{ next_number: number }>();
   return row?.next_number;
+}
+
+/**
+ * Local rate limit windows are aligned to the wall clock (miniflare
+ * src/workers/ratelimit/ratelimit-object.worker.ts: epoch = now / period).
+ * A burst that crosses a window edge would be split over two windows, so
+ * wait for a fresh window when the current one is about to end.
+ */
+async function awaitFreshWindow() {
+  const intoWindow = Date.now() % 60_000;
+  if (intoWindow > 50_000) await new Promise((r) => setTimeout(r, 60_000 - intoWindow + 50));
 }
 
 beforeAll(async () => {
@@ -156,5 +169,34 @@ describe('POST /v1/feedback rejects', () => {
       message,
     });
     expect(await nextNumber('inventory')).toBe(before);
+  });
+});
+
+describe('POST /v1/feedback rate limits', () => {
+  it('allows 10 posts per minute per anonymous ID', async () => {
+    await awaitFreshWindow();
+    const anonId = newAnonId();
+    for (let i = 0; i < 10; i++) {
+      expect((await post({ type: 'idea', text: `Burst ${i}` }, { anonId })).status).toBe(201);
+    }
+
+    const res = await post({ type: 'idea', text: 'One too many' }, { anonId });
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({
+      error: { code: 'rate_limited', message: 'Too many posts, try again soon' },
+    });
+    // Someone else can still post.
+    expect((await post({ type: 'idea', text: 'Other user' })).status).toBe(201);
+  });
+
+  it('allows 60 posts per minute per IP, across IDs', async () => {
+    await awaitFreshWindow();
+    const ip = '203.0.113.7';
+    for (let i = 0; i < 60; i++) {
+      expect((await post({ type: 'idea', text: `Shared IP ${i}` }, { ip })).status).toBe(201);
+    }
+
+    expect((await post({ type: 'idea', text: 'One too many' }, { ip })).status).toBe(429);
+    expect((await post({ type: 'idea', text: 'Other IP' }, { ip: '203.0.113.8' })).status).toBe(201);
   });
 });
