@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../features/feedback_list/presentation/feedback_list_screen.dart';
 import '../di/community_dependencies.dart';
+import '../l10n/community_localizations.dart';
+import '../widgets/community_popups.dart';
 
 /// Route names inside the package's own Navigator.
 abstract final class CommunityRoutes {
@@ -20,6 +23,23 @@ class CommunityNavigator extends StatefulWidget {
     return Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(builder: (_) => CommunityNavigator(initialRoute: initialRoute)),
     );
+  }
+
+  /// Opens [url] in the browser or the app that handles it. Tells the user
+  /// when nothing could open it.
+  static Future<void> openExternalUrl(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url);
+    var opened = false;
+    if (uri != null) {
+      try {
+        opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } on Exception catch (e) {
+        debugPrint('community: could not open $url: $e');
+      }
+    }
+    if (!opened && context.mounted) {
+      showCommunitySnackBar(context, CommunityLocalizations.of(context).linkFailed);
+    }
   }
 
   /// Back from a package screen: pops inside the package, or closes the

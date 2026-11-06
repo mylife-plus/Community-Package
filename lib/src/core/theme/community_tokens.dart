@@ -9,6 +9,18 @@ abstract final class CommunityTokens {
   static const cardSectionGap = 8.0;
   static const iconSize = 24.0;
   static const reactionChipSize = Size(40, 26);
+
+  /// Link rows such as "all Feedback": one block with 1 px gaps.
+  static const rowHeight = 44.0;
+  static const rowGap = 1.0;
+  static const rowRadius = 5.0;
+  static const rowPadding = EdgeInsets.only(left: 12, right: 5);
+  static const rowEmojiSize = 20.0;
+  static const rowEmojiGap = 10.0;
+
+  static const sheetRadius = 5.0;
+  static const buttonSize = Size(105, 42);
+  static const buttonRadius = 5.0;
 }
 
 /// Colours with no matching role in the host theme. The dark values are the

@@ -30,7 +30,32 @@ class CommunityLocalizations {
     required this.errorGeneric,
     required this.retry,
     required this.loadMoreFailed,
+    required this.privacyNotice,
+    required this.privacyIntro,
+    required this.privacyWhyTitle,
+    required this.privacyWhyBody,
+    required this.privacyWhatTitle,
+    required this.privacyUnlink,
+    required this.privacyDelete,
+    required this.privacyRetentionTitle,
+    required this.privacyRetentionBody,
+    required this.privacyRightsTitle,
+    required this.privacyRightsBody,
+    required this.privacyPolicyBefore,
+    required this.privacyPolicyLink,
+    required this.privacyPolicyAfter,
+    required this.yourId,
+    required this.agree,
+    required this.decline,
+    required this.close,
+    required this.rulesTitle,
+    required this.ruleNoPrivateInfo,
+    required this.ruleNoUnrelated,
+    required this.ruleNoHate,
+    required this.rulesWarning,
+    required this.rulesThanks,
     required this.errorStorage,
+    required this.linkFailed,
   });
 
   /// Add to the host app's `localizationsDelegates`.
@@ -70,7 +95,41 @@ class CommunityLocalizations {
   final String errorGeneric;
   final String retry;
   final String loadMoreFailed;
+
+  // Privacy notice. Each heading is bold, followed by its body text.
+  final String privacyNotice;
+  final String privacyIntro;
+  final String privacyWhyTitle;
+  final String privacyWhyBody;
+  final String privacyWhatTitle;
+  final String privacyUnlink;
+  final String privacyDelete;
+  final String privacyRetentionTitle;
+  final String privacyRetentionBody;
+  final String privacyRightsTitle;
+  final String privacyRightsBody;
+
+  /// "Read our full [privacyPolicyLink] for details.", split around the link.
+  final String privacyPolicyBefore;
+  final String privacyPolicyLink;
+  final String privacyPolicyAfter;
+
+  /// The user's anonymous ID, shown once they agreed.
+  final String Function(String id) yourId;
+  final String agree;
+  final String decline;
+  final String close;
+
+  // Community rules.
+  final String rulesTitle;
+  final String ruleNoPrivateInfo;
+  final String ruleNoUnrelated;
+  final String ruleNoHate;
+  final String rulesWarning;
+  final String rulesThanks;
+
   final String errorStorage;
+  final String linkFailed;
 }
 
 class _CommunityLocalizationsDelegate extends LocalizationsDelegate<CommunityLocalizations> {
