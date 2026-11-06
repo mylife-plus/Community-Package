@@ -173,6 +173,29 @@ void main() {
     expect(find.text('Feedback 26'), findsOneWidget);
   });
 
+  testWidgets('from the list +, a post returns to that list with the post on top', (tester) async {
+    await host(tester, agreed: true);
+    backend.answer(pageJson([5, 4]));
+    unawaited(CommunityPackage.openCommunity(hostContext));
+    await tester.pumpAndSettle();
+    await tapAndSettle(tester, find.text('all Feedback'));
+
+    await tapAndSettle(tester, find.byTooltip('new Feedback'));
+    expect(formScreens, findsOneWidget);
+    await fillForm(tester, topic: 'Idea', text: 'Dark icon');
+    backend.answer(feedbackJson(6), status: 201);
+    await tapAndSettle(tester, submit);
+
+    expect(notice, findsNothing);
+    expect(rules, findsNothing);
+    expect(formScreens, findsNothing);
+    expect(listScreens, findsOneWidget);
+    expect(find.text('Thanks! Posted as #6'), findsOneWidget);
+    final cards = tester.widgetList<Text>(find.textContaining('Feedback ')).map((t) => t.data);
+    expect(cards.first, 'Feedback 6');
+    expect(backend.requests.map((r) => r.method), ['GET', 'POST']);
+  });
+
   testWidgets('a blocking loading dialog shows while the post is sent', (tester) async {
     await openFromSettings(tester, agreed: true);
     await fillForm(tester);

@@ -33,6 +33,10 @@ class CommunityNavigator extends StatefulWidget {
   static Future<void> openFeedbackList(BuildContext context) =>
       Navigator.of(context).pushNamed(CommunityRoutes.feedbackList);
 
+  /// New Feedback, on top of the current package screen.
+  static Future<void> openNewFeedback(BuildContext context) =>
+      Navigator.of(context).pushNamed(CommunityRoutes.newFeedback);
+
   /// After a post from New Feedback: back to the list it was opened from,
   /// or, when the flow started on New Feedback, the list in its place.
   static void showFeedbackListAfterPost(BuildContext context) {

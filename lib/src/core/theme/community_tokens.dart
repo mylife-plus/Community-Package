@@ -22,6 +22,12 @@ abstract final class CommunityTokens {
   static const buttonSize = Size(105, 42);
   static const buttonRadius = 5.0;
 
+  /// The list toolbar under the header (+ now; sort, filter, search in S5).
+  /// Places the 21 px + 27 px from the right edge, as in Figma frame 1:426.
+  static const toolbarHeight = 46.0;
+  static const toolbarPadding = EdgeInsets.only(left: 4, right: 13);
+  static const toolbarIconSize = 21.0;
+
   // New Feedback form. Measured from the Figma PNG exports (frames 1:144
   // and 1:181), not read from Figma itself.
   static const formPadding = 14.0;

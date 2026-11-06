@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/di/community_dependencies.dart';
 import '../../../core/l10n/community_localizations.dart';
+import '../../../core/navigation/community_navigator.dart';
 import '../../../core/state/loading_state.dart';
 import '../../../core/theme/community_tokens.dart';
 import '../../../core/utils/formatters.dart';
@@ -27,11 +29,45 @@ class FeedbackListScreen extends StatelessWidget {
     final l = CommunityLocalizations.of(context);
     return Scaffold(
       appBar: CommunityAppBar(emoji: '✍️', title: l.feedbackTitle),
-      body: ControllerScope<FeedbackListController>(
-        create:
-            createController ??
-            () => FeedbackListController(CommunityDependencies.feedbackRepository),
-        builder: (controller) => _Body(controller: controller),
+      body: Column(
+        children: [
+          const _Toolbar(),
+          Expanded(
+            child: ControllerScope<FeedbackListController>(
+              create:
+                  createController ??
+                  () => FeedbackListController(CommunityDependencies.feedbackRepository),
+              builder: (controller) => _Body(controller: controller),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The row under the header. Only + for now; sort, filter and search join
+/// it with the list toolbar.
+class _Toolbar extends StatelessWidget {
+  const _Toolbar();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = CommunityLocalizations.of(context);
+    return Container(
+      height: CommunityTokens.toolbarHeight,
+      padding: CommunityTokens.toolbarPadding,
+      alignment: Alignment.centerRight,
+      child: IconButton(
+        tooltip: l.newFeedbackTitle,
+        onPressed: () => CommunityNavigator.openNewFeedback(context),
+        icon: SvgPicture.asset(
+          'assets/icons/add.svg',
+          package: 'community_package',
+          width: CommunityTokens.toolbarIconSize,
+          height: CommunityTokens.toolbarIconSize,
+          colorFilter: ColorFilter.mode(CommunityColors.muted(context), BlendMode.srcIn),
+        ),
       ),
     );
   }
