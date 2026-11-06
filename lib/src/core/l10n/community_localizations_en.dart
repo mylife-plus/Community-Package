@@ -70,6 +70,7 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
         rulesThanks: 'Thank you',
         errorStorage: 'Could not save on this device. Please try again.',
         linkFailed: 'Could not open the link.',
+        errorRateLimited: 'Too many posts. Try again soon.',
       );
 
   static String _minutesAgo(int n) => '${n}m ago';

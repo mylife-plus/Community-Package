@@ -27,8 +27,8 @@ class ApiClient {
   final String appId;
   final Duration timeout;
 
-  /// The reader's app language, sent as `?lang=` so content can be
-  /// translated. Updated by the package's root widget.
+  /// The user's app language, sent as `?lang=`. Updated by the package's
+  /// root widget.
   String languageCode = 'en';
 
   /// The user's anonymous ID, asked for on every request. Null until the
@@ -40,17 +40,32 @@ class ApiClient {
     String path, {
     Map<String, String?> query = const {},
   }) async {
-    final uri = Uri.parse('$_baseUrl/v1$path').replace(
-      queryParameters: {
-        for (final entry in query.entries)
-          if (entry.value != null) entry.key: entry.value!,
-        'lang': languageCode,
-      },
-    );
+    final uri = _uri(path, query);
     final headers = await _headers();
+    return _send(() => _http.get(uri, headers: headers));
+  }
+
+  /// POST [body] as JSON to `/v1[path]` and decode the JSON object it returns.
+  Future<Map<String, dynamic>> postJson(String path, Map<String, Object?> body) async {
+    final uri = _uri(path, const {});
+    final headers = {...await _headers(), 'Content-Type': 'application/json; charset=utf-8'};
+    return _send(() => _http.post(uri, headers: headers, body: jsonEncode(body)));
+  }
+
+  /// Every request carries `?lang=`: readers get content in their language,
+  /// and new posts are saved with the author's language.
+  Uri _uri(String path, Map<String, String?> query) => Uri.parse('$_baseUrl/v1$path').replace(
+    queryParameters: {
+      for (final entry in query.entries)
+        if (entry.value != null) entry.key: entry.value!,
+      'lang': languageCode,
+    },
+  );
+
+  Future<Map<String, dynamic>> _send(Future<http.Response> Function() request) async {
     final http.Response response;
     try {
-      response = await _http.get(uri, headers: headers).timeout(timeout);
+      response = await request().timeout(timeout);
     } on SocketException catch (e) {
       // http's IOClient wraps socket failures in a ClientException that also
       // implements SocketException (package:http lib/src/io_client.dart), so

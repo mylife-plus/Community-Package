@@ -19,6 +19,9 @@ enum AppErrorType {
   /// The item no longer exists.
   notFound,
 
+  /// Too many posts in a short time.
+  rateLimited,
+
   /// The backend failed.
   server,
 
@@ -65,12 +68,15 @@ class AppError implements Exception {
         return AppErrorType.blocked;
       case 'not_found':
         return AppErrorType.notFound;
+      case 'rate_limited':
+        return AppErrorType.rateLimited;
       case 'server_error':
         return AppErrorType.server;
     }
     if (statusCode == 400) return AppErrorType.badRequest;
     if (statusCode == 401 || statusCode == 403) return AppErrorType.unauthorized;
     if (statusCode == 404) return AppErrorType.notFound;
+    if (statusCode == 429) return AppErrorType.rateLimited;
     return AppErrorType.server;
   }
 

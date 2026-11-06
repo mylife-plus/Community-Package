@@ -112,4 +112,39 @@ void main() {
 
     await expectLater(api.getJson('/feedback'), _appError(AppErrorType.network));
   });
+
+  test('posts JSON with the IDs and the language', () async {
+    late http.Request sent;
+    final api = _client((request) async {
+      sent = request;
+      return http.Response('{"number":26}', 201);
+    }, anonId: () async => 'id-1')..languageCode = 'de';
+
+    final body = await api.postJson('/feedback', {'type': 'idea', 'text': 'Grüße 👋'});
+
+    expect(body, {'number': 26});
+    expect(sent.method, 'POST');
+    expect(sent.url.toString(), 'https://example.com/v1/feedback?lang=de');
+    expect(sent.headers['X-App-Id'], 'inventory');
+    expect(sent.headers['X-Anon-Id'], 'id-1');
+    expect(sent.headers['Content-Type'], 'application/json; charset=utf-8');
+    expect(jsonDecode(utf8.decode(sent.bodyBytes)), {'type': 'idea', 'text': 'Grüße 👋'});
+  });
+
+  test('a 429 is rate limited', () async {
+    final api = _client(
+      (_) async => http.Response(
+        jsonEncode({'error': {'code': 'rate_limited', 'message': 'Too many posts, try again soon'}}),
+        429,
+      ),
+    );
+
+    await expectLater(api.postJson('/feedback', {}), _appError(AppErrorType.rateLimited));
+  });
+
+  test('a post that cannot connect means offline', () async {
+    final api = _client((_) async => throw const SocketException('Failed host lookup'));
+
+    await expectLater(api.postJson('/feedback', {}), _appError(AppErrorType.offline));
+  });
 }

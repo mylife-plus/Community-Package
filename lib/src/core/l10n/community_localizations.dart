@@ -59,6 +59,7 @@ class CommunityLocalizations {
     required this.rulesThanks,
     required this.errorStorage,
     required this.linkFailed,
+    required this.errorRateLimited,
   });
 
   /// Add to the host app's `localizationsDelegates`.
@@ -138,6 +139,7 @@ class CommunityLocalizations {
 
   final String errorStorage;
   final String linkFailed;
+  final String errorRateLimited;
 }
 
 class _CommunityLocalizationsDelegate extends LocalizationsDelegate<CommunityLocalizations> {

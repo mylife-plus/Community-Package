@@ -31,6 +31,8 @@ String errorMessage(CommunityLocalizations l, AppError error) {
       return l.errorServer;
     case AppErrorType.storage:
       return l.errorStorage;
+    case AppErrorType.rateLimited:
+      return l.errorRateLimited;
     case AppErrorType.badRequest:
     case AppErrorType.unauthorized:
     case AppErrorType.blocked:
