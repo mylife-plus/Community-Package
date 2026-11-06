@@ -1,0 +1,8 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          # Nested models (for example a page of items) are written to the
+          # disk cache, so they must serialise all the way down.
+          explicit_to_json: true
