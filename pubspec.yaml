@@ -10,14 +10,20 @@ environment:
 # Runtime ranges are kept wide so each host app's SDK can pick the newest
 # version it supports.
 dependencies:
+  # 0.6 needs Flutter 3.47 and Android API 24; 0.5 covers older SDKs.
+  android_id: ">=0.5.0 <0.7.0"
+  crypto: ^3.0.3
   flutter:
     sdk: flutter
+  # 11 needs Dart 3.8 and Android API 24; 10 covers older SDKs.
+  flutter_secure_storage: ">=10.0.0 <12.0.0"
   flutter_svg: ^2.0.10
   freezed_annotation: ^3.1.0
   get: ">=4.6.6 <5.0.0"
   http: ^1.2.0
   json_annotation: ^4.9.0
   shared_preferences: ^2.2.2
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   build_runner: ^2.17.1
