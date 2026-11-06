@@ -1,0 +1,22 @@
+# Dart / Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+coverage/
+pubspec.lock
+
+# IDE
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+
+# Backend
+backend/node_modules/
+backend/.wrangler/
+backend/.dev.vars*
+backend/.env*
