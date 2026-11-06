@@ -7,13 +7,20 @@ import 'package:community_package/src/data/repositories/feedback_repository.dart
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-/// A scripted backend: each GET answers with the next queued response.
+/// A scripted backend: each request answers with the next queued response.
 class FakeBackend {
   final _responses = <FutureOr<http.Response> Function(http.Request)>[];
   final requests = <http.Request>[];
 
-  void answer(Map<String, dynamic> json) =>
-      _responses.add((_) => http.Response(jsonEncode(json), 200));
+  void answer(Map<String, dynamic> json, {int status = 200}) =>
+      _responses.add((_) => http.Response(jsonEncode(json), status));
+
+  /// Answers once [gate] completes, to test what happens meanwhile.
+  void answerLater(Future<void> gate, Map<String, dynamic> json, {int status = 200}) =>
+      _responses.add((_) async {
+        await gate;
+        return http.Response(jsonEncode(json), status);
+      });
 
   void fail({int status = 500, String code = 'server_error'}) => _responses.add(
     (_) => http.Response(jsonEncode({'error': {'code': code, 'message': 'x'}}), status),

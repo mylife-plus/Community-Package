@@ -89,6 +89,15 @@ class FeedbackRepository {
     return request;
   }
 
+  /// Posts new feedback and puts it at the top of the list: in memory, on
+  /// disk and on [feedbackListStream].
+  Future<FeedbackItem> createFeedback({required FeedbackType type, required String text}) async {
+    final json = await _api.postJson('/feedback', {'type': type.name, 'text': text});
+    final item = FeedbackItem.fromJson(json);
+    await _addToTop(item);
+    return item;
+  }
+
   /// Drops every cached list, for example when the app ID changes.
   Future<void> clearCache() async {
     _firstPage = null;
@@ -165,6 +174,36 @@ class FeedbackRepository {
       return null;
     }
   }
+
+  /// The post is saved on the server by now, so nothing here may throw.
+  Future<void> _addToTop(FeedbackItem item) async {
+    final key = _listKey;
+    // A list request still running was sent before this post existed. Its
+    // answer must not replace the list that has the post.
+    _firstPageRequest = null;
+
+    final inMemory = _firstPageKey == key ? _firstPage : null;
+    final firstPage = inMemory ?? await _readDisk(key, ignoreTtl: true);
+    if (firstPage == null) {
+      // Nothing cached: load the list, which has the post.
+      unawaited(_revalidate(key));
+      return;
+    }
+
+    final updated = _prepend(firstPage, item);
+    try {
+      await _cache.write(key, updated.toJson());
+    } catch (e) {
+      debugPrint('community: could not cache the new post: $e');
+    }
+    final shown = inMemory != null ? (_list ?? firstPage) : firstPage;
+    _setFirstPage(key, updated);
+    _publish(_prepend(shown, item));
+  }
+
+  static FeedbackPage _prepend(FeedbackPage page, FeedbackItem item) => page.copyWith(
+    items: [item, ...page.items.where((i) => i.number != item.number)],
+  );
 
   void _setFirstPage(String key, FeedbackPage page) {
     _firstPage = page;

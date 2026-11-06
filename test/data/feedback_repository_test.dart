@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:community_package/src/core/cache/prefs_cache.dart';
 import 'package:community_package/src/core/errors/app_error.dart';
 import 'package:community_package/src/data/models/feedback_item.dart';
@@ -152,5 +155,98 @@ void main() {
     expect(backend.requests.last.url.queryParameters['cursor'], 'c1');
     expect(backend.requests, hasLength(2));
     expect(published.last, [4, 3, 2, 1]);
+  });
+
+  group('createFeedback', () {
+    test('posts the type and text and returns the new item', () async {
+      backend.answer(feedbackJson(26, type: 'improvement'), status: 201);
+
+      final item = await repo.createFeedback(type: FeedbackType.improvement, text: 'Totals');
+
+      expect(item.number, 26);
+      expect(item.type, FeedbackType.improvement);
+      final sent = backend.requests.single;
+      expect(sent.method, 'POST');
+      expect(sent.url.path, '/v1/feedback');
+      expect(jsonDecode(sent.body), {'type': 'improvement', 'text': 'Totals'});
+    });
+
+    test('puts the new item on top of every loaded page', () async {
+      backend.answer(pageJson([5, 4], nextCursor: 'c1'));
+      await repo.getFeedbackList();
+      backend.answer(pageJson([3, 2]));
+      await repo.loadMore();
+      await pumpEventQueue();
+      published.clear();
+
+      backend.answer(feedbackJson(6), status: 201);
+      await repo.createFeedback(type: FeedbackType.idea, text: 'New');
+      await pumpEventQueue();
+
+      expect(published, [
+        [6, 5, 4, 3, 2],
+      ]);
+    });
+
+    test('the next memory and disk hits start with the new item', () async {
+      backend.answer(pageJson([2, 1]));
+      await repo.getFeedbackList();
+      backend.answer(feedbackJson(3), status: 201);
+      await repo.createFeedback(type: FeedbackType.idea, text: 'New');
+
+      backend.answer(pageJson([3, 2, 1]));
+      expect(_numbers(await repo.getFeedbackList()), [3, 2, 1]);
+
+      // After a restart, from disk.
+      await pumpEventQueue();
+      backend.answer(pageJson([3, 2, 1]));
+      expect(_numbers(await build().getFeedbackList()), [3, 2, 1]);
+    });
+
+    test('with nothing cached, the list is loaded from the network', () async {
+      backend.answer(feedbackJson(3), status: 201);
+      backend.answer(pageJson([3, 2, 1]));
+
+      await repo.createFeedback(type: FeedbackType.idea, text: 'New');
+      await pumpEventQueue();
+
+      expect(backend.requests.map((r) => r.method), ['POST', 'GET']);
+      expect(published, [
+        [3, 2, 1],
+      ]);
+    });
+
+    test('a list request sent before the post cannot replace the list', () async {
+      backend.answer(pageJson([2, 1]));
+      await repo.getFeedbackList();
+      final gate = Completer<void>();
+      backend.answerLater(gate.future, pageJson([2, 1]));
+      await repo.getFeedbackList(); // memory hit; revalidation waits on gate
+      await pumpEventQueue();
+
+      backend.answer(feedbackJson(3), status: 201);
+      await repo.createFeedback(type: FeedbackType.idea, text: 'New');
+      gate.complete();
+      await pumpEventQueue();
+
+      expect(published.last, [3, 2, 1]);
+      backend.answer(pageJson([3, 2, 1]));
+      expect(_numbers(await repo.getFeedbackList()), [3, 2, 1]);
+    });
+
+    test('a failed post throws and leaves the list alone', () async {
+      backend.answer(pageJson([2, 1]));
+      await repo.getFeedbackList();
+      await pumpEventQueue();
+      published.clear();
+      backend.fail(status: 429, code: 'rate_limited');
+
+      await expectLater(
+        repo.createFeedback(type: FeedbackType.idea, text: 'New'),
+        throwsA(isA<AppError>().having((e) => e.type, 'type', AppErrorType.rateLimited)),
+      );
+      await pumpEventQueue();
+      expect(published, isEmpty);
+    });
   });
 }
