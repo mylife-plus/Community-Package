@@ -40,6 +40,14 @@ export const appContext = createMiddleware<AppEnv>(async (c, next) => {
   await next();
 });
 
+/** For writes: the user must have an anonymous ID (agreed to the privacy notice). */
+export const requireAnonId = createMiddleware<AppEnv>(async (c, next) => {
+  if (!c.get('anonId')) {
+    throw new ApiError('bad_request', 'Missing X-Anon-Id header', 400);
+  }
+  await next();
+});
+
 async function appExists(db: D1Database, appId: string): Promise<boolean> {
   if (knownApps.has(appId)) return true;
   const row = await db.prepare('SELECT 1 AS found FROM apps WHERE id = ?').bind(appId).first();
