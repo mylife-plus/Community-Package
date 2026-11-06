@@ -59,6 +59,22 @@ class CommunityLocalizations {
     required this.rulesThanks,
     required this.errorStorage,
     required this.linkFailed,
+    required this.newFeedbackTitle,
+    required this.chooseTopic,
+    required this.typeImprovement,
+    required this.typeProblem,
+    required this.typeIdea,
+    required this.topicHint,
+    required this.improvementPrompt,
+    required this.ideaPrompt,
+    required this.agreeToRules,
+    required this.rulesLink,
+    required this.cancel,
+    required this.submit,
+    required this.discardTitle,
+    required this.discard,
+    required this.keepEditing,
+    required this.postedAs,
     required this.errorRateLimited,
   });
 
@@ -139,6 +155,34 @@ class CommunityLocalizations {
 
   final String errorStorage;
   final String linkFailed;
+
+  // New Feedback.
+  final String newFeedbackTitle;
+  final String chooseTopic;
+  final String typeImprovement;
+  final String typeProblem;
+  final String typeIdea;
+
+  /// In the text field while no topic is chosen yet.
+  final String topicHint;
+
+  /// In the text field, per chosen topic.
+  final String improvementPrompt;
+  final String ideaPrompt;
+
+  /// Opens the rules before the user agreed; [rulesLink] after.
+  final String agreeToRules;
+  final String rulesLink;
+  final String cancel;
+  final String submit;
+
+  /// Asked when the user leaves the form with text in it.
+  final String discardTitle;
+  final String discard;
+  final String keepEditing;
+
+  /// After submitting, with the new post's number.
+  final String Function(int number) postedAs;
   final String errorRateLimited;
 }
 

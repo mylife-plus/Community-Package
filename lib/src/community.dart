@@ -40,6 +40,15 @@ abstract final class CommunityPackage {
     return CommunityNavigator.open(context, initialRoute: CommunityRoutes.home);
   }
 
+  /// Opens New Feedback full screen, from the host's Settings ("Give
+  /// feedback"). After posting, the user lands on All Feedback.
+  static Future<void> openNewFeedback(BuildContext context) {
+    if (_config == null) {
+      throw StateError('Call CommunityPackage.init before opening the community screens.');
+    }
+    return CommunityNavigator.open(context, initialRoute: CommunityRoutes.newFeedback);
+  }
+
   @visibleForTesting
   static void reset() {
     _config = null;

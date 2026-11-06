@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../features/community_home/presentation/community_home_screen.dart';
 import '../../features/feedback_list/presentation/feedback_list_screen.dart';
+import '../../features/new_feedback/presentation/new_feedback_screen.dart';
 import '../di/community_dependencies.dart';
 import '../l10n/community_localizations.dart';
 import '../widgets/community_popups.dart';
@@ -11,6 +12,7 @@ import '../widgets/community_popups.dart';
 abstract final class CommunityRoutes {
   static const home = '/community';
   static const feedbackList = '/feedback';
+  static const newFeedback = '/feedback/new';
 }
 
 /// The package's nested Navigator. Host apps never see these routes; they
@@ -30,6 +32,17 @@ class CommunityNavigator extends StatefulWidget {
   /// All Feedback, on top of the current package screen.
   static Future<void> openFeedbackList(BuildContext context) =>
       Navigator.of(context).pushNamed(CommunityRoutes.feedbackList);
+
+  /// After a post from New Feedback: back to the list it was opened from,
+  /// or, when the flow started on New Feedback, the list in its place.
+  static void showFeedbackListAfterPost(BuildContext context) {
+    final inner = Navigator.of(context);
+    if (inner.canPop()) {
+      inner.pop();
+    } else {
+      inner.pushReplacementNamed(CommunityRoutes.feedbackList);
+    }
+  }
 
   /// Opens [url] in the browser or the app that handles it. Tells the user
   /// when nothing could open it.
@@ -97,6 +110,11 @@ class _CommunityNavigatorState extends State<CommunityNavigator> {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => const FeedbackListScreen(),
+        );
+      case CommunityRoutes.newFeedback:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const NewFeedbackScreen(),
         );
       case CommunityRoutes.home:
       default:

@@ -1,3 +1,4 @@
+import '../../data/models/feedback_item.dart';
 import '../errors/app_error.dart';
 import '../l10n/community_localizations.dart';
 
@@ -38,5 +39,17 @@ String errorMessage(CommunityLocalizations l, AppError error) {
     case AppErrorType.blocked:
     case AppErrorType.notFound:
       return l.errorGeneric;
+  }
+}
+
+/// The name of [type], for example `Improvement`.
+String feedbackTypeLabel(CommunityLocalizations l, FeedbackType type) {
+  switch (type) {
+    case FeedbackType.improvement:
+      return l.typeImprovement;
+    case FeedbackType.problem:
+      return l.typeProblem;
+    case FeedbackType.idea:
+      return l.typeIdea;
   }
 }

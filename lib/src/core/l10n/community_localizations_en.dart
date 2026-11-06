@@ -70,6 +70,22 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
         rulesThanks: 'Thank you',
         errorStorage: 'Could not save on this device. Please try again.',
         linkFailed: 'Could not open the link.',
+        newFeedbackTitle: 'new Feedback',
+        chooseTopic: 'Choose Topic',
+        typeImprovement: 'Improvement',
+        typeProblem: 'Problem',
+        typeIdea: 'Idea',
+        topicHint: 'Your improvement idea...',
+        improvementPrompt: 'What do you want to improve?',
+        ideaPrompt: "What's your idea?",
+        agreeToRules: 'agree to Rules',
+        rulesLink: 'Rules',
+        cancel: 'cancel',
+        submit: 'submit',
+        discardTitle: 'Discard this feedback?',
+        discard: 'discard',
+        keepEditing: 'keep editing',
+        postedAs: _postedAs,
         errorRateLimited: 'Too many posts. Try again soon.',
       );
 
@@ -82,4 +98,5 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
   static String _commentCount(int n) => n == 1 ? '1 comment' : '$n comments';
   static String _reactionCount(int n) => n == 1 ? '1 heart' : '$n hearts';
   static String _yourId(String id) => 'Your ID: $id';
+  static String _postedAs(int n) => 'Thanks! Posted as #$n';
 }

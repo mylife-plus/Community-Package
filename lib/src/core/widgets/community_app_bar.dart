@@ -8,11 +8,20 @@ import 'emoji_text.dart';
 
 /// Header of every package screen: back arrow and an emoji title.
 class CommunityAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const CommunityAppBar({super.key, required this.emoji, required this.title, this.actions});
+  const CommunityAppBar({
+    super.key,
+    required this.emoji,
+    required this.title,
+    this.actions,
+    this.onBack,
+  });
 
   final String emoji;
   final String title;
   final List<Widget>? actions;
+
+  /// Replaces the default back, for screens that ask before leaving.
+  final VoidCallback? onBack;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -25,7 +34,7 @@ class CommunityAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: true,
       leading: IconButton(
         tooltip: CommunityLocalizations.of(context).back,
-        onPressed: () => CommunityNavigator.back(context),
+        onPressed: onBack ?? () => CommunityNavigator.back(context),
         icon: SvgPicture.asset(
           'assets/icons/arrow_left.svg',
           package: 'community_package',
