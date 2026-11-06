@@ -25,6 +25,7 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
         errorGeneric: 'Something went wrong. Please try again.',
         retry: 'Try again',
         loadMoreFailed: 'Could not load more feedback.',
+        errorStorage: 'Could not save on this device. Please try again.',
       );
 
   static String _minutesAgo(int n) => '${n}m ago';

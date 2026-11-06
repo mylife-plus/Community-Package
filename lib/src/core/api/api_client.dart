@@ -12,9 +12,11 @@ class ApiClient {
   ApiClient({
     required String backendUrl,
     required this.appId,
+    Future<String?> Function()? anonId,
     http.Client? httpClient,
     this.timeout = defaultTimeout,
   }) : _baseUrl = _trimSlash(backendUrl),
+       _anonId = anonId ?? _noAnonId,
        _http = httpClient ?? http.Client();
 
   /// Not tuned yet: a guess for a single D1 query over a mobile network.
@@ -29,8 +31,9 @@ class ApiClient {
   /// translated. Updated by the package's root widget.
   String languageCode = 'en';
 
-  /// The user's anonymous ID, once they agreed to the privacy notice.
-  String? anonId;
+  /// The user's anonymous ID, asked for on every request. Null until the
+  /// user agreed to the privacy notice, and then no `X-Anon-Id` is sent.
+  final Future<String?> Function() _anonId;
 
   /// GET `/v1[path]` and decode the JSON object it returns.
   Future<Map<String, dynamic>> getJson(
@@ -44,9 +47,10 @@ class ApiClient {
         'lang': languageCode,
       },
     );
+    final headers = await _headers();
     final http.Response response;
     try {
-      response = await _http.get(uri, headers: _headers).timeout(timeout);
+      response = await _http.get(uri, headers: headers).timeout(timeout);
     } on SocketException catch (e) {
       // http's IOClient wraps socket failures in a ClientException that also
       // implements SocketException (package:http lib/src/io_client.dart), so
@@ -61,11 +65,14 @@ class ApiClient {
     return _decode(response);
   }
 
-  Map<String, String> get _headers => {
-    'Accept': 'application/json',
-    'X-App-Id': appId,
-    if (anonId != null) 'X-Anon-Id': anonId!,
-  };
+  Future<Map<String, String>> _headers() async {
+    final anonId = await _anonId();
+    return {
+      'Accept': 'application/json',
+      'X-App-Id': appId,
+      if (anonId != null) 'X-Anon-Id': anonId,
+    };
+  }
 
   Map<String, dynamic> _decode(http.Response response) {
     Object? body;
@@ -85,6 +92,8 @@ class ApiClient {
     }
     return body;
   }
+
+  static Future<String?> _noAnonId() async => null;
 
   static String _trimSlash(String url) =>
       url.endsWith('/') ? url.substring(0, url.length - 1) : url;

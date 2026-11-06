@@ -30,6 +30,7 @@ class CommunityLocalizations {
     required this.errorGeneric,
     required this.retry,
     required this.loadMoreFailed,
+    required this.errorStorage,
   });
 
   /// Add to the host app's `localizationsDelegates`.
@@ -69,6 +70,7 @@ class CommunityLocalizations {
   final String errorGeneric;
   final String retry;
   final String loadMoreFailed;
+  final String errorStorage;
 }
 
 class _CommunityLocalizationsDelegate extends LocalizationsDelegate<CommunityLocalizations> {

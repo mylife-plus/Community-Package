@@ -21,6 +21,9 @@ enum AppErrorType {
 
   /// The backend failed.
   server,
+
+  /// Reading or saving on the phone failed (Keychain, preferences).
+  storage,
 }
 
 /// The only error type that reaches controllers and the UI.

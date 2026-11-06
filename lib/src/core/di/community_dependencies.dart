@@ -3,22 +3,42 @@ import 'package:http/http.dart' as http;
 
 import '../../config/community_config.dart';
 import '../../data/repositories/feedback_repository.dart';
+import '../../data/repositories/identity_repository.dart';
 import '../api/api_client.dart';
 import '../cache/prefs_cache.dart';
+import '../identity/anon_id_source.dart';
 
 /// The package's long-lived objects, registered bottom-up in the shared GetX
 /// container. Every tag starts with `community_`, so host apps that use GetX
 /// themselves (SpaceTime, money) never see a clash.
 abstract final class CommunityDependencies {
+  static const _configTag = 'community_config';
+  static const _identityTag = 'community_identity_repository';
   static const _apiTag = 'community_api';
   static const _cacheTag = 'community_cache';
   static const _feedbackTag = 'community_feedback_repository';
 
-  /// [httpClient] replaces the network in tests.
-  static void register(CommunityConfig config, {http.Client? httpClient}) {
+  /// [httpClient] and [anonIdSource] replace the network and the phone's
+  /// ID storage in tests.
+  static void register(
+    CommunityConfig config, {
+    http.Client? httpClient,
+    AnonIdSource? anonIdSource,
+  }) {
     unregister();
+    Get.put(config, tag: _configTag, permanent: true);
+    final identity = Get.put(
+      IdentityRepository(anonIdSource ?? AnonIdSource.forPlatform()),
+      tag: _identityTag,
+      permanent: true,
+    );
     final api = Get.put(
-      ApiClient(backendUrl: config.backendUrl, appId: config.appId, httpClient: httpClient),
+      ApiClient(
+        backendUrl: config.backendUrl,
+        appId: config.appId,
+        anonId: identity.requestAnonId,
+        httpClient: httpClient,
+      ),
       tag: _apiTag,
       permanent: true,
     );
@@ -34,9 +54,19 @@ abstract final class CommunityDependencies {
     }
     Get.delete<PrefsCache>(tag: _cacheTag, force: true);
     Get.delete<ApiClient>(tag: _apiTag, force: true);
+    if (Get.isRegistered<IdentityRepository>(tag: _identityTag)) {
+      Get.find<IdentityRepository>(tag: _identityTag).dispose();
+      Get.delete<IdentityRepository>(tag: _identityTag, force: true);
+    }
+    Get.delete<CommunityConfig>(tag: _configTag, force: true);
   }
 
+  static CommunityConfig get config => Get.find<CommunityConfig>(tag: _configTag);
+
   static ApiClient get api => Get.find<ApiClient>(tag: _apiTag);
+
+  static IdentityRepository get identityRepository =>
+      Get.find<IdentityRepository>(tag: _identityTag);
 
   static FeedbackRepository get feedbackRepository =>
       Get.find<FeedbackRepository>(tag: _feedbackTag);

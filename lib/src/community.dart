@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 
 import 'config/community_config.dart';
@@ -9,10 +11,14 @@ abstract final class CommunityPackage {
   static CommunityConfig? _config;
 
   /// Sets up the package. Call once at startup, before opening any screen.
-  /// Does no network work, so it doesn't slow down app start.
+  /// Does no network work and doesn't wait for the phone's storage, so it
+  /// doesn't slow down app start.
   static Future<void> init(CommunityConfig config) async {
     _config = config;
     CommunityDependencies.register(config);
+    // Starts reading the anonymous ID now; requests wait for it, and a
+    // failed read is retried on the next request.
+    unawaited(CommunityDependencies.identityRepository.requestAnonId());
   }
 
   /// The config passed to [init].

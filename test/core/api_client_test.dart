@@ -8,13 +8,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-ApiClient _client(MockClientHandler handler, {Duration timeout = ApiClient.defaultTimeout}) =>
-    ApiClient(
-      backendUrl: 'https://example.com/',
-      appId: 'inventory',
-      httpClient: MockClient(handler),
-      timeout: timeout,
-    );
+ApiClient _client(
+  MockClientHandler handler, {
+  Duration timeout = ApiClient.defaultTimeout,
+  Future<String?> Function()? anonId,
+}) => ApiClient(
+  backendUrl: 'https://example.com/',
+  appId: 'inventory',
+  anonId: anonId,
+  httpClient: MockClient(handler),
+  timeout: timeout,
+);
 
 Matcher _appError(AppErrorType type) =>
     throwsA(isA<AppError>().having((e) => e.type, 'type', type));
@@ -37,10 +41,13 @@ void main() {
 
   test('sends the anonymous ID once there is one', () async {
     late http.Request sent;
-    final api = _client((request) async {
-      sent = request;
-      return http.Response('{}', 200);
-    })..anonId = 'f2b7c1de-0000-4000-8000-000000000001';
+    final api = _client(
+      (request) async {
+        sent = request;
+        return http.Response('{}', 200);
+      },
+      anonId: () async => 'f2b7c1de-0000-4000-8000-000000000001',
+    );
 
     await api.getJson('/feedback');
 
