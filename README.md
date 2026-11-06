@@ -22,6 +22,27 @@ flutter test
 
 Requires Dart `>=3.7.0`.
 
+### Adding it to an app
+
+```dart
+// At startup
+await CommunityPackage.init(const CommunityConfig(
+  backendUrl: 'https://<worker>.workers.dev',
+  appId: 'inventory',
+  privacyPolicyUrl: 'https://example.com/privacy', // optional
+));
+
+// MaterialApp / GetMaterialApp (optional; without it the labels are English)
+localizationsDelegates: [CommunityLocalizations.delegate, ...],
+
+// Settings row
+onTap: () => CommunityPackage.openCommunity(context),
+```
+
+- Without `privacyPolicyUrl` the privacy notice leaves out the "Read our full Privacy Policy" sentence.
+- The anonymous ID is created only after the user agrees to the privacy notice. iOS keeps it in the Keychain; Android derives it from a SHA-256 hash of ANDROID_ID. Neither needs extra setup.
+- `flutter_secure_storage` 11 (picked on Dart 3.8+) and `android_id` 0.6 (picked on Flutter 3.47+) need Android `minSdk` 24.
+
 ## Backend
 
 Requires Node.js and a Cloudflare account with `wrangler login` done.
