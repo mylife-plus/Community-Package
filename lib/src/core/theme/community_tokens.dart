@@ -21,6 +21,25 @@ abstract final class CommunityTokens {
   static const sheetRadius = 5.0;
   static const buttonSize = Size(105, 42);
   static const buttonRadius = 5.0;
+
+  // New Feedback form. Measured from the Figma PNG exports (frames 1:144
+  // and 1:181), not read from Figma itself.
+  static const formPadding = 14.0;
+  static const fieldMinHeight = 47.0;
+  static const fieldRadius = 3.0;
+  static const fieldPadding = EdgeInsets.symmetric(horizontal: 17, vertical: 10);
+  static const topicPillMinWidth = 176.0;
+  static const topicMenuMinWidth = 182.0;
+  static const topicRowHeight = 42.0;
+  static const topicRadius = 8.0;
+
+  /// The ✗ / ✓ buttons at the bottom of a form.
+  static const actionButtonSize = Size(61, 59);
+  static const actionButtonRadius = 9.0;
+  static const actionButtonGap = 80.0;
+
+  /// Space under the ✗ / ✓ buttons on phones without a bottom inset.
+  static const actionsBottomGap = 16.0;
 }
 
 /// Colours with no matching role in the host theme. The dark values are the
@@ -32,6 +51,7 @@ class CommunityColors {
     required this.statusDone,
     required this.cost,
     required this.reacted,
+    required this.submit,
   });
 
   static const _dark = CommunityColors._(
@@ -40,6 +60,7 @@ class CommunityColors {
     statusDone: Color(0xFF00C00D),
     cost: Color(0xFFFF0000),
     reacted: Color(0xFFFF0000),
+    submit: Color(0xFF4BE000),
   );
 
   static const _light = CommunityColors._(
@@ -48,6 +69,7 @@ class CommunityColors {
     statusDone: Color(0xFF00850A),
     cost: Color(0xFFD00000),
     reacted: Color(0xFFD00000),
+    submit: Color(0xFF2E8B00),
   );
 
   static CommunityColors of(BuildContext context) =>
@@ -59,9 +81,16 @@ class CommunityColors {
   final Color cost;
   final Color reacted;
 
+  /// The ✓ of a form's submit button.
+  final Color submit;
+
   /// Card and chip borders: Figma's #404040 on black is white at 25%.
   static Color border(BuildContext context) =>
       Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25);
+
+  /// Text field borders: Figma's #004C93 is #0088FF at 55% on black.
+  static Color fieldBorder(BuildContext context) =>
+      Theme.of(context).colorScheme.primary.withValues(alpha: 0.55);
 
   /// Secondary text such as the age: Figma's #9B9B9B on black.
   static Color muted(BuildContext context) =>
