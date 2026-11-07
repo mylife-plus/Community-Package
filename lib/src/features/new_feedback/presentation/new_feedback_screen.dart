@@ -14,9 +14,13 @@ import '../../../core/widgets/controller_scope.dart';
 import '../../../core/widgets/feedback_type_picker.dart';
 import '../../../data/models/feedback_item.dart';
 import '../../privacy/presentation/post_gate.dart';
+import '../domain/screen_tree.dart';
 import 'new_feedback_controller.dart';
+import 'problem_fields.dart';
+import 'screen_picker_sheet.dart';
 
-/// New Feedback: choose a topic, write the text, submit.
+/// New Feedback: choose a topic, write the text (or, for a Problem, pick
+/// the screen and list the steps), submit.
 class NewFeedbackScreen extends StatelessWidget {
   const NewFeedbackScreen({super.key, this.createController, this.postGate});
 
@@ -32,6 +36,8 @@ class NewFeedbackScreen extends StatelessWidget {
           () => NewFeedbackController(
             CommunityDependencies.feedbackRepository,
             CommunityDependencies.identityRepository,
+            screens: CommunityDependencies.config.screens,
+            deviceDetails: CommunityDependencies.deviceDetails,
           ),
       builder: (controller) => _Form(
         controller: controller,
@@ -65,8 +71,8 @@ class _Form extends StatelessWidget {
     final submitting = controller.submitting;
 
     return PopScope(
-      // Typed text or a running submit: system back asks first or waits.
-      canPop: !controller.hasText && !submitting,
+      // Any input or a running submit: system back asks first or waits.
+      canPop: !controller.hasInput && !submitting,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _leave(context);
       },
@@ -105,12 +111,15 @@ class _Form extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: _pillToField),
-                          CommunityTextField(
-                            controller: controller.textController,
-                            hint: _hint(l, controller.type),
-                            maxLength: NewFeedbackController.maxTextLength,
-                            enabled: !submitting,
-                          ),
+                          if (controller.type == FeedbackType.problem)
+                            ..._problemFields(context, l)
+                          else
+                            CommunityTextField(
+                              controller: controller.textController,
+                              hint: _hint(l, controller.type),
+                              maxLength: NewFeedbackController.maxTextLength,
+                              enabled: !submitting,
+                            ),
                           const SizedBox(height: _fieldToRules),
                           Center(
                             child: _RulesLink(
@@ -159,6 +168,53 @@ class _Form extends StatelessWidget {
     );
   }
 
+  /// Screen, steps, the optional description and the device details.
+  List<Widget> _problemFields(BuildContext context, CommunityLocalizations l) {
+    final submitting = controller.submitting;
+    const gap = SizedBox(height: CommunityTokens.problemFieldGap);
+    final steps = controller.steps;
+    return [
+      if (controller.asksScreen) ...[
+        ScreenPickerField(
+          screen: controller.screen,
+          onTap: submitting ? null : () => _pickScreen(context),
+        ),
+        gap,
+      ],
+      for (var i = 0; i < steps.length; i++) ...[
+        if (i > 0) gap,
+        ProblemStepField(
+          key: ValueKey(steps[i].id),
+          number: i + 1,
+          initialText: steps[i].text,
+          enabled: !submitting,
+          onChanged: (text) => controller.editStep(steps[i].id, text),
+          onLeave: () => controller.leaveStep(steps[i].id),
+        ),
+      ],
+      if (NewFeedbackController.askProblemDescription) ...[
+        gap,
+        CommunityTextField(
+          controller: controller.descriptionController,
+          hint: l.problemDescriptionHint,
+          maxLength: NewFeedbackController.maxTextLength,
+          enabled: !submitting,
+        ),
+      ],
+      gap,
+      DeviceDetailsRow(details: controller.deviceDetails),
+    ];
+  }
+
+  Future<void> _pickScreen(BuildContext context) async {
+    FocusScope.of(context).unfocus();
+    final choice = await showCommunitySheet<ScreenChoice>(
+      context,
+      builder: (_) => ScreenPickerSheet(screens: controller.screens, selected: controller.screen),
+    );
+    if (choice != null) controller.chooseScreen(choice);
+  }
+
   static String _hint(CommunityLocalizations l, FeedbackType? type) {
     switch (type) {
       case null:
@@ -168,15 +224,15 @@ class _Form extends StatelessWidget {
       case FeedbackType.idea:
         return l.ideaPrompt;
       case FeedbackType.problem:
-        // The problem form (S4) has its own fields.
+        // Not shown: a Problem has its own fields.
         return l.topicHint;
     }
   }
 
-  /// Back arrow, ✗ and system back: asks before typed text is lost.
+  /// Back arrow, ✗ and system back: asks before any input is lost.
   Future<void> _leave(BuildContext context) async {
     if (controller.submitting) return;
-    if (controller.hasText) {
+    if (controller.hasInput) {
       final l = CommunityLocalizations.of(context);
       final discard = await showCommunityConfirm(
         context,

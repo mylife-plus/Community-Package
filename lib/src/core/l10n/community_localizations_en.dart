@@ -87,6 +87,12 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
         keepEditing: 'keep editing',
         postedAs: _postedAs,
         errorRateLimited: 'Too many posts. Try again soon.',
+        selectScreen: 'select a screen',
+        stepHint: 'Step to reproduce the Problem',
+        problemDescriptionHint: 'What went wrong?',
+        deviceOs: 'OS',
+        deviceApp: 'App',
+        devicePhone: 'Phone',
         appVersionShort: _appVersionShort,
       );
 

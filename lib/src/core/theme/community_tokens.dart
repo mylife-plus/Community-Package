@@ -39,6 +39,17 @@ abstract final class CommunityTokens {
   static const topicRowHeight = 42.0;
   static const topicRadius = 8.0;
 
+  // Problem form, measured from the PNG exports of frames Settings-3 and
+  // Settings-4: fields 46 px high and 5 px apart; the device boxes are
+  // 93, 79 and 189 px wide with 4 px between them.
+  static const problemFieldGap = 5.0;
+  static const deviceBoxGap = 4.0;
+  static const deviceBoxFlex = (os: 93, app: 79, phone: 189);
+  static const deviceBoxPadding = EdgeInsets.fromLTRB(7, 3, 7, 4);
+
+  /// Screen picker rows: each level is indented this much more.
+  static const screenIndent = 20.0;
+
   /// The ✗ / ✓ buttons at the bottom of a form.
   static const actionButtonSize = Size(61, 59);
   static const actionButtonRadius = 9.0;

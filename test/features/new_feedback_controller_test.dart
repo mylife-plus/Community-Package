@@ -33,10 +33,10 @@ void main() {
     identity.dispose();
   });
 
-  test('offers Improvement and Idea, and nothing is chosen at first', () {
+  test('offers Improvement, Problem and Idea, and nothing is chosen at first', () {
     final controller = start();
 
-    expect(NewFeedbackController.types, [FeedbackType.improvement, FeedbackType.idea]);
+    expect(NewFeedbackController.types, [FeedbackType.improvement, FeedbackType.problem, FeedbackType.idea]);
     expect(controller.type, isNull);
     expect(controller.canSubmit, isFalse);
   });

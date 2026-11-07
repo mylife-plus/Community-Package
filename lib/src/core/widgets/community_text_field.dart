@@ -23,10 +23,39 @@ class CommunityTextField extends StatelessWidget {
   final int? maxLength;
   final bool enabled;
 
+  /// The typed text.
+  static TextStyle? textStyle(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.textTheme.bodyLarge?.copyWith(
+      fontSize: 20,
+      fontWeight: FontWeight.w400,
+      color: theme.colorScheme.onSurface,
+    );
+  }
+
+  static TextStyle? hintStyle(BuildContext context) => Theme.of(context).textTheme.bodyLarge?.copyWith(
+    fontSize: 20,
+    fontWeight: FontWeight.w300,
+    color: CommunityColors.muted(context),
+  );
+
+  /// The count, shown only close to the limit.
+  static Widget? counter(
+    BuildContext context, {
+    required int currentLength,
+    required bool isFocused,
+    required int? maxLength,
+  }) {
+    if (maxLength == null || currentLength < maxLength - counterThreshold) return null;
+    return Text(
+      '$currentLength / $maxLength',
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: CommunityColors.muted(context)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final muted = CommunityColors.muted(context);
     OutlineInputBorder border(Color color) => OutlineInputBorder(
       borderRadius: BorderRadius.circular(CommunityTokens.fieldRadius),
       borderSide: BorderSide(color: color),
@@ -40,26 +69,11 @@ class CommunityTextField extends StatelessWidget {
       maxLines: maxLines,
       keyboardType: TextInputType.multiline,
       textCapitalization: TextCapitalization.sentences,
-      style: theme.textTheme.bodyLarge?.copyWith(
-        fontSize: 20,
-        fontWeight: FontWeight.w400,
-        color: theme.colorScheme.onSurface,
-      ),
-      // The count only shows close to the limit.
-      buildCounter: (context, {required currentLength, required isFocused, maxLength}) {
-        if (maxLength == null || currentLength < maxLength - counterThreshold) return null;
-        return Text(
-          '$currentLength / $maxLength',
-          style: theme.textTheme.bodySmall?.copyWith(color: muted),
-        );
-      },
+      style: textStyle(context),
+      buildCounter: counter,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: theme.textTheme.bodyLarge?.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.w300,
-          color: muted,
-        ),
+        hintStyle: hintStyle(context),
         filled: true,
         fillColor: theme.colorScheme.surface,
         isDense: true,

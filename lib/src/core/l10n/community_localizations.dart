@@ -76,6 +76,12 @@ class CommunityLocalizations {
     required this.keepEditing,
     required this.postedAs,
     required this.errorRateLimited,
+    required this.selectScreen,
+    required this.stepHint,
+    required this.problemDescriptionHint,
+    required this.deviceOs,
+    required this.deviceApp,
+    required this.devicePhone,
     required this.appVersionShort,
   });
 
@@ -185,6 +191,21 @@ class CommunityLocalizations {
   /// After submitting, with the new post's number.
   final String Function(int number) postedAs;
   final String errorRateLimited;
+
+  // Problem form.
+  /// The screen picker's field before a screen is chosen, and its title.
+  final String selectScreen;
+
+  /// In an empty step field, after the step's number.
+  final String stepHint;
+
+  /// In the optional "what went wrong" field.
+  final String problemDescriptionHint;
+
+  /// Labels of the read-only device boxes.
+  final String deviceOs;
+  final String deviceApp;
+  final String devicePhone;
 
   /// The app version on a Problem card, for example `App 3.2.0`.
   final String Function(String version) appVersionShort;

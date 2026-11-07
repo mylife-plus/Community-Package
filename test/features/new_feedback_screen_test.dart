@@ -107,8 +107,8 @@ void main() {
     // The closed pill stays laid out under the list, hidden and untappable.
     expect(find.text('Choose Topic').hitTestable(), findsOneWidget);
     expect(find.text('Improvement'), findsOneWidget);
+    expect(find.text('Problem'), findsOneWidget);
     expect(find.text('Idea'), findsOneWidget);
-    expect(find.text('Problem'), findsNothing); // arrives with the problem form
     expect(find.text('Your improvement idea...'), findsOneWidget);
     expect(find.text('agree to Rules'), findsOneWidget);
     expect(backend.requests, isEmpty);
