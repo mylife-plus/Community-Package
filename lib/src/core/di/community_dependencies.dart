@@ -7,6 +7,7 @@ import '../../data/repositories/identity_repository.dart';
 import '../api/api_client.dart';
 import '../cache/prefs_cache.dart';
 import '../identity/anon_id_source.dart';
+import '../identity/device_details.dart';
 
 /// The package's long-lived objects, registered bottom-up in the shared GetX
 /// container. Every tag starts with `community_`, so host apps that use GetX
@@ -17,13 +18,15 @@ abstract final class CommunityDependencies {
   static const _apiTag = 'community_api';
   static const _cacheTag = 'community_cache';
   static const _feedbackTag = 'community_feedback_repository';
+  static const _deviceTag = 'community_device_details';
 
-  /// [httpClient] and [anonIdSource] replace the network and the phone's
-  /// ID storage in tests.
+  /// [httpClient], [anonIdSource] and [deviceDetails] replace the network,
+  /// the phone's ID storage and its device details in tests.
   static void register(
     CommunityConfig config, {
     http.Client? httpClient,
     AnonIdSource? anonIdSource,
+    DeviceDetailsSource? deviceDetails,
   }) {
     unregister();
     Get.put(config, tag: _configTag, permanent: true);
@@ -44,10 +47,16 @@ abstract final class CommunityDependencies {
     );
     final cache = Get.put(PrefsCache(), tag: _cacheTag, permanent: true);
     Get.put(FeedbackRepository(api, cache), tag: _feedbackTag, permanent: true);
+    Get.put<DeviceDetailsSource>(
+      deviceDetails ?? DeviceDetailsSource.forPlatform(),
+      tag: _deviceTag,
+      permanent: true,
+    );
   }
 
   /// Removes everything [register] added. Safe to call when nothing is registered.
   static void unregister() {
+    Get.delete<DeviceDetailsSource>(tag: _deviceTag, force: true);
     if (Get.isRegistered<FeedbackRepository>(tag: _feedbackTag)) {
       Get.find<FeedbackRepository>(tag: _feedbackTag).dispose();
       Get.delete<FeedbackRepository>(tag: _feedbackTag, force: true);
@@ -70,4 +79,6 @@ abstract final class CommunityDependencies {
 
   static FeedbackRepository get feedbackRepository =>
       Get.find<FeedbackRepository>(tag: _feedbackTag);
+
+  static DeviceDetailsSource get deviceDetails => Get.find<DeviceDetailsSource>(tag: _deviceTag);
 }
