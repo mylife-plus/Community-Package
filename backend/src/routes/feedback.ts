@@ -1,10 +1,10 @@
-import { Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 import { type AppEnv, requireAnonId } from '../lib/context';
 import { encodeCursor } from '../lib/cursor';
 import { ApiError } from '../lib/errors';
 import { FEEDBACK_SELECT, type FeedbackRow, toFeedbackJson } from '../lib/feedback';
 import { cursorAfter, listSql, readListQuery } from '../lib/listQuery';
-import { writeRateLimit } from '../lib/rateLimit';
+import { reactionRateLimit, writeRateLimit } from '../lib/rateLimit';
 
 export const PAGE_SIZE = 20;
 
@@ -55,6 +55,57 @@ feedback.get('/', async (c) => {
 
   return c.json({ items: page.map(toFeedbackJson), nextCursor });
 });
+
+// Heart on and off. Both are safe to repeat. The count is recounted from
+// the reactions table, so it can never drift from the rows.
+feedback.put('/:number/reaction', requireAnonId, reactionRateLimit, (c) => setReaction(c, true));
+feedback.delete('/:number/reaction', requireAnonId, reactionRateLimit, (c) => setReaction(c, false));
+
+async function setReaction(c: Context<AppEnv>, on: boolean) {
+  const number = readNumber(c.req.param('number') ?? '');
+  const db = c.env.DB;
+  const appId = c.get('appId');
+  const anonId = c.get('anonId');
+
+  const change = on
+    ? db
+        .prepare(
+          `INSERT OR IGNORE INTO reactions (feedback_id, anon_id, created_at)
+           SELECT id, ?3, ?4 FROM feedback WHERE app_id = ?1 AND number = ?2`,
+        )
+        .bind(appId, number, anonId, Date.now())
+    : db
+        .prepare(
+          `DELETE FROM reactions WHERE anon_id = ?3
+             AND feedback_id = (SELECT id FROM feedback WHERE app_id = ?1 AND number = ?2)`,
+        )
+        .bind(appId, number, anonId);
+
+  // One batch, so one transaction (see the create route below).
+  const results = await db.batch([
+    change,
+    db
+      .prepare(
+        `UPDATE feedback
+         SET reaction_count = (SELECT COUNT(*) FROM reactions r WHERE r.feedback_id = feedback.id)
+         WHERE app_id = ?1 AND number = ?2`,
+      )
+      .bind(appId, number),
+    db.prepare(`SELECT ${FEEDBACK_SELECT} FROM feedback f WHERE f.app_id = ?2 AND f.number = ?3`).bind(anonId, appId, number),
+  ]);
+
+  const row = results[2]?.results[0] as FeedbackRow | undefined;
+  if (!row) throw new ApiError('not_found', 'Feedback not found', 404);
+  return c.json(toFeedbackJson(row));
+}
+
+/** A feedback number from the path. */
+function readNumber(value: string): number {
+  if (!/^[1-9]\d{0,8}$/.test(value)) {
+    throw new ApiError('bad_request', 'Invalid number', 400);
+  }
+  return Number(value);
+}
 
 // Create. The number is the app's next one; taking it, saving the post and
 // its "created" timeline event run in one batch, which D1 runs as one
