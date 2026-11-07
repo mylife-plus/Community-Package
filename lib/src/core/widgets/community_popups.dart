@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -25,6 +26,101 @@ Future<T?> showCommunitySheet<T>(BuildContext context, {required WidgetBuilder b
     ),
     builder: builder,
   );
+}
+
+/// A small menu that drops down from the widget [anchorContext] belongs to,
+/// like Flutter's PopupMenuButton: same overlay coordinates
+/// (material/popup_menu.dart, PopupMenuButtonState.showButtonMenu), a
+/// transparent barrier, and back or a tap outside closes it with null.
+/// [builder]'s content keeps its own size, up to the screen.
+Future<T?> showCommunityDropdown<T>(BuildContext anchorContext, {required WidgetBuilder builder}) {
+  final navigator = Navigator.of(anchorContext);
+  final overlay = navigator.overlay!.context.findRenderObject()! as RenderBox;
+  final button = anchorContext.findRenderObject()! as RenderBox;
+  final anchor = Rect.fromPoints(
+    button.localToGlobal(Offset.zero, ancestor: overlay),
+    button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
+  );
+  return navigator.push(
+    _DropdownRoute<T>(
+      anchor: anchor,
+      builder: builder,
+      barrierLabel: MaterialLocalizations.of(anchorContext).modalBarrierDismissLabel,
+    ),
+  );
+}
+
+class _DropdownRoute<T> extends PopupRoute<T> {
+  _DropdownRoute({required this.anchor, required this.builder, required this.barrierLabel});
+
+  final Rect anchor;
+  final WidgetBuilder builder;
+
+  @override
+  final String barrierLabel;
+
+  @override
+  Color? get barrierColor => null;
+
+  @override
+  bool get barrierDismissible => true;
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 150);
+
+  @override
+  Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
+    final padding = MediaQuery.paddingOf(context);
+    return CustomSingleChildLayout(
+      delegate: _DropdownLayout(anchor: anchor, padding: padding),
+      child: Builder(builder: builder),
+    );
+  }
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => FadeTransition(opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut), child: child);
+}
+
+/// Places the menu just below its anchor, left edges lined up, and keeps it
+/// on screen.
+class _DropdownLayout extends SingleChildLayoutDelegate {
+  _DropdownLayout({required this.anchor, required this.padding});
+
+  /// Gap between the anchor and the menu, and to the screen edges.
+  static const _gap = 4.0;
+  static const _screenMargin = CommunityTokens.screenPadding;
+
+  final Rect anchor;
+  final EdgeInsets padding;
+
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
+    final space = constraints.biggest;
+    final below = space.height - anchor.bottom - _gap - padding.bottom - _screenMargin;
+    final above = anchor.top - _gap - padding.top - _screenMargin;
+    return BoxConstraints(
+      maxWidth: space.width - _screenMargin * 2,
+      maxHeight: math.max(math.max(below, above), 0),
+    );
+  }
+
+  @override
+  Offset getPositionForChild(Size size, Size childSize) {
+    final maxX = size.width - _screenMargin - childSize.width;
+    final x = anchor.left.clamp(_screenMargin, math.max(maxX, _screenMargin)).toDouble();
+    final fitsBelow = anchor.bottom + _gap + childSize.height <= size.height - padding.bottom - _screenMargin;
+    final y = fitsBelow ? anchor.bottom + _gap : anchor.top - _gap - childSize.height;
+    return Offset(x, y);
+  }
+
+  @override
+  bool shouldRelayout(_DropdownLayout oldDelegate) =>
+      anchor != oldDelegate.anchor || padding != oldDelegate.padding;
 }
 
 /// Closes the sheet or dialog [context] is in, with [result].
