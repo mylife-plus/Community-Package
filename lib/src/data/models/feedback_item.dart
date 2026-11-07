@@ -32,6 +32,10 @@ abstract class FeedbackItem with _$FeedbackItem {
 
     /// Problems only: steps to reproduce.
     List<String>? steps,
+
+    /// Problems only: what went wrong, if the author said. [text] then
+    /// starts with it, followed by the steps.
+    String? description,
     String? osVersion,
     String? appVersion,
     String? deviceModel,

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:community_package/src/core/cache/prefs_cache.dart';
 import 'package:community_package/src/core/errors/app_error.dart';
+import 'package:community_package/src/core/identity/device_details.dart';
 import 'package:community_package/src/data/models/feedback_item.dart';
 import 'package:community_package/src/data/repositories/feedback_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -155,6 +156,61 @@ void main() {
     expect(backend.requests.last.url.queryParameters['cursor'], 'c1');
     expect(backend.requests, hasLength(2));
     expect(published.last, [4, 3, 2, 1]);
+  });
+
+  group('createProblem', () {
+    test('posts the steps, path, description and device details', () async {
+      backend.answer({...feedbackJson(26, type: 'problem'), 'steps': ['Tap plus']}, status: 201);
+
+      final item = await repo.createProblem(
+        steps: ['Tap plus', 'Add an item'],
+        screenPath: 'Inventory > Sell Items',
+        description: 'Nothing happens',
+        device: const DeviceDetails(osVersion: 'iOS 18.1', appVersion: '3.2.0', deviceModel: 'iPhone 15 Pro'),
+      );
+
+      expect(item.type, FeedbackType.problem);
+      expect(jsonDecode(backend.requests.single.body), {
+        'type': 'problem',
+        'steps': ['Tap plus', 'Add an item'],
+        'screenPath': 'Inventory > Sell Items',
+        'description': 'Nothing happens',
+        'osVersion': 'iOS 18.1',
+        'appVersion': '3.2.0',
+        'deviceModel': 'iPhone 15 Pro',
+      });
+    });
+
+    test('sends null for what is not known', () async {
+      backend.answer(feedbackJson(26, type: 'problem'), status: 201);
+
+      await repo.createProblem(steps: ['Open the app']);
+
+      expect(jsonDecode(backend.requests.single.body), {
+        'type': 'problem',
+        'steps': ['Open the app'],
+        'screenPath': null,
+        'description': null,
+        'osVersion': null,
+        'appVersion': null,
+        'deviceModel': null,
+      });
+    });
+
+    test('puts the new Problem on top of the list', () async {
+      backend.answer(pageJson([2, 1]));
+      await repo.getFeedbackList();
+      await pumpEventQueue();
+      published.clear();
+
+      backend.answer(feedbackJson(3, type: 'problem'), status: 201);
+      await repo.createProblem(steps: ['Open the app']);
+      await pumpEventQueue();
+
+      expect(published, [
+        [3, 2, 1],
+      ]);
+    });
   });
 
   group('createFeedback', () {

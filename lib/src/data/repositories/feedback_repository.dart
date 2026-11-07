@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../../core/api/api_client.dart';
 import '../../core/cache/prefs_cache.dart';
 import '../../core/errors/app_error.dart';
+import '../../core/identity/device_details.dart';
 import '../models/feedback_item.dart';
 
 /// Feedback of the host app. Owns the list stream.
@@ -91,9 +92,28 @@ class FeedbackRepository {
 
   /// Posts new feedback and puts it at the top of the list: in memory, on
   /// disk and on [feedbackListStream].
-  Future<FeedbackItem> createFeedback({required FeedbackType type, required String text}) async {
-    final json = await _api.postJson('/feedback', {'type': type.name, 'text': text});
-    final item = FeedbackItem.fromJson(json);
+  Future<FeedbackItem> createFeedback({required FeedbackType type, required String text}) =>
+      _create({'type': type.name, 'text': text});
+
+  /// Posts a Problem, like [createFeedback]. The backend builds its text
+  /// from [description] and [steps].
+  Future<FeedbackItem> createProblem({
+    required List<String> steps,
+    String? screenPath,
+    String? description,
+    DeviceDetails device = DeviceDetails.unknown,
+  }) => _create({
+    'type': FeedbackType.problem.name,
+    'steps': steps,
+    'screenPath': screenPath,
+    'description': description,
+    'osVersion': device.osVersion,
+    'appVersion': device.appVersion,
+    'deviceModel': device.deviceModel,
+  });
+
+  Future<FeedbackItem> _create(Map<String, Object?> body) async {
+    final item = FeedbackItem.fromJson(await _api.postJson('/feedback', body));
     await _addToTop(item);
     return item;
   }

@@ -22,6 +22,7 @@ _FeedbackItem _$FeedbackItemFromJson(Map<String, dynamic> json) =>
       screenPath: json['screenPath'] as String?,
       steps:
           (json['steps'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      description: json['description'] as String?,
       osVersion: json['osVersion'] as String?,
       appVersion: json['appVersion'] as String?,
       deviceModel: json['deviceModel'] as String?,
@@ -44,6 +45,7 @@ Map<String, dynamic> _$FeedbackItemToJson(_FeedbackItem instance) =>
       'githubUrl': instance.githubUrl,
       'screenPath': instance.screenPath,
       'steps': instance.steps,
+      'description': instance.description,
       'osVersion': instance.osVersion,
       'appVersion': instance.appVersion,
       'deviceModel': instance.deviceModel,

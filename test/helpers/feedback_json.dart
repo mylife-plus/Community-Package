@@ -9,6 +9,7 @@ Map<String, dynamic> feedbackJson(int number, {String? status, String type = 'id
   'githubUrl': null,
   'screenPath': null,
   'steps': null,
+  'description': null,
   'osVersion': null,
   'appVersion': null,
   'deviceModel': null,
