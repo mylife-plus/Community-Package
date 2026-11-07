@@ -87,6 +87,7 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
         keepEditing: 'keep editing',
         postedAs: _postedAs,
         errorRateLimited: 'Too many posts. Try again soon.',
+        appVersionShort: _appVersionShort,
       );
 
   static String _minutesAgo(int n) => '${n}m ago';
@@ -99,4 +100,5 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
   static String _reactionCount(int n) => n == 1 ? '1 heart' : '$n hearts';
   static String _yourId(String id) => 'Your ID: $id';
   static String _postedAs(int n) => 'Thanks! Posted as #$n';
+  static String _appVersionShort(String version) => 'App $version';
 }

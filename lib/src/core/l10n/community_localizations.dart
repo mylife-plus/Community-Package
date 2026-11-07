@@ -76,6 +76,7 @@ class CommunityLocalizations {
     required this.keepEditing,
     required this.postedAs,
     required this.errorRateLimited,
+    required this.appVersionShort,
   });
 
   /// Add to the host app's `localizationsDelegates`.
@@ -184,6 +185,9 @@ class CommunityLocalizations {
   /// After submitting, with the new post's number.
   final String Function(int number) postedAs;
   final String errorRateLimited;
+
+  /// The app version on a Problem card, for example `App 3.2.0`.
+  final String Function(String version) appVersionShort;
 }
 
 class _CommunityLocalizationsDelegate extends LocalizationsDelegate<CommunityLocalizations> {

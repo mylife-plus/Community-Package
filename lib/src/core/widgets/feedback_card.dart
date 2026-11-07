@@ -19,7 +19,8 @@ String feedbackTypeEmoji(FeedbackType type) {
 }
 
 /// One feedback item in a list: type, number, age, text, status, cost,
-/// comment count and hearts.
+/// comment count and hearts. A Problem shows its screen path, description,
+/// steps and device details instead of the text.
 class FeedbackCard extends StatelessWidget {
   const FeedbackCard({super.key, required this.item, this.now});
 
@@ -36,6 +37,11 @@ class FeedbackCard extends StatelessWidget {
     final onSurface = theme.colorScheme.onSurface;
     final muted = CommunityColors.muted(context);
     final costCents = item.costCents;
+    final body = text.bodyLarge?.copyWith(
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+      color: onSurface,
+    );
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -72,14 +78,10 @@ class FeedbackCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: CommunityTokens.cardSectionGap),
-            Text(
-              item.text,
-              style: text.bodyLarge?.copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: onSurface,
-              ),
-            ),
+            if (_hasProblemDetails(item))
+              _ProblemDetails(item: item, style: body)
+            else
+              Text(item.text, style: body),
             const SizedBox(height: CommunityTokens.cardSectionGap),
             Row(
               children: [
@@ -122,6 +124,97 @@ class FeedbackCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Problems posted with the Problem form have steps. Anything else shows
+/// its text.
+bool _hasProblemDetails(FeedbackItem item) =>
+    item.type == FeedbackType.problem && (item.steps?.isNotEmpty ?? false);
+
+/// 📲 path, the description, "1. … → 2. …" and the device line.
+///
+/// The steps are the card's main text, like an Improvement's. The optional
+/// description is a step down in size, weight and colour, so the two do not
+/// run together (Material type hierarchy:
+/// https://m3.material.io/styles/typography/applying-type).
+class _ProblemDetails extends StatelessWidget {
+  const _ProblemDetails({required this.item, required this.style});
+
+  final FeedbackItem item;
+  final TextStyle? style;
+
+  static const _lineGap = 4.0;
+  static const _stepsGap = 6.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = CommunityLocalizations.of(context);
+    final theme = Theme.of(context);
+    final path = item.screenPath;
+    final description = item.description;
+    final steps = item.steps ?? const <String>[];
+    final appVersion = item.appVersion;
+    final device = [
+      item.osVersion,
+      if (appVersion != null) l.appVersionShort(appVersion),
+      item.deviceModel,
+    ].whereType<String>().join('  ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (path != null) ...[
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: '📲', style: emojiStyle(16)),
+                TextSpan(text: ' ${formatScreenPath(path)}'),
+              ],
+            ),
+            style: style,
+          ),
+          const SizedBox(height: _lineGap),
+        ],
+        if (description != null) ...[
+          Text(
+            description,
+            style: style?.copyWith(
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+            ),
+          ),
+          const SizedBox(height: _stepsGap),
+        ],
+        Text.rich(
+          TextSpan(
+            children: [
+              for (var i = 0; i < steps.length; i++) ...[
+                if (i > 0) const TextSpan(text: ' → '),
+                TextSpan(
+                  text: '${i + 1}. ',
+                  style: TextStyle(color: theme.colorScheme.primary),
+                ),
+                TextSpan(text: steps[i]),
+              ],
+            ],
+          ),
+          style: style,
+        ),
+        if (device.isNotEmpty) ...[
+          const SizedBox(height: _lineGap),
+          Text(
+            device,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontSize: 14,
+              fontWeight: FontWeight.w300,
+              color: CommunityColors.muted(context),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
