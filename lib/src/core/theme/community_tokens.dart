@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../data/models/feedback_item.dart';
+
 /// Spacing, radius and size tokens from the Figma file.
 abstract final class CommunityTokens {
   static const screenPadding = 6.0;
@@ -22,11 +24,26 @@ abstract final class CommunityTokens {
   static const buttonSize = Size(105, 42);
   static const buttonRadius = 5.0;
 
-  /// The list toolbar under the header (+ now; sort, filter, search in S5).
-  /// Places the 21 px + 27 px from the right edge, as in Figma frame 1:426.
+  /// The list toolbar under the header: sort, filter and search on the
+  /// left, + on the right. Measured from the PNG export of frame 1:426:
+  /// icon centres 30, 102 and 179 px from the left (a 26 px gap between the
+  /// 48 px buttons puts them at 30, 104 and 178), the + 27 px from the right.
   static const toolbarHeight = 46.0;
-  static const toolbarPadding = EdgeInsets.only(left: 4, right: 13);
+  static const toolbarPadding = EdgeInsets.only(left: 6, right: 13);
+  static const toolbarButtonGap = 26.0;
   static const toolbarIconSize = 21.0;
+  static const sortIconSize = Size(19, 12);
+  static const filterIconSize = Size(19, 21);
+  static const searchIconSize = Size(20, 21);
+
+  /// The search field that replaces the toolbar's buttons.
+  static const searchFieldHeight = 38.0;
+  static const searchFieldPadding = EdgeInsets.symmetric(horizontal: 10, vertical: 8);
+
+  /// The sort and filter menus (not in Figma; built like the topic menu).
+  static const menuRowPadding = 16.0;
+  static const menuHeaderHeight = 32.0;
+  static const menuTickSize = 20.0;
 
   // New Feedback form. Measured from the Figma PNG exports (frames 1:144
   // and 1:181), not read from Figma itself.
@@ -91,6 +108,13 @@ class CommunityColors {
 
   static CommunityColors of(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark ? _dark : _light;
+
+  /// The colour of [status] on cards and in the filter.
+  Color status(FeedbackStatus status) => switch (status) {
+    FeedbackStatus.planned => statusPlanned,
+    FeedbackStatus.inProgress => statusInProgress,
+    FeedbackStatus.done => statusDone,
+  };
 
   final Color statusPlanned;
   final Color statusInProgress;

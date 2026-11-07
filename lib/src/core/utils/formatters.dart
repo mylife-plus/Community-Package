@@ -1,4 +1,5 @@
 import '../../data/models/feedback_item.dart';
+import '../../data/models/feedback_query.dart';
 import '../errors/app_error.dart';
 import '../l10n/community_localizations.dart';
 
@@ -51,6 +52,32 @@ String feedbackTypeLabel(CommunityLocalizations l, FeedbackType type) {
       return l.typeProblem;
     case FeedbackType.idea:
       return l.typeIdea;
+  }
+}
+
+/// The name of [status], for example `in progress`.
+String feedbackStatusLabel(CommunityLocalizations l, FeedbackStatus status) {
+  switch (status) {
+    case FeedbackStatus.planned:
+      return l.statusPlanned;
+    case FeedbackStatus.inProgress:
+      return l.statusInProgress;
+    case FeedbackStatus.done:
+      return l.statusDone;
+  }
+}
+
+/// The name of a sort option, for example `Most hearts`.
+String feedbackSortLabel(CommunityLocalizations l, FeedbackSort sort) {
+  switch (sort) {
+    case FeedbackSort.newest:
+      return l.sortNewest;
+    case FeedbackSort.oldest:
+      return l.sortOldest;
+    case FeedbackSort.reactions:
+      return l.sortReactions;
+    case FeedbackSort.comments:
+      return l.sortComments;
   }
 }
 

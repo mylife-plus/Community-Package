@@ -83,6 +83,24 @@ class CommunityLocalizations {
     required this.deviceApp,
     required this.devicePhone,
     required this.appVersionShort,
+    required this.sortTooltip,
+    required this.filterTooltip,
+    required this.searchTooltip,
+    required this.closeSearch,
+    required this.sortNewest,
+    required this.sortOldest,
+    required this.sortReactions,
+    required this.sortComments,
+    required this.filterType,
+    required this.filterProgress,
+    required this.resetFilter,
+    required this.searchHint,
+    required this.noMatchesTitle,
+    required this.noMatchesBody,
+    required this.clearSearchAndFilter,
+    required this.addHeart,
+    required this.removeHeart,
+    required this.errorTooManyHearts,
   });
 
   /// Add to the host app's `localizationsDelegates`.
@@ -209,6 +227,39 @@ class CommunityLocalizations {
 
   /// The app version on a Problem card, for example `App 3.2.0`.
   final String Function(String version) appVersionShort;
+
+  // List toolbar.
+  /// Tooltips of the toolbar buttons.
+  final String sortTooltip;
+  final String filterTooltip;
+  final String searchTooltip;
+  final String closeSearch;
+
+  /// The sort options.
+  final String sortNewest;
+  final String sortOldest;
+  final String sortReactions;
+  final String sortComments;
+
+  /// Group titles in the filter, and the row that clears it.
+  final String filterType;
+  final String filterProgress;
+  final String resetFilter;
+
+  /// In the search field.
+  final String searchHint;
+
+  /// When a search or filter finds nothing, with a button that clears both.
+  final String noMatchesTitle;
+  final String noMatchesBody;
+  final String clearSearchAndFilter;
+
+  /// For screen readers, on the heart button.
+  final String addHeart;
+  final String removeHeart;
+
+  /// When hearts hit the rate limit.
+  final String errorTooManyHearts;
 }
 
 class _CommunityLocalizationsDelegate extends LocalizationsDelegate<CommunityLocalizations> {
