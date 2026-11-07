@@ -1,5 +1,6 @@
 import { env, exports } from 'cloudflare:workers';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { RATE_LIMIT_TEST_TIMEOUT, awaitFreshWindow } from './rate-limit-window';
 
 const BASE = 'https://example.com/v1/feedback';
 
@@ -33,17 +34,6 @@ function newAnonId() {
 async function nextNumber(app: string) {
   const row = await env.DB.prepare('SELECT next_number FROM apps WHERE id = ?').bind(app).first<{ next_number: number }>();
   return row?.next_number;
-}
-
-/**
- * Local rate limit windows are aligned to the wall clock (miniflare
- * src/workers/ratelimit/ratelimit-object.worker.ts: epoch = now / period).
- * A burst that crosses a window edge would be split over two windows, so
- * wait for a fresh window when the current one is about to end.
- */
-async function awaitFreshWindow() {
-  const intoWindow = Date.now() % 60_000;
-  if (intoWindow > 50_000) await new Promise((r) => setTimeout(r, 60_000 - intoWindow + 50));
 }
 
 beforeAll(async () => {
@@ -173,7 +163,7 @@ describe('POST /v1/feedback rejects', () => {
   });
 });
 
-describe('POST /v1/feedback rate limits', () => {
+describe('POST /v1/feedback rate limits', { timeout: RATE_LIMIT_TEST_TIMEOUT }, () => {
   it('allows 10 posts per minute per anonymous ID', async () => {
     await awaitFreshWindow();
     const anonId = newAnonId();
