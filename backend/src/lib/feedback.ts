@@ -5,7 +5,7 @@
  */
 export const FEEDBACK_SELECT = `
   f.id, f.number, f.type, f.text, f.lang, f.status, f.cost_cents, f.github_url,
-  f.screen_path, f.steps_json, f.os_version, f.app_version, f.device_model,
+  f.screen_path, f.steps_json, f.description, f.os_version, f.app_version, f.device_model,
   f.reaction_count, f.comment_count, f.created_at, f.updated_at,
   CASE WHEN ?1 IS NOT NULL AND f.author_id = ?1 THEN 1 ELSE 0 END AS is_mine,
   EXISTS (SELECT 1 FROM reactions r WHERE r.feedback_id = f.id AND r.anon_id = ?1) AS reacted`;
@@ -21,6 +21,7 @@ export type FeedbackRow = {
   github_url: string | null;
   screen_path: string | null;
   steps_json: string | null;
+  description: string | null;
   os_version: string | null;
   app_version: string | null;
   device_model: string | null;
@@ -44,6 +45,7 @@ export function toFeedbackJson(row: FeedbackRow) {
     githubUrl: row.github_url,
     screenPath: row.screen_path,
     steps: parseSteps(row),
+    description: row.description,
     osVersion: row.os_version,
     appVersion: row.app_version,
     deviceModel: row.device_model,

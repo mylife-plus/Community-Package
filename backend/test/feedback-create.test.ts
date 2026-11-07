@@ -70,6 +70,7 @@ describe('POST /v1/feedback', () => {
       githubUrl: null,
       screenPath: null,
       steps: null,
+      description: null,
       osVersion: null,
       appVersion: null,
       deviceModel: null,
@@ -147,7 +148,7 @@ describe('POST /v1/feedback', () => {
 describe('POST /v1/feedback rejects', () => {
   const cases: Array<[string, unknown, Parameters<typeof post>[1], string]> = [
     ['a missing X-Anon-Id', { type: 'idea', text: 'Hi' }, { anonId: null }, 'Missing X-Anon-Id header'],
-    ['a problem (needs the problem form)', { type: 'problem', text: 'Crash' }, {}, 'Invalid type'],
+    ['a problem without steps', { type: 'problem', text: 'Crash' }, {}, 'Invalid steps'],
     ['an unknown type', { type: 'bug', text: 'Crash' }, {}, 'Invalid type'],
     ['a missing text', { type: 'idea' }, {}, 'Invalid text'],
     ['an empty text', { type: 'idea', text: '' }, {}, 'Text must be 1 to 2000 characters'],

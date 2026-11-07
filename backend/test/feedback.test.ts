@@ -140,6 +140,7 @@ describe('GET /v1/feedback list', () => {
       githubUrl: null,
       screenPath: 'Inventory > Sell Item > Add Item',
       steps: ['Tap plus', 'Add an item'],
+      description: null,
       osVersion: 'iOS 17.4.1',
       appVersion: '1.0.0',
       deviceModel: 'iPhone 15 Pro',
