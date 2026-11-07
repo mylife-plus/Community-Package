@@ -53,3 +53,13 @@ String feedbackTypeLabel(CommunityLocalizations l, FeedbackType type) {
       return l.typeIdea;
   }
 }
+
+/// Between the names of a saved screen path:
+/// `Inventory > Sell Items > Add Items`.
+const screenPathSeparator = ' > ';
+
+/// A saved screen path as shown: `Inventory → Sell Items → Add Items`.
+String formatScreenPath(String saved) => saved.split(screenPathSeparator).join(' → ');
+
+/// Path names, as shown: `Inventory → Sell Items`.
+String formatScreenNames(List<String> names) => names.join(' → ');
