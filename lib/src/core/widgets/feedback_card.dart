@@ -22,9 +22,12 @@ String feedbackTypeEmoji(FeedbackType type) {
 /// comment count and hearts. A Problem shows its screen path, description,
 /// steps and device details instead of the text.
 class FeedbackCard extends StatelessWidget {
-  const FeedbackCard({super.key, required this.item, this.now});
+  const FeedbackCard({super.key, required this.item, this.onReact, this.now});
 
   final FeedbackItem item;
+
+  /// Tapping the heart. Null shows the hearts read-only.
+  final VoidCallback? onReact;
 
   /// For tests. Defaults to the current time.
   final DateTime? now;
@@ -50,7 +53,8 @@ class FeedbackCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(CommunityTokens.cardRadius),
       ),
       child: Padding(
-        padding: CommunityTokens.cardPadding,
+        // The heart's tap area reaches down to the card's edge instead.
+        padding: CommunityTokens.cardPadding.copyWith(bottom: 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -82,7 +86,7 @@ class FeedbackCard extends StatelessWidget {
               _ProblemDetails(item: item, style: body)
             else
               Text(item.text, style: body),
-            const SizedBox(height: CommunityTokens.cardSectionGap),
+            SizedBox(height: CommunityTokens.cardSectionGap - _ReactionButton.tapPadding.top),
             Row(
               children: [
                 Expanded(
@@ -114,8 +118,7 @@ class FeedbackCard extends StatelessWidget {
                         count: item.commentCount,
                         semanticsLabel: l.commentCount(item.commentCount),
                       ),
-                      const SizedBox(width: 8),
-                      _ReactionChip(item: item, semanticsLabel: l.reactionCount(item.reactionCount)),
+                      _ReactionButton(item: item, onTap: onReact),
                     ],
                   ),
                 ),
@@ -226,13 +229,8 @@ class _Status extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = CommunityLocalizations.of(context);
-    final colors = CommunityColors.of(context);
-    final (label, color) = switch (status) {
-      FeedbackStatus.planned => (l.statusPlanned, colors.statusPlanned),
-      FeedbackStatus.inProgress => (l.statusInProgress, colors.statusInProgress),
-      FeedbackStatus.done => (l.statusDone, colors.statusDone),
-    };
+    final label = feedbackStatusLabel(CommunityLocalizations.of(context), status);
+    final color = CommunityColors.of(context).status(status);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -284,45 +282,67 @@ class _Count extends StatelessWidget {
 }
 
 /// Heart count in a small box. Red border when the user has reacted.
-/// Read-only for now; tapping arrives with reactions.
-class _ReactionChip extends StatelessWidget {
-  const _ReactionChip({required this.item, required this.semanticsLabel});
+///
+/// The box keeps Figma's size; the tap area around it is larger (48 px
+/// wide, as high as the card's spacing allows), so it is easy to hit.
+class _ReactionButton extends StatelessWidget {
+  const _ReactionButton({required this.item, required this.onTap});
+
+  /// Space around the box that still takes taps. The left part is the gap
+  /// to the comment count; top and bottom are the card's own spacing.
+  static const tapPadding = EdgeInsets.fromLTRB(8, 7, 0, 6);
+
+  static const _borderAnimation = Duration(milliseconds: 150);
 
   final FeedbackItem item;
-  final String semanticsLabel;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final l = CommunityLocalizations.of(context);
     final theme = Theme.of(context);
     final border = item.reacted
         ? CommunityColors.of(context).reacted
         : CommunityColors.border(context);
+    final onTap = this.onTap;
     return Semantics(
-      label: semanticsLabel,
+      label: l.reactionCount(item.reactionCount),
+      hint: onTap == null ? null : (item.reacted ? l.removeHeart : l.addHeart),
+      button: onTap != null,
+      toggled: onTap == null ? null : item.reacted,
+      onTap: onTap,
       excludeSemantics: true,
-      child: Container(
-        constraints: BoxConstraints(
-          minWidth: CommunityTokens.reactionChipSize.width,
-          minHeight: CommunityTokens.reactionChipSize.height,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 5),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          border: Border.all(color: border),
-          borderRadius: BorderRadius.circular(CommunityTokens.cardRadius),
-        ),
-        child: Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(text: '❤️', style: emojiStyle(16)),
-              TextSpan(text: ' ${item.reactionCount}'),
-            ],
-          ),
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w300,
-            color: theme.colorScheme.onSurface,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Padding(
+          padding: tapPadding,
+          child: AnimatedContainer(
+            duration: _borderAnimation,
+            constraints: BoxConstraints(
+              minWidth: CommunityTokens.reactionChipSize.width,
+              minHeight: CommunityTokens.reactionChipSize.height,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 5),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              border: Border.all(color: border),
+              borderRadius: BorderRadius.circular(CommunityTokens.cardRadius),
+            ),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: '❤️', style: emojiStyle(16)),
+                  TextSpan(text: ' ${item.reactionCount}'),
+                ],
+              ),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w300,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
           ),
         ),
       ),
