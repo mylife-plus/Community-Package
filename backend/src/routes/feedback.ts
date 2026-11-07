@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import { type AppEnv, requireAnonId } from '../lib/context';
-import { decodeCursor, encodeCursor } from '../lib/cursor';
+import { encodeCursor } from '../lib/cursor';
 import { ApiError } from '../lib/errors';
 import { FEEDBACK_SELECT, type FeedbackRow, toFeedbackJson } from '../lib/feedback';
+import { cursorAfter, listSql, readListQuery } from '../lib/listQuery';
 import { writeRateLimit } from '../lib/rateLimit';
 
 export const PAGE_SIZE = 20;
@@ -39,22 +40,18 @@ const LANG_PATTERN = /^[a-z]{2,3}$/;
 
 export const feedback = new Hono<AppEnv>();
 
-// List, newest first. Sort, filters and search arrive with the list toolbar.
+// List, sorted, filtered and searched as asked (lib/listQuery.ts).
 feedback.get('/', async (c) => {
-  const cursor = decodeCursor(c.req.query('cursor'));
-
-  const where = cursor ? 'f.app_id = ?2 AND (f.created_at, f.id) < (?3, ?4)' : 'f.app_id = ?2';
-  const sql = `SELECT ${FEEDBACK_SELECT} FROM feedback f WHERE ${where}
-    ORDER BY f.created_at DESC, f.id DESC LIMIT ?5`;
+  const query = readListQuery((name) => c.req.query(name));
+  const { sql, params } = listSql(FEEDBACK_SELECT, c.get('appId'), c.get('anonId'), query, PAGE_SIZE + 1);
 
   const { results } = await c.env.DB.prepare(sql)
-    .bind(c.get('anonId'), c.get('appId'), cursor?.createdAt ?? null, cursor?.id ?? null, PAGE_SIZE + 1)
+    .bind(...params)
     .all<FeedbackRow>();
 
   const page = results.slice(0, PAGE_SIZE);
   const last = page.at(-1);
-  const nextCursor =
-    results.length > PAGE_SIZE && last ? encodeCursor({ createdAt: last.created_at, id: last.id }) : null;
+  const nextCursor = results.length > PAGE_SIZE && last ? encodeCursor(cursorAfter(query.sort, last)) : null;
 
   return c.json({ items: page.map(toFeedbackJson), nextCursor });
 });
