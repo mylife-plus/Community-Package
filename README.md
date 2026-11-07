@@ -67,13 +67,18 @@ npm run deploy      # deploy to Cloudflare
 
 Run `npm run cf-typegen` after changing `wrangler.jsonc`, and commit the updated `worker-configuration.d.ts`.
 
-Writes are rate-limited per anonymous ID and per IP with the Workers Rate Limiting binding. The limits are set in `wrangler.jsonc` (`ratelimits`); each `namespace_id` must be unique within the Cloudflare account.
+Writes are rate-limited per anonymous ID and per IP with the Workers Rate Limiting binding: posts 10 per minute per ID and 60 per IP, hearts 30 per minute per ID and 120 per IP, counted apart so hearts never block a post. The limits are set in `wrangler.jsonc` (`ratelimits`); each `namespace_id` must be unique within the Cloudflare account.
 
 ### Endpoints
+
+Feedback routes need `X-App-Id`; writes also need `X-Anon-Id`.
 
 | Method | Path | Result |
 |---|---|---|
 | GET | `/v1/health` | `{"status":"ok","db":"ok"}` when the Worker can reach D1 |
+| GET | `/v1/feedback` | 20 items and a `nextCursor`. Optional: `sort` (`newest`, `oldest`, `reactions`, `comments`), `type` and `status` (comma lists), `q` (words in the text, or a number such as `21` or `#21`), `cursor` |
+| POST | `/v1/feedback` | Creates feedback, returns the item |
+| PUT / DELETE | `/v1/feedback/:number/reaction` | Heart on / off, returns the item |
 
 Errors always use this shape:
 
