@@ -22,7 +22,7 @@ void main() {
 
   FeedbackRepository build() {
     final r = backend.repository(cache: PrefsCache(now: () => now));
-    r.feedbackListStream.listen((page) => published.add(_numbers(page)));
+    r.feedbackListStream.listen((list) => published.add(_numbers(list.page)));
     return r;
   }
 

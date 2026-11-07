@@ -1,5 +1,11 @@
 /// A feedback item as the backend sends it.
-Map<String, dynamic> feedbackJson(int number, {String? status, String type = 'idea'}) => {
+Map<String, dynamic> feedbackJson(
+  int number, {
+  String? status,
+  String type = 'idea',
+  int reactionCount = 0,
+  bool reacted = false,
+}) => {
   'number': number,
   'type': type,
   'text': 'Feedback $number',
@@ -13,9 +19,9 @@ Map<String, dynamic> feedbackJson(int number, {String? status, String type = 'id
   'osVersion': null,
   'appVersion': null,
   'deviceModel': null,
-  'reactionCount': 0,
+  'reactionCount': reactionCount,
   'commentCount': 0,
-  'reacted': false,
+  'reacted': reacted,
   'isMine': false,
   'createdAt': '2026-11-0${number % 9 + 1}T10:00:00.000Z',
   'updatedAt': '2026-11-0${number % 9 + 1}T10:00:00.000Z',

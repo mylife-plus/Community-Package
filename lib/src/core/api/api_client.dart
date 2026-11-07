@@ -52,6 +52,20 @@ class ApiClient {
     return _send(() => _http.post(uri, headers: headers, body: jsonEncode(body)));
   }
 
+  /// PUT `/v1[path]` without a body and decode the JSON object it returns.
+  Future<Map<String, dynamic>> putJson(String path) async {
+    final uri = _uri(path, const {});
+    final headers = await _headers();
+    return _send(() => _http.put(uri, headers: headers));
+  }
+
+  /// DELETE `/v1[path]` and decode the JSON object it returns.
+  Future<Map<String, dynamic>> deleteJson(String path) async {
+    final uri = _uri(path, const {});
+    final headers = await _headers();
+    return _send(() => _http.delete(uri, headers: headers));
+  }
+
   /// Every request carries `?lang=`: readers get content in their language,
   /// and new posts are saved with the author's language.
   Uri _uri(String path, Map<String, String?> query) => Uri.parse('$_baseUrl/v1$path').replace(
