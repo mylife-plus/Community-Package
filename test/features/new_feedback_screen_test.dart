@@ -62,8 +62,8 @@ void main() {
   }
 
   /// Settings → "Give feedback".
-  Future<void> openFromSettings(WidgetTester tester, {bool agreed = false}) async {
-    await host(tester, agreed: agreed);
+  Future<void> openFromSettings(WidgetTester tester, {bool agreed = false, ThemeData? theme}) async {
+    await host(tester, agreed: agreed, theme: theme);
     unawaited(CommunityPackage.openNewFeedback(hostContext));
     await tester.pumpAndSettle();
   }
@@ -263,6 +263,29 @@ void main() {
     expect(listScreens, findsOneWidget);
     expect(tester.widget<SnackBar>(find.byType(SnackBar)).margin, isNull);
   });
+
+  for (final brightness in Brightness.values) {
+    testWidgets('messages use the inverse surface, whatever the host snackbar theme ($brightness)', (
+      tester,
+    ) async {
+      final colors = ColorScheme.fromSeed(seedColor: Colors.indigo, brightness: brightness);
+      // A host snackbar close to its cards, as in Inventory's dark theme.
+      final theme = ThemeData(
+        colorScheme: colors,
+        snackBarTheme: SnackBarThemeData(backgroundColor: colors.surfaceContainerHigh),
+      );
+      await openFromSettings(tester, agreed: true, theme: theme);
+      await fillForm(tester);
+      backend.answer(feedbackJson(26), status: 201);
+      backend.answer(pageJson([26]));
+      backend.answer(pageJson([26]));
+
+      await tapAndSettle(tester, submit);
+
+      expect(tester.widget<SnackBar>(find.byType(SnackBar)).backgroundColor, colors.inverseSurface);
+      expect(tester.widget<Text>(find.text('Thanks! Posted as #26')).style?.color, colors.onInverseSurface);
+    });
+  }
 
   testWidgets('declining the privacy notice sends nothing and unlocks the form', (tester) async {
     await openFromSettings(tester);

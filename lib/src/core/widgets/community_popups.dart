@@ -34,6 +34,12 @@ void closePopup<T>(BuildContext context, [T? result]) => Navigator.of(context).p
 /// above buttons at the bottom of a screen's body: the Scaffold only clears
 /// its own bottom bar and floating action button.
 void showCommunitySnackBar(BuildContext context, String message, {double bottomClearance = 0}) {
+  // Material's snackbar colours: the inverse surface stands out from the
+  // screen behind it (https://m3.material.io/components/snackbar/specs).
+  // Set here because a host theme may pick a background close to its cards
+  // (Inventory's dark snackbar was hard to notice on the list).
+  final colors = Theme.of(context).colorScheme;
+  final content = Text(message, style: TextStyle(color: colors.onInverseSurface));
   final SnackBar snackBar;
   if (bottomClearance > 0) {
     // A margin needs floating behaviour. 15, 5, 15, 10 is Flutter's own
@@ -41,12 +47,13 @@ void showCommunitySnackBar(BuildContext context, String message, {double bottomC
     final inset =
         SnackBarTheme.of(context).insetPadding ?? const EdgeInsets.fromLTRB(15, 5, 15, 10);
     snackBar = SnackBar(
-      content: Text(message),
+      content: content,
+      backgroundColor: colors.inverseSurface,
       behavior: SnackBarBehavior.floating,
       margin: inset.copyWith(bottom: inset.bottom + bottomClearance),
     );
   } else {
-    snackBar = SnackBar(content: Text(message));
+    snackBar = SnackBar(content: content, backgroundColor: colors.inverseSurface);
   }
   ScaffoldMessenger.maybeOf(context)
     ?..hideCurrentSnackBar()
