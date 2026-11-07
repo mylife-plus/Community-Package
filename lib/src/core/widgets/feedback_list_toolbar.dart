@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../data/models/feedback_item.dart';
 import '../../data/models/feedback_query.dart';
 import '../l10n/community_localizations.dart';
+import '../theme/community_icons.dart';
 import '../theme/community_tokens.dart';
 import 'community_popups.dart';
 import 'feedback_query_menus.dart';
@@ -73,7 +74,7 @@ class FeedbackListToolbar extends StatelessWidget {
       children: [
         Builder(
           builder: (buttonContext) => _ToolbarButton(
-            icon: 'sort',
+            icon: CommunityIcons.sort,
             size: CommunityTokens.sortIconSize,
             tooltip: l.sortTooltip,
             active: query.sort != FeedbackSort.newest,
@@ -83,7 +84,7 @@ class FeedbackListToolbar extends StatelessWidget {
         const SizedBox(width: CommunityTokens.toolbarButtonGap),
         Builder(
           builder: (buttonContext) => _ToolbarButton(
-            icon: 'filter',
+            icon: CommunityIcons.filter,
             size: CommunityTokens.filterIconSize,
             tooltip: l.filterTooltip,
             active: query.hasFilter,
@@ -92,7 +93,7 @@ class FeedbackListToolbar extends StatelessWidget {
         ),
         const SizedBox(width: CommunityTokens.toolbarButtonGap),
         _ToolbarButton(
-          icon: 'search',
+          icon: CommunityIcons.search,
           size: CommunityTokens.searchIconSize,
           tooltip: l.searchTooltip,
           active: false,
@@ -101,7 +102,7 @@ class FeedbackListToolbar extends StatelessWidget {
         const Spacer(),
         if (onAdd != null)
           _ToolbarButton(
-            icon: 'add',
+            icon: CommunityIcons.add,
             size: const Size.square(CommunityTokens.toolbarIconSize),
             tooltip: addTooltip,
             active: false,
@@ -140,7 +141,7 @@ class _ToolbarButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  /// File name in assets/icons, without `.svg`.
+  /// One of [CommunityIcons].
   final String icon;
   final Size size;
   final String? tooltip;
@@ -156,8 +157,8 @@ class _ToolbarButton extends StatelessWidget {
         tooltip: tooltip,
         onPressed: onPressed,
         icon: SvgPicture.asset(
-          'assets/icons/$icon.svg',
-          package: 'community_package',
+          icon,
+          package: CommunityIcons.package,
           width: size.width,
           height: size.height,
           colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
@@ -228,8 +229,8 @@ class _SearchField extends StatelessWidget {
               prefixIcon: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: SvgPicture.asset(
-                  'assets/icons/search.svg',
-                  package: 'community_package',
+                  CommunityIcons.search,
+                  package: CommunityIcons.package,
                   width: 16,
                   height: 17,
                   colorFilter: ColorFilter.mode(muted, BlendMode.srcIn),

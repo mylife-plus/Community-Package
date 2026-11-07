@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../l10n/community_localizations.dart';
 import '../navigation/community_navigator.dart';
+import '../theme/community_icons.dart';
 import '../theme/community_tokens.dart';
 import 'emoji_text.dart';
 
@@ -36,8 +37,8 @@ class CommunityAppBar extends StatelessWidget implements PreferredSizeWidget {
         tooltip: CommunityLocalizations.of(context).back,
         onPressed: onBack ?? () => CommunityNavigator.back(context),
         icon: SvgPicture.asset(
-          'assets/icons/arrow_left.svg',
-          package: 'community_package',
+          CommunityIcons.arrowLeft,
+          package: CommunityIcons.package,
           width: CommunityTokens.iconSize,
           height: CommunityTokens.iconSize,
           colorFilter: ColorFilter.mode(color, BlendMode.srcIn),

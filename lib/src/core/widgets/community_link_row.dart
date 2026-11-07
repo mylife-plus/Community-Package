@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../theme/community_icons.dart';
 import '../theme/community_tokens.dart';
 import 'emoji_text.dart';
 
@@ -69,8 +70,8 @@ class CommunityLinkRow extends StatelessWidget {
                   ),
                 ),
                 SvgPicture.asset(
-                  'assets/icons/arrow_right.svg',
-                  package: 'community_package',
+                  CommunityIcons.arrowRight,
+                  package: CommunityIcons.package,
                   width: CommunityTokens.iconSize,
                   height: CommunityTokens.iconSize,
                   colorFilter: ColorFilter.mode(onSurface, BlendMode.srcIn),
