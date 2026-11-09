@@ -10,10 +10,11 @@ class CommunityConfig {
   });
 
   /// Base URL of the community Worker, without the `/v1` prefix.
-  /// For example `https://community-dev.qureshicreatives.workers.dev`.
+  /// For example `https://community.<your-subdomain>.workers.dev`.
   final String backendUrl;
 
-  /// The app's ID on the backend: `inventory`, `spacetime` or `money`.
+  /// The app's ID on the backend: its row in the `apps` table, for example
+  /// `inventory`.
   final String appId;
 
   /// The full Privacy Policy, linked from the privacy notice. Without it the

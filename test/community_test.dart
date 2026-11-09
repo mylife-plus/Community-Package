@@ -23,7 +23,7 @@ void main() {
   test('init stores the config', () async {
     await CommunityPackage.init(
       const CommunityConfig(
-        backendUrl: 'https://community-dev.qureshicreatives.workers.dev',
+        backendUrl: 'https://community.example.workers.dev',
         appId: 'inventory',
         privacyPolicyUrl: 'https://example.com/privacy',
       ),
@@ -32,7 +32,7 @@ void main() {
     expect(CommunityPackage.config.appId, 'inventory');
     expect(
       CommunityPackage.config.backendUrl,
-      'https://community-dev.qureshicreatives.workers.dev',
+      'https://community.example.workers.dev',
     );
     expect(CommunityDependencies.config.privacyPolicyUrl, 'https://example.com/privacy');
   });

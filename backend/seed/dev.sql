@@ -1,6 +1,6 @@
--- Development seed for the community-dev database. Not a migration.
+-- Development seed with invented sample data. Not a migration.
 -- Wipes all feedback data and inserts sample rows.
--- Apply: npx wrangler d1 execute community-dev --remote --file seed/dev.sql
+-- Apply: npx wrangler d1 execute <database_name> --remote --file seed/dev.sql
 -- reaction_count and comment_count match the rows below; comment_count includes replies.
 
 DELETE FROM reads;
