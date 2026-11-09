@@ -15,10 +15,14 @@ class CommunityAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     this.actions,
     this.onBack,
+    this.titleColor,
   });
 
   final String emoji;
   final String title;
+
+  /// For example a status colour. Defaults to the app bar's text colour.
+  final Color? titleColor;
   final List<Widget>? actions;
 
   /// Replaces the default back, for screens that ask before leaving.
@@ -57,7 +61,7 @@ class CommunityAppBar extends StatelessWidget implements PreferredSizeWidget {
               style: theme.textTheme.titleMedium?.copyWith(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: color,
+                color: titleColor ?? color,
               ),
             ),
           ),

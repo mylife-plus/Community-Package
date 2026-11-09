@@ -11,6 +11,7 @@ const communityScreens = ScreenNode(
   children: [
     ScreenNode('Community App'),
     ScreenNode('All Feedback'),
+    ScreenNode('Feedback Detail'),
     ScreenNode('New Feedback'),
   ],
 );

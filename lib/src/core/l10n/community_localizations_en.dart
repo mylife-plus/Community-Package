@@ -112,6 +112,30 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
         addHeart: 'Add a heart',
         removeHeart: 'Remove your heart',
         errorTooManyHearts: 'Too many hearts. Try again soon.',
+        sortReplies: 'Most replies',
+        filterMine: 'Mine',
+        filterAdmin: 'Admin',
+        searchCommentsHint: 'Search comments',
+        feedbackNotFound: 'This feedback no longer exists.',
+        newCommentHint: 'new Comment...',
+        writeComment: 'Write a comment',
+        sendComment: 'Send',
+        noCommentsTitle: 'No comments yet',
+        noCommentsBody: 'Be the first to comment.',
+        commentDeleted: 'Comment deleted',
+        edited: 'edited',
+        showReplies: _showReplies,
+        hideReplies: 'Hide replies',
+        reply: 'Reply',
+        editComment: 'Edit comment',
+        editCommentTitle: 'edit Comment',
+        save: 'save',
+        delete: 'delete',
+        keep: 'keep',
+        deleteCommentTitle: 'Delete this comment?',
+        deleteCommentKeepsReplies: 'Delete this comment? Its replies stay.',
+        commentNotFound: 'This comment no longer exists.',
+        errorTooManyComments: 'Too many comments. Try again soon.',
       );
 
   static String _minutesAgo(int n) => '${n}m ago';
@@ -125,4 +149,5 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
   static String _yourId(String id) => 'Your ID: $id';
   static String _postedAs(int n) => 'Thanks! Posted as #$n';
   static String _appVersionShort(String version) => 'App $version';
+  static String _showReplies(int n) => n == 1 ? 'Show 1 reply' : 'Show $n replies';
 }

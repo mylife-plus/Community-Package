@@ -219,6 +219,7 @@ class _List extends StatelessWidget {
               return FeedbackCard(
                 key: ValueKey(item.number),
                 item: item,
+                onTap: () => CommunityNavigator.openFeedbackDetail(context, item.number),
                 onReact: () => onReact(item),
               );
             }

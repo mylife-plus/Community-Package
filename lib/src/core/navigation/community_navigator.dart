@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../features/community_home/presentation/community_home_screen.dart';
+import '../../features/feedback_detail/presentation/feedback_detail_screen.dart';
 import '../../features/feedback_list/presentation/feedback_list_screen.dart';
 import '../../features/new_feedback/presentation/new_feedback_screen.dart';
 import '../di/community_dependencies.dart';
@@ -13,6 +14,9 @@ abstract final class CommunityRoutes {
   static const home = '/community';
   static const feedbackList = '/feedback';
   static const newFeedback = '/feedback/new';
+
+  /// Takes the feedback's number as the route's arguments.
+  static const feedbackDetail = '/feedback/detail';
 }
 
 /// The package's nested Navigator. Host apps never see these routes; they
@@ -36,6 +40,11 @@ class CommunityNavigator extends StatefulWidget {
   /// New Feedback, on top of the current package screen.
   static Future<void> openNewFeedback(BuildContext context) =>
       Navigator.of(context).pushNamed(CommunityRoutes.newFeedback);
+
+  /// The detail of feedback [number], on top of the current package screen.
+  /// Only the number travels; the screen loads the rest.
+  static Future<void> openFeedbackDetail(BuildContext context, int number) =>
+      Navigator.of(context).pushNamed(CommunityRoutes.feedbackDetail, arguments: number);
 
   /// After a post from New Feedback: back to the list it was opened from,
   /// or, when the flow started on New Feedback, the list in its place.
@@ -119,6 +128,19 @@ class _CommunityNavigatorState extends State<CommunityNavigator> {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => const NewFeedbackScreen(),
+        );
+      case CommunityRoutes.feedbackDetail:
+        final number = settings.arguments;
+        if (number is int) {
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => FeedbackDetailScreen(number: number),
+          );
+        }
+        // Opened without a number: All Feedback instead of a broken screen.
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const FeedbackListScreen(),
         );
       case CommunityRoutes.home:
       default:

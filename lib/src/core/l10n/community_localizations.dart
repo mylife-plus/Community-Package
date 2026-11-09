@@ -101,6 +101,30 @@ class CommunityLocalizations {
     required this.addHeart,
     required this.removeHeart,
     required this.errorTooManyHearts,
+    required this.sortReplies,
+    required this.filterMine,
+    required this.filterAdmin,
+    required this.searchCommentsHint,
+    required this.feedbackNotFound,
+    required this.newCommentHint,
+    required this.writeComment,
+    required this.sendComment,
+    required this.noCommentsTitle,
+    required this.noCommentsBody,
+    required this.commentDeleted,
+    required this.edited,
+    required this.showReplies,
+    required this.hideReplies,
+    required this.reply,
+    required this.editComment,
+    required this.editCommentTitle,
+    required this.save,
+    required this.delete,
+    required this.keep,
+    required this.deleteCommentTitle,
+    required this.deleteCommentKeepsReplies,
+    required this.commentNotFound,
+    required this.errorTooManyComments,
   });
 
   /// Add to the host app's `localizationsDelegates`.
@@ -260,6 +284,59 @@ class CommunityLocalizations {
 
   /// When hearts hit the rate limit.
   final String errorTooManyHearts;
+
+  // Feedback detail and comments.
+  /// The comment sort option and filters.
+  final String sortReplies;
+  final String filterMine;
+  final String filterAdmin;
+
+  /// In the comment search field.
+  final String searchCommentsHint;
+
+  /// The detail screen of feedback that was deleted.
+  final String feedbackNotFound;
+
+  /// In the new comment and reply fields.
+  final String newCommentHint;
+
+  /// Tooltip of the + that opens the new comment field.
+  final String writeComment;
+
+  /// The send button inside a comment field.
+  final String sendComment;
+
+  /// A feedback without comments.
+  final String noCommentsTitle;
+  final String noCommentsBody;
+
+  /// In place of a deleted comment that still has replies.
+  final String commentDeleted;
+
+  /// After the age of an edited comment: `3d ago · edited`.
+  final String edited;
+
+  /// For screen readers, on the replies chip.
+  final String Function(int count) showReplies;
+  final String hideReplies;
+
+  /// For screen readers, on the chip of a comment without replies.
+  final String reply;
+
+  /// The ✏️ on the user's own comments, and the sheet it opens.
+  final String editComment;
+  final String editCommentTitle;
+  final String save;
+  final String delete;
+  final String keep;
+
+  /// Asked before deleting a comment, without and with replies.
+  final String deleteCommentTitle;
+  final String deleteCommentKeepsReplies;
+  final String commentNotFound;
+
+  /// When comments hit the rate limit.
+  final String errorTooManyComments;
 }
 
 class _CommunityLocalizationsDelegate extends LocalizationsDelegate<CommunityLocalizations> {

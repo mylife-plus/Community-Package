@@ -37,6 +37,7 @@ void main() {
       'Community',
       'Community > Community App',
       'Community > All Feedback',
+      'Community > Feedback Detail',
       'Community > New Feedback',
     ]);
   });

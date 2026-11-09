@@ -169,6 +169,7 @@ void main() {
       'Community',
       'Community App',
       'All Feedback',
+      'Feedback Detail',
       'New Feedback',
     ]);
     double left(String name) => tester.getTopLeft(find.descendant(of: picker, matching: find.text(name))).dx;

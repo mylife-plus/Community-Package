@@ -72,8 +72,23 @@ abstract final class CommunityTokens {
   static const actionButtonRadius = 9.0;
   static const actionButtonGap = 80.0;
 
+  /// The red 🗑 between ✗ and ✓ (Edit Comment, Settings-12): 43 px square,
+  /// about 30 px from each.
+  static const deleteButtonSize = Size(43, 43);
+  static const deleteButtonGap = 30.0;
+
   /// Space under the ✗ / ✓ buttons on phones without a bottom inset.
   static const actionsBottomGap = 16.0;
+
+  // Feedback detail and comments, measured from the PNG export of
+  // Settings-6: the new comment field 45 px high, a reply field 32 px, the
+  // replies chip 64 × 26, dividers inset about 10 px in the thread box.
+  static const commentPadding = EdgeInsets.fromLTRB(12, 8, 12, 10);
+  static const commentFieldMinHeight = 45.0;
+  static const replyFieldMinHeight = 32.0;
+  static const repliesChipSize = Size(64, 26);
+  static const commentDividerIndent = 10.0;
+  static const commentGap = 6.0;
 }
 
 /// Colours with no matching role in the host theme. The dark values are the

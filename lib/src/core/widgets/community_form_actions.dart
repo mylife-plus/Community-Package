@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../theme/community_tokens.dart';
 
-/// The ✗ (cancel) and ✓ (submit) buttons at the bottom of a form.
+/// The ✗ (cancel) and ✓ (submit) buttons at the bottom of a form, with an
+/// optional red 🗑 (delete) between them (Settings-12).
 /// A null [onSubmit] shows the ✓ dimmed and ignores taps.
 class CommunityFormActions extends StatelessWidget {
   const CommunityFormActions({
@@ -13,6 +14,8 @@ class CommunityFormActions extends StatelessWidget {
     required this.submitLabel,
     required this.onCancel,
     required this.onSubmit,
+    this.deleteLabel,
+    this.onDelete,
   });
 
   /// Not tuned yet: how faint the ✓ is while the form can't be sent.
@@ -34,10 +37,15 @@ class CommunityFormActions extends StatelessWidget {
   final VoidCallback? onCancel;
   final VoidCallback? onSubmit;
 
+  /// The 🗑 between ✗ and ✓. Hidden when null.
+  final String? deleteLabel;
+  final VoidCallback? onDelete;
+
   @override
   Widget build(BuildContext context) {
     final error = Theme.of(context).colorScheme.error;
     final submit = CommunityColors.of(context).submit;
+    final onDelete = this.onDelete;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -46,7 +54,13 @@ class CommunityFormActions extends StatelessWidget {
           onPressed: onCancel,
           icon: CustomPaint(size: const Size(20, 20), painter: _CrossPainter(error)),
         ),
-        const SizedBox(width: CommunityTokens.actionButtonGap),
+        if (onDelete == null)
+          const SizedBox(width: CommunityTokens.actionButtonGap)
+        else ...[
+          const SizedBox(width: CommunityTokens.deleteButtonGap),
+          _DeleteButton(label: deleteLabel ?? '', onPressed: onDelete),
+          const SizedBox(width: CommunityTokens.deleteButtonGap),
+        ],
         _ActionButton(
           label: submitLabel,
           onPressed: onSubmit,
@@ -85,6 +99,39 @@ class _ActionButton extends StatelessWidget {
             child: SizedBox.fromSize(
               size: CommunityTokens.actionButtonSize,
               child: Center(child: icon),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The red 🗑 button: smaller than ✗ and ✓, in the theme's error colour.
+class _DeleteButton extends StatelessWidget {
+  const _DeleteButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: Tooltip(
+        message: label,
+        child: Material(
+          color: scheme.error,
+          borderRadius: BorderRadius.circular(CommunityTokens.actionButtonRadius),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onPressed,
+            child: SizedBox.fromSize(
+              size: CommunityTokens.deleteButtonSize,
+              child: Icon(Icons.delete_outline, size: 24, color: scheme.onError),
             ),
           ),
         ),

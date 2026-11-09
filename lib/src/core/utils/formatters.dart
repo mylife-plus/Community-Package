@@ -1,3 +1,4 @@
+import '../../data/models/comment_query.dart';
 import '../../data/models/feedback_item.dart';
 import '../../data/models/feedback_query.dart';
 import '../errors/app_error.dart';
@@ -91,3 +92,25 @@ String formatScreenPath(String saved) => saved.split(screenPathSeparator).join('
 
 /// Path names, as shown: `Inventory → Sell Items`.
 String formatScreenNames(List<String> names) => names.join(' → ');
+
+/// The name of a comment sort option, for example `Most replies`.
+String commentSortLabel(CommunityLocalizations l, CommentSort sort) {
+  switch (sort) {
+    case CommentSort.newest:
+      return l.sortNewest;
+    case CommentSort.oldest:
+      return l.sortOldest;
+    case CommentSort.replies:
+      return l.sortReplies;
+  }
+}
+
+/// The name of a comment filter, for example `Mine`.
+String commentFilterLabel(CommunityLocalizations l, CommentFilter filter) {
+  switch (filter) {
+    case CommentFilter.mine:
+      return l.filterMine;
+    case CommentFilter.admin:
+      return l.filterAdmin;
+  }
+}

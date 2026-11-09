@@ -22,9 +22,12 @@ String feedbackTypeEmoji(FeedbackType type) {
 /// comment count and hearts. A Problem shows its screen path, description,
 /// steps and device details instead of the text.
 class FeedbackCard extends StatelessWidget {
-  const FeedbackCard({super.key, required this.item, this.onReact, this.now});
+  const FeedbackCard({super.key, required this.item, this.onTap, this.onReact, this.now});
 
   final FeedbackItem item;
+
+  /// Tapping the card outside the heart, for example to open its detail.
+  final VoidCallback? onTap;
 
   /// Tapping the heart. Null shows the hearts read-only.
   final VoidCallback? onReact;
@@ -46,85 +49,90 @@ class FeedbackCard extends StatelessWidget {
       color: onSurface,
     );
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border.all(color: CommunityColors.border(context)),
+    // A Material, not a DecoratedBox, so the tap ripple shows on the card.
+    return Material(
+      color: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: CommunityColors.border(context)),
         borderRadius: BorderRadius.circular(CommunityTokens.cardRadius),
       ),
-      child: Padding(
-        // The heart's tap area reaches down to the card's edge instead.
-        padding: CommunityTokens.cardPadding.copyWith(bottom: 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                EmojiText(feedbackTypeEmoji(item.type), size: 20),
-                const SizedBox(width: 4),
-                Text(
-                  '#${item.number}',
-                  style: text.bodyLarge?.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w200,
-                    color: onSurface,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  formatAge(l, item.createdAt, now: now),
-                  style: text.bodyMedium?.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w300,
-                    color: muted,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: CommunityTokens.cardSectionGap),
-            if (_hasProblemDetails(item))
-              _ProblemDetails(item: item, style: body)
-            else
-              Text(item.text, style: body),
-            SizedBox(height: CommunityTokens.cardSectionGap - _ReactionButton.tapPadding.top),
-            Row(
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: item.status == null ? null : _Status(status: item.status!),
-                  ),
-                ),
-                if (costCents != null)
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(text: '💰', style: emojiStyle(16)),
-                        TextSpan(text: ' ${formatUsd(l, costCents)}'),
-                      ],
-                    ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          // The heart's tap area reaches down to the card's edge instead.
+          padding: CommunityTokens.cardPadding.copyWith(bottom: 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  EmojiText(feedbackTypeEmoji(item.type), size: 20),
+                  const SizedBox(width: 4),
+                  Text(
+                    '#${item.number}',
                     style: text.bodyLarge?.copyWith(
                       fontSize: 16,
-                      fontWeight: FontWeight.w300,
-                      color: CommunityColors.of(context).cost,
+                      fontWeight: FontWeight.w200,
+                      color: onSurface,
                     ),
                   ),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      _Count(
-                        emoji: '💬',
-                        count: item.commentCount,
-                        semanticsLabel: l.commentCount(item.commentCount),
-                      ),
-                      _ReactionButton(item: item, onTap: onReact),
-                    ],
+                  const Spacer(),
+                  Text(
+                    formatAge(l, item.createdAt, now: now),
+                    style: text.bodyMedium?.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w300,
+                      color: muted,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+              const SizedBox(height: CommunityTokens.cardSectionGap),
+              if (_hasProblemDetails(item))
+                _ProblemDetails(item: item, style: body)
+              else
+                Text(item.text, style: body),
+              SizedBox(height: CommunityTokens.cardSectionGap - _ReactionButton.tapPadding.top),
+              Row(
+                children: [
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: item.status == null ? null : _Status(status: item.status!),
+                    ),
+                  ),
+                  if (costCents != null)
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(text: '💰', style: emojiStyle(16)),
+                          TextSpan(text: ' ${formatUsd(l, costCents)}'),
+                        ],
+                      ),
+                      style: text.bodyLarge?.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w300,
+                        color: CommunityColors.of(context).cost,
+                      ),
+                    ),
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        _Count(
+                          emoji: '💬',
+                          count: item.commentCount,
+                          semanticsLabel: l.commentCount(item.commentCount),
+                        ),
+                        _ReactionButton(item: item, onTap: onReact),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -236,12 +244,17 @@ class _Status extends StatelessWidget {
       children: [
         const EmojiText('💪', size: 16),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontSize: 14,
-            fontWeight: FontWeight.w300,
-            color: color,
+        // Shrinks on narrow phones instead of pushing into the counts.
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontSize: 14,
+              fontWeight: FontWeight.w300,
+              color: color,
+            ),
           ),
         ),
       ],
