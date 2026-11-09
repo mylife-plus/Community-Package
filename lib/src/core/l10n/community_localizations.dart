@@ -131,6 +131,10 @@ class CommunityLocalizations {
     required this.errorTooManyComments,
     required this.offlineShowingSaved,
     required this.loadMoreCommentsFailed,
+    required this.screenCommunity,
+    required this.screenAllFeedback,
+    required this.screenFeedbackDetail,
+    required this.screenNewFeedback,
   });
 
   /// Add to the host app's `localizationsDelegates`.
@@ -359,6 +363,13 @@ class CommunityLocalizations {
 
   /// Under the comments when the next page failed.
   final String loadMoreCommentsFailed;
+
+  /// The package's own screens in the Problem form's screen picker and in
+  /// screen paths. "Community App" uses [communityTitle].
+  final String screenCommunity;
+  final String screenAllFeedback;
+  final String screenFeedbackDetail;
+  final String screenNewFeedback;
 }
 
 class _CommunityLocalizationsDelegate extends LocalizationsDelegate<CommunityLocalizations> {

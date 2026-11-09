@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/feedback_item.dart';
 import '../l10n/community_localizations.dart';
+import '../navigation/community_screens.dart';
 import '../theme/community_tokens.dart';
 import '../utils/formatters.dart';
 import 'emoji_text.dart';
@@ -185,6 +186,10 @@ class _ProblemDetails extends StatelessWidget {
       item.deviceModel,
     ].whereType<String>().join('  ');
 
+    // Saved in English; shown in the app's language where the tree knows it.
+    final screens = CommunityScreens.of(context);
+    List<String> labels(List<String> names) => screenPathLabels(context, names, screens);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -193,7 +198,7 @@ class _ProblemDetails extends StatelessWidget {
             TextSpan(
               children: [
                 TextSpan(text: '📲', style: emojiStyle(16)),
-                TextSpan(text: ' ${formatScreenPath(path)}'),
+                TextSpan(text: ' ${formatScreenPath(path, labels: labels)}'),
               ],
             ),
             style: style,

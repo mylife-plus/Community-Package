@@ -140,6 +140,10 @@ class CommunityLocalizationsEs extends CommunityLocalizations {
         errorTooManyComments: 'Demasiados comentarios. Inténtalo en un momento.',
         offlineShowingSaved: 'Sin conexión. Mostrando sugerencias guardadas.',
         loadMoreCommentsFailed: 'No se pudieron cargar más comentarios.',
+        screenCommunity: 'Comunidad',
+        screenAllFeedback: 'Todas las sugerencias',
+        screenFeedbackDetail: 'Detalle de sugerencia',
+        screenNewFeedback: 'Nueva sugerencia',
       );
 
   static String _minutesAgo(int n) => 'hace $n min';

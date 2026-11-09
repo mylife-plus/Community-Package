@@ -1,29 +1,30 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import '../../../config/screen_node.dart';
+import '../../../core/navigation/community_screens.dart';
 import '../../../core/utils/formatters.dart';
-
-/// The package's own screens, added after the host app's so a problem in
-/// the feedback screens can be reported too. English, like the host's names.
-/// Later screens (feedback detail, My History, ...) join as they are built.
-const communityScreens = ScreenNode(
-  'Community',
-  children: [
-    ScreenNode('Community App'),
-    ScreenNode('All Feedback'),
-    ScreenNode('Feedback Detail'),
-    ScreenNode('New Feedback'),
-  ],
-);
 
 /// One row of the screen picker: a screen, how deep it sits, and the names
 /// from the top down to it.
 @immutable
 class ScreenChoice {
-  const ScreenChoice({required this.path});
+  const ScreenChoice({required this.path, this.nodes = const []});
 
-  /// From the top-level screen down to this one.
+  /// Names from the top-level screen down to this one, as saved.
   final List<String> path;
+
+  /// The screens of [path], for their titles. Empty shows the names.
+  final List<ScreenNode> nodes;
+
+  /// The titles of [path] in the app's language.
+  List<String> labels(BuildContext context) => [
+    for (var i = 0; i < path.length; i++)
+      i < nodes.length ? screenLabel(context, nodes[i]) : path[i],
+  ];
+
+  /// This screen's title in the app's language.
+  String label(BuildContext context) => labels(context).last;
 
   String get name => path.last;
 
@@ -44,11 +45,11 @@ class ScreenChoice {
 /// given.
 List<ScreenChoice> flattenScreens(List<ScreenNode> roots) {
   final rows = <ScreenChoice>[];
-  void visit(ScreenNode node, List<String> parents) {
-    final path = [...parents, node.name];
-    rows.add(ScreenChoice(path: path));
+  void visit(ScreenNode node, List<ScreenNode> parents) {
+    final nodes = [...parents, node];
+    rows.add(ScreenChoice(path: [for (final n in nodes) n.name], nodes: nodes));
     for (final child in node.children) {
-      visit(child, path);
+      visit(child, nodes);
     }
   }
 

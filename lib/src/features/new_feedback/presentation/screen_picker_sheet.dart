@@ -98,7 +98,7 @@ class _ScreenRow extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      choice.name,
+                      choice.label(context),
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontSize: 16,
                         // Top-level screens stand out from the screens under them.

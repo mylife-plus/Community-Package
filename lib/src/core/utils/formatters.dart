@@ -88,7 +88,10 @@ String feedbackSortLabel(CommunityLocalizations l, FeedbackSort sort) {
 const screenPathSeparator = ' > ';
 
 /// A saved screen path as shown: `Inventory → Sell Items → Add Items`.
-String formatScreenPath(String saved) => saved.split(screenPathSeparator).join(' → ');
+String formatScreenPath(String saved, {List<String> Function(List<String> names)? labels}) {
+  final names = saved.split(screenPathSeparator);
+  return (labels?.call(names) ?? names).join(' → ');
+}
 
 /// Path names, as shown: `Inventory → Sell Items`.
 String formatScreenNames(List<String> names) => names.join(' → ');

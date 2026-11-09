@@ -52,7 +52,7 @@ class ScreenPickerField extends StatelessWidget {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      chosen == null ? l.selectScreen : formatScreenNames(chosen.path),
+                      chosen == null ? l.selectScreen : formatScreenNames(chosen.labels(context)),
                       style: style,
                     ),
                   ),

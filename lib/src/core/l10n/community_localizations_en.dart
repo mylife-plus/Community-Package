@@ -138,6 +138,10 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
         errorTooManyComments: 'Too many comments. Try again soon.',
         offlineShowingSaved: 'Offline. Showing saved feedback.',
         loadMoreCommentsFailed: 'Could not load more comments.',
+        screenCommunity: 'Community',
+        screenAllFeedback: 'All Feedback',
+        screenFeedbackDetail: 'Feedback Detail',
+        screenNewFeedback: 'New Feedback',
       );
 
   static String _minutesAgo(int n) => '${n}m ago';

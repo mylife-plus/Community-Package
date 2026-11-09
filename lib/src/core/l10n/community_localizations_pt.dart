@@ -140,6 +140,10 @@ class CommunityLocalizationsPt extends CommunityLocalizations {
         errorTooManyComments: 'Demasiados comentários. Tente novamente daqui a pouco.',
         offlineShowingSaved: 'Sem ligação. A mostrar feedback guardado.',
         loadMoreCommentsFailed: 'Não foi possível carregar mais comentários.',
+        screenCommunity: 'Comunidade',
+        screenAllFeedback: 'Todo o feedback',
+        screenFeedbackDetail: 'Detalhe do feedback',
+        screenNewFeedback: 'Novo feedback',
       );
 
   static String _minutesAgo(int n) => 'há $n min';

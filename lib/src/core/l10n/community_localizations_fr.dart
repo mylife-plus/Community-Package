@@ -141,6 +141,10 @@ class CommunityLocalizationsFr extends CommunityLocalizations {
         errorTooManyComments: 'Trop de commentaires. Réessayez dans un instant.',
         offlineShowingSaved: 'Hors ligne. Feedback enregistré affiché.',
         loadMoreCommentsFailed: 'Impossible de charger plus de commentaires.',
+        screenCommunity: 'Communauté',
+        screenAllFeedback: 'Tout le feedback',
+        screenFeedbackDetail: 'Détail du feedback',
+        screenNewFeedback: 'Nouveau feedback',
       );
 
   // French puts a no-break space (U+00A0) before ? ! : so the sign never

@@ -355,6 +355,52 @@ void main() {
     expect(find.text('iOS 18.1  App 3.2.0  iPhone 15 Pro'), findsOneWidget);
   });
 
+  testWidgets('the picker, the field and the card show the labels; the English path is saved', (
+    tester,
+  ) async {
+    final labelled = CommunityConfig(
+      backendUrl: 'https://example.com',
+      appId: 'inventory',
+      screens: [
+        ScreenNode(
+          'Inventory',
+          label: (_) => 'Lager',
+          children: [
+            ScreenNode(
+              'Sell Items',
+              label: (_) => 'Verkaufen',
+              children: [ScreenNode('Add Items', label: (_) => 'Artikel hinzufügen')],
+            ),
+          ],
+        ),
+        const ScreenNode('Settings'),
+      ],
+    );
+    await openProblem(tester, config: labelled);
+    await tapAndSettle(tester, find.byType(ScreenPickerField));
+    expect(find.descendant(of: picker, matching: find.text('Lager')), findsOneWidget);
+    expect(find.descendant(of: picker, matching: find.text('Settings')), findsOneWidget);
+    expect(find.descendant(of: picker, matching: find.text('Inventory')), findsNothing);
+    await tapAndSettle(tester, find.descendant(of: picker, matching: find.text('Artikel hinzufügen')));
+    expect(find.text('Lager → Verkaufen → Artikel hinzufügen'), findsOneWidget);
+
+    await typeStep(tester, 0, 'Tap plus');
+    final page = {
+      'items': [_problemJson(26)],
+      'nextCursor': null,
+    };
+    backend.answer(_problemJson(26), status: 201);
+    backend.answer(page);
+    backend.answer(page);
+    await tapAndSettle(tester, submit);
+
+    expect(
+      (jsonDecode(backend.requests.first.body) as Map<String, dynamic>)['screenPath'],
+      'Inventory > Sell Items > Add Items',
+    );
+    expect(find.textContaining('Lager → Verkaufen → Artikel hinzufügen', findRichText: true), findsOneWidget);
+  });
+
   testWidgets('leaving with only a screen chosen asks first', (tester) async {
     await openProblem(tester);
     await pickScreen(tester, 'Settings');
