@@ -1,6 +1,10 @@
+// Template. Copy it to wrangler.jsonc (not committed), fill in your
+// Worker name and D1 database, and keep everything else in step with this
+// file: the tests run on this template and fail when the two drift apart.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "community-dev",
+  // Your Worker's name. Its URL becomes https://<name>.<your-subdomain>.workers.dev
+  "name": "community",
   "main": "src/index.ts",
   // Latest date the bundled workerd (1.20261104.1) supports.
   "compatibility_date": "2026-11-04",
@@ -11,8 +15,9 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "community-dev",
-      "database_id": "7265c297-ce0d-4ff7-a3ff-2f6985ac9c1d",
+      // From `npx wrangler d1 create <name>` (see the README).
+      "database_name": "community",
+      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
       "migrations_dir": "migrations"
     }
   ],

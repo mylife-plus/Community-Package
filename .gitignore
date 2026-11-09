@@ -20,3 +20,5 @@ backend/node_modules/
 backend/.wrangler/
 backend/.dev.vars*
 backend/.env*
+# Your own Worker and D1 database; copy it from backend/wrangler.example.jsonc.
+backend/wrangler.jsonc
