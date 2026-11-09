@@ -1,7 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+import 'community_localizations_de.dart';
 import 'community_localizations_en.dart';
+import 'community_localizations_es.dart';
+import 'community_localizations_fr.dart';
+import 'community_localizations_pt.dart';
 
 /// Labels of the community screens, in the host app's language.
 ///
@@ -132,6 +136,15 @@ class CommunityLocalizations {
   /// Add to the host app's `localizationsDelegates`.
   static const LocalizationsDelegate<CommunityLocalizations> delegate =
       _CommunityLocalizationsDelegate();
+
+  /// The labels for [locale]'s language (any region), else English.
+  static CommunityLocalizations forLocale(Locale locale) => switch (locale.languageCode) {
+    'de' => const CommunityLocalizationsDe(),
+    'es' => const CommunityLocalizationsEs(),
+    'fr' => const CommunityLocalizationsFr(),
+    'pt' => const CommunityLocalizationsPt(),
+    _ => const CommunityLocalizationsEn(),
+  };
 
   /// The labels for [context], falling back to English.
   static CommunityLocalizations of(BuildContext context) =>
@@ -356,10 +369,9 @@ class _CommunityLocalizationsDelegate extends LocalizationsDelegate<CommunityLoc
   @override
   bool isSupported(Locale locale) => true;
 
-  // de, es, fr and pt are added with the labels for every M1 screen.
   @override
   Future<CommunityLocalizations> load(Locale locale) =>
-      SynchronousFuture(const CommunityLocalizationsEn());
+      SynchronousFuture(CommunityLocalizations.forLocale(locale));
 
   @override
   bool shouldReload(_CommunityLocalizationsDelegate old) => false;
