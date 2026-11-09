@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/api/read_response.dart';
 import '../../core/cache/prefs_cache.dart';
 import '../../core/errors/app_error.dart';
 import '../../core/identity/device_details.dart';
@@ -167,9 +168,8 @@ class FeedbackRepository {
     unawaited(_replaceItem(number, (current) => _withReaction(current, on)));
     try {
       final path = '/feedback/$number/reaction';
-      final fresh = FeedbackItem.fromJson(
-        on ? await _api.putJson(path) : await _api.deleteJson(path),
-      );
+      final json = on ? await _api.putJson(path) : await _api.deleteJson(path);
+      final fresh = _read(() => FeedbackItem.fromJson(json));
       await _replaceItem(number, (_) => fresh, persist: true);
     } on AppError {
       await _replaceItem(number, (current) => _withReaction(current, !on), persist: true);
@@ -203,7 +203,8 @@ class FeedbackRepository {
   });
 
   Future<FeedbackItem> _create(Map<String, Object?> body) async {
-    final item = FeedbackItem.fromJson(await _api.postJson('/feedback', body));
+    final json = await _api.postJson('/feedback', body);
+    final item = _read(() => FeedbackItem.fromJson(json));
     await _addToTop(item);
     if (!_createdController.isClosed) _createdController.add(item);
     return item;
@@ -245,8 +246,9 @@ class FeedbackRepository {
     final key = _languageKey;
     late final Future<FeedbackItem> request;
     request = () async {
+      final json = await _api.getJson('/feedback/$number');
       final fresh = _withPendingReactions(
-        FeedbackPage(items: [FeedbackItem.fromJson(await _api.getJson('/feedback/$number'))]),
+        FeedbackPage(items: [_read(() => FeedbackItem.fromJson(json))]),
       ).items.single;
       // The language changed meanwhile: the answer belongs to the old one.
       if (key != _languageKey) return fresh;
@@ -309,9 +311,8 @@ class FeedbackRepository {
     final diskKey = _diskKey;
     late final Future<FeedbackPage> request;
     request = () async {
-      final page = _withPendingReactions(
-        FeedbackPage.fromJson(await _api.getJson('/feedback', query: query.toQueryParameters())),
-      );
+      final json = await _api.getJson('/feedback', query: query.toQueryParameters());
+      final page = _withPendingReactions(_read(() => FeedbackPage.fromJson(json)));
       // A post, a logout or a newer request may have replaced this one meanwhile.
       if (!_isCurrent(query, lists) || !identical(lists.firstPageRequest, request)) return page;
       if (query.isDefault) await _cache.write(diskKey, page.toJson());
@@ -326,11 +327,11 @@ class FeedbackRepository {
   }
 
   Future<void> _fetchNextPage(FeedbackQuery query, _QueryLists lists, String cursor) async {
-    final next = _withPendingReactions(
-      FeedbackPage.fromJson(
-        await _api.getJson('/feedback', query: {...query.toQueryParameters(), 'cursor': cursor}),
-      ),
+    final json = await _api.getJson(
+      '/feedback',
+      query: {...query.toQueryParameters(), 'cursor': cursor},
     );
+    final next = _withPendingReactions(_read(() => FeedbackPage.fromJson(json)));
     // A refresh moved the list on while this page loaded. A heart changes
     // items but not the cursor, so the page still fits after it.
     final list = lists.all;
@@ -448,6 +449,8 @@ class FeedbackRepository {
       debugPrint('community: could not cache the heart: $e');
     }
   }
+
+  static T _read<T>(T Function() parse) => readResponse(parse, what: 'feedback');
 
   /// A page fetched while hearts are on their way shows them as asked.
   FeedbackPage _withPendingReactions(FeedbackPage page) {

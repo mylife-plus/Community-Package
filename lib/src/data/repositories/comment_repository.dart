@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/api/read_response.dart';
 import '../../core/errors/app_error.dart';
 import '../models/comment_query.dart';
 import '../models/feedback_comment.dart';
@@ -255,18 +256,7 @@ class CommentRepository {
     }
   }
 
-  /// Reads a response with [parse]. A shape the app doesn't know becomes
-  /// an [AppError], like any other failure.
-  static T _read<T>(T Function() parse) {
-    try {
-      return parse();
-    } on Object catch (e) {
-      // TypeError from a cast, FormatException from a date: both are a
-      // response this version can't read.
-      debugPrint('community: unreadable comments response: $e');
-      throw const AppError(AppErrorType.network, message: 'Unreadable response');
-    }
-  }
+  static T _read<T>(T Function() parse) => readResponse(parse, what: 'comments');
 
   static CommentPage _prepend(CommentPage page, FeedbackComment comment) => page.copyWith(
     items: [comment, ...page.items.where((c) => c.id != comment.id)],
