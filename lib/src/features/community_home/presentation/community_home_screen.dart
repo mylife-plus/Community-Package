@@ -83,12 +83,15 @@ class CommunityHomeScreen extends StatelessWidget {
                       children: [
                         EmojiText('🛡️', size: 14),
                         const SizedBox(width: 4),
-                        Text(
-                          l.privacyNotice,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w300,
-                            color: CommunityColors.muted(context),
+                        Flexible(
+                          child: Text(
+                            l.privacyNotice,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w300,
+                              color: CommunityColors.muted(context),
+                            ),
                           ),
                         ),
                       ],

@@ -99,4 +99,32 @@ void main() {
     expect(find.text('Feedback 5'), findsOneWidget);
     expect(richText('📲'), findsNothing);
   });
+
+  testWidgets('the counts stay on the right with a status and a cost', (tester) async {
+    Future<double> heartRight(Map<String, dynamic> json) async {
+      await pumpCard(tester, json);
+      return tester.getTopRight(find.textContaining('❤️', findRichText: true)).dx;
+    }
+
+    final plain = await heartRight(feedbackJson(9, reactionCount: 14, commentCount: 3));
+    final full = await heartRight({
+      ...feedbackJson(9, status: 'planned', reactionCount: 14, commentCount: 3),
+      'costCents': 9000,
+    });
+
+    expect(full, plain);
+  });
+
+  testWidgets('a long cost ellipsizes instead of pushing the counts', (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await pumpCard(tester, {
+      ...feedbackJson(9, status: 'in_progress', reactionCount: 140, commentCount: 30),
+      'costCents': 123456789,
+    });
+
+    expect(tester.takeException(), isNull);
+  });
 }

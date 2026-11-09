@@ -87,8 +87,12 @@ class PrivacyNoticeSheet extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(19, 8, 19, 32),
           child: anonId == null
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              // Wraps onto two lines when long labels or a large text size
+              // don't fit side by side.
+              ? Wrap(
+                  alignment: WrapAlignment.spaceEvenly,
+                  spacing: 12,
+                  runSpacing: 12,
                   children: [
                     CommunityButton(
                       label: l.decline,

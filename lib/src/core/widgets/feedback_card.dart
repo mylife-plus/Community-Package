@@ -24,6 +24,12 @@ String feedbackTypeEmoji(FeedbackType type) {
 class FeedbackCard extends StatelessWidget {
   const FeedbackCard({super.key, required this.item, this.onTap, this.onReact, this.now});
 
+  /// Not in Figma: the least space between the cost and the counts.
+  static const _costGap = 8.0;
+
+  /// Not in Figma: the most of the bottom row the cost may take.
+  static const _costMaxShare = 0.35;
+
   final FeedbackItem item;
 
   /// Tapping the card outside the heart, for example to open its detail.
@@ -94,42 +100,48 @@ class FeedbackCard extends StatelessWidget {
               else
                 Text(item.text, style: body),
               SizedBox(height: CommunityTokens.cardSectionGap - _ReactionButton.tapPadding.top),
-              Row(
-                children: [
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: item.status == null ? null : _Status(status: item.status!),
-                    ),
-                  ),
-                  if (costCents != null)
-                    Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(text: '💰', style: emojiStyle(16)),
-                          TextSpan(text: ' ${formatUsd(l, costCents)}'),
-                        ],
-                      ),
-                      style: text.bodyLarge?.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w300,
-                        color: CommunityColors.of(context).cost,
+              LayoutBuilder(
+                builder: (context, constraints) => Row(
+                  children: [
+                    // Takes the free space, so the counts stay on the right.
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: item.status == null ? null : _Status(status: item.status!),
                       ),
                     ),
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        _Count(
-                          emoji: '💬',
-                          count: item.commentCount,
-                          semanticsLabel: l.commentCount(item.commentCount),
+                    // The cost keeps its size up to a share of the row; on
+                    // a narrow card or with large text it ellipsizes, and
+                    // the status gives way first.
+                    if (costCents != null) ...[
+                      ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: constraints.maxWidth * _costMaxShare),
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(text: '💰', style: emojiStyle(16)),
+                              TextSpan(text: ' ${formatUsd(l, costCents)}'),
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.bodyLarge?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w300,
+                            color: CommunityColors.of(context).cost,
+                          ),
                         ),
-                        _ReactionButton(item: item, onTap: onReact),
-                      ],
+                      ),
+                      const SizedBox(width: _costGap),
+                    ],
+                    _Count(
+                      emoji: '💬',
+                      count: item.commentCount,
+                      semanticsLabel: l.commentCount(item.commentCount),
                     ),
-                  ),
-                ],
+                    _ReactionButton(item: item, onTap: onReact),
+                  ],
+                ),
               ),
             ],
           ),
