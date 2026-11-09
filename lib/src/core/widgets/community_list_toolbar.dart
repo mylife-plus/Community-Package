@@ -2,28 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../data/models/feedback_item.dart';
-import '../../data/models/feedback_query.dart';
 import '../l10n/community_localizations.dart';
 import '../theme/community_icons.dart';
 import '../theme/community_tokens.dart';
-import 'community_popups.dart';
-import 'feedback_query_menus.dart';
 
-/// The row under a list's header (Figma frame 1:426): sort, filter and
-/// search on the left, + on the right. Sort and filter turn the primary
-/// colour while they change the list. Search turns the whole row into a
-/// search field with a ✗ that closes it.
-class FeedbackListToolbar extends StatelessWidget {
-  const FeedbackListToolbar({
+/// The row under a list's header (Figma frames 1:426 and Settings-6): sort,
+/// filter and search on the left, + on the right. Used by All Feedback and
+/// by the comments of a feedback, each with its own menus.
+///
+/// Sort and filter turn the primary colour while they change the list.
+/// Search turns the whole row into a search field with a ✗ that closes it.
+class CommunityListToolbar extends StatelessWidget {
+  const CommunityListToolbar({
     super.key,
-    required this.query,
+    required this.sortActive,
+    required this.filterActive,
+    required this.onSort,
+    required this.onFilter,
     required this.searchOpen,
     required this.searchController,
-    required this.onSort,
-    required this.onToggleType,
-    required this.onToggleStatus,
-    required this.onResetFilter,
+    required this.searchHint,
     required this.onOpenSearch,
     required this.onCloseSearch,
     required this.onSearchChanged,
@@ -31,15 +29,22 @@ class FeedbackListToolbar extends StatelessWidget {
     required this.maxSearchLength,
     this.onAdd,
     this.addTooltip,
+    this.addActive = false,
   });
 
-  final FeedbackQuery query;
+  /// The list is not in its default order.
+  final bool sortActive;
+
+  /// A filter narrows the list.
+  final bool filterActive;
+
+  /// Open the sort or filter menu under the button [anchor] belongs to.
+  final ValueChanged<BuildContext> onSort;
+  final ValueChanged<BuildContext> onFilter;
+
   final bool searchOpen;
   final TextEditingController searchController;
-  final ValueChanged<FeedbackSort> onSort;
-  final ValueChanged<FeedbackType> onToggleType;
-  final ValueChanged<FeedbackStatus> onToggleStatus;
-  final VoidCallback onResetFilter;
+  final String searchHint;
   final VoidCallback onOpenSearch;
   final VoidCallback onCloseSearch;
   final ValueChanged<String> onSearchChanged;
@@ -50,6 +55,9 @@ class FeedbackListToolbar extends StatelessWidget {
   final VoidCallback? onAdd;
   final String? addTooltip;
 
+  /// The + in the primary colour, while what it opened is open.
+  final bool addActive;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -58,6 +66,7 @@ class FeedbackListToolbar extends StatelessWidget {
       child: searchOpen
           ? _SearchField(
               controller: searchController,
+              hint: searchHint,
               maxLength: maxSearchLength,
               onChanged: onSearchChanged,
               onSubmitted: onSearchSubmitted,
@@ -77,8 +86,8 @@ class FeedbackListToolbar extends StatelessWidget {
             icon: CommunityIcons.sort,
             size: CommunityTokens.sortIconSize,
             tooltip: l.sortTooltip,
-            active: query.sort != FeedbackSort.newest,
-            onPressed: () => _openSort(buttonContext),
+            active: sortActive,
+            onPressed: () => onSort(buttonContext),
           ),
         ),
         const SizedBox(width: CommunityTokens.toolbarButtonGap),
@@ -87,8 +96,8 @@ class FeedbackListToolbar extends StatelessWidget {
             icon: CommunityIcons.filter,
             size: CommunityTokens.filterIconSize,
             tooltip: l.filterTooltip,
-            active: query.hasFilter,
-            onPressed: () => _openFilter(buttonContext),
+            active: filterActive,
+            onPressed: () => onFilter(buttonContext),
           ),
         ),
         const SizedBox(width: CommunityTokens.toolbarButtonGap),
@@ -105,31 +114,12 @@ class FeedbackListToolbar extends StatelessWidget {
             icon: CommunityIcons.add,
             size: const Size.square(CommunityTokens.toolbarIconSize),
             tooltip: addTooltip,
-            active: false,
+            active: addActive,
             onPressed: onAdd,
           ),
       ],
     );
   }
-
-  Future<void> _openSort(BuildContext buttonContext) async {
-    final sort = await showCommunityDropdown<FeedbackSort>(
-      buttonContext,
-      builder: (_) => FeedbackSortMenu(selected: query.sort),
-    );
-    if (sort != null) onSort(sort);
-  }
-
-  Future<void> _openFilter(BuildContext buttonContext) => showCommunityDropdown<void>(
-    buttonContext,
-    builder: (_) => FeedbackFilterMenu(
-      types: query.types,
-      statuses: query.statuses,
-      onToggleType: onToggleType,
-      onToggleStatus: onToggleStatus,
-      onReset: onResetFilter,
-    ),
-  );
 }
 
 class _ToolbarButton extends StatelessWidget {
@@ -173,6 +163,7 @@ class _ToolbarButton extends StatelessWidget {
 class _SearchField extends StatelessWidget {
   const _SearchField({
     required this.controller,
+    required this.hint,
     required this.maxLength,
     required this.onChanged,
     required this.onSubmitted,
@@ -180,6 +171,7 @@ class _SearchField extends StatelessWidget {
   });
 
   final TextEditingController controller;
+  final String hint;
   final int maxLength;
   final ValueChanged<String> onChanged;
   final VoidCallback onSubmitted;
@@ -215,7 +207,7 @@ class _SearchField extends StatelessWidget {
             // InputDecorationTheme cannot add a second box (as Inventory's
             // did inside the Problem steps, S4).
             decoration: InputDecoration(
-              hintText: l.searchHint,
+              hintText: hint,
               hintStyle: theme.textTheme.bodyLarge?.copyWith(
                 fontSize: 16,
                 fontWeight: FontWeight.w300,

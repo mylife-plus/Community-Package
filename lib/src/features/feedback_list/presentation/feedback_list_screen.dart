@@ -13,8 +13,10 @@ import '../../../core/widgets/community_popups.dart';
 import '../../../core/widgets/controller_scope.dart';
 import '../../../core/widgets/feedback_card.dart';
 import '../../../core/widgets/feedback_card_skeleton.dart';
-import '../../../core/widgets/feedback_list_toolbar.dart';
+import '../../../core/widgets/community_list_toolbar.dart';
+import '../../../core/widgets/feedback_query_menus.dart';
 import '../../../data/models/feedback_item.dart';
+import '../../../data/models/feedback_query.dart';
 import '../../privacy/presentation/post_gate.dart';
 import 'feedback_list_controller.dart';
 
@@ -46,15 +48,26 @@ class FeedbackListScreen extends StatelessWidget {
             () => FeedbackListController(CommunityDependencies.feedbackRepository),
         builder: (controller) => Column(
           children: [
-            FeedbackListToolbar(
-              query: controller.query,
+            CommunityListToolbar(
+              sortActive: controller.query.sort != FeedbackSort.newest,
+              filterActive: controller.query.hasFilter,
+              onSort: (anchor) => showFeedbackSortMenu(
+                anchor,
+                selected: controller.query.sort,
+                onSelected: controller.setSort,
+              ),
+              onFilter: (anchor) => showFeedbackFilterMenu(
+                anchor,
+                types: controller.query.types,
+                statuses: controller.query.statuses,
+                onToggleType: controller.toggleType,
+                onToggleStatus: controller.toggleStatus,
+                onReset: controller.resetFilter,
+              ),
               searchOpen: controller.searchOpen,
               searchController: controller.searchController,
+              searchHint: l.searchHint,
               maxSearchLength: FeedbackListController.maxSearchLength,
-              onSort: controller.setSort,
-              onToggleType: controller.toggleType,
-              onToggleStatus: controller.toggleStatus,
-              onResetFilter: controller.resetFilter,
               onOpenSearch: controller.openSearch,
               onCloseSearch: controller.closeSearch,
               onSearchChanged: controller.onSearchChanged,
@@ -203,7 +216,11 @@ class _List extends StatelessWidget {
           itemBuilder: (context, index) {
             if (index < items.length) {
               final item = items[index];
-              return FeedbackCard(key: ValueKey(item.number), item: item, onReact: () => onReact(item));
+              return FeedbackCard(
+                key: ValueKey(item.number),
+                item: item,
+                onReact: () => onReact(item),
+              );
             }
             if (controller.loadMoreError != null) return _LoadMoreError(controller: controller);
             return const FeedbackCardSkeleton();

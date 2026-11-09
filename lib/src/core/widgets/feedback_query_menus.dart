@@ -5,13 +5,11 @@ import '../../data/models/feedback_query.dart';
 import '../l10n/community_localizations.dart';
 import '../theme/community_tokens.dart';
 import '../utils/formatters.dart';
+import 'community_menu.dart';
 import 'community_popups.dart';
-import 'emoji_text.dart';
 import 'feedback_card.dart';
 
-// The sort and filter menus of a feedback list. Not in Figma; built like the
-// New Feedback topic menu (frame 1:144): surface, primary outline and
-// dividers, 8 px corners, 42 px rows.
+// The sort and filter menus of a feedback list (community_menu.dart).
 
 /// The sort options, the current one ticked. Choosing one closes the menu
 /// with it.
@@ -23,10 +21,10 @@ class FeedbackSortMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = CommunityLocalizations.of(context);
-    return _MenuFrame(
+    return CommunityMenuFrame(
       children: [
         for (final sort in FeedbackSort.values)
-          _MenuRow(
+          CommunityMenuRow(
             label: Text(feedbackSortLabel(l, sort)),
             selected: sort == selected,
             onTap: () => closePopup(context, sort),
@@ -68,11 +66,11 @@ class _FeedbackFilterMenuState extends State<FeedbackFilterMenu> {
   Widget build(BuildContext context) {
     final l = CommunityLocalizations.of(context);
     final colors = CommunityColors.of(context);
-    return _MenuFrame(
+    return CommunityMenuFrame(
       children: [
-        _MenuHeader(l.filterType),
+        CommunityMenuHeader(l.filterType),
         for (final type in FeedbackType.values)
-          _MenuRow(
+          CommunityMenuRow(
             emoji: feedbackTypeEmoji(type),
             label: Text(feedbackTypeLabel(l, type)),
             selected: _types.contains(type),
@@ -81,9 +79,9 @@ class _FeedbackFilterMenuState extends State<FeedbackFilterMenu> {
               widget.onToggleType(type);
             },
           ),
-        _MenuHeader(l.filterProgress),
+        CommunityMenuHeader(l.filterProgress),
         for (final status in FeedbackStatus.values)
-          _MenuRow(
+          CommunityMenuRow(
             emoji: '💪',
             label: Text(
               feedbackStatusLabel(l, status),
@@ -96,7 +94,7 @@ class _FeedbackFilterMenuState extends State<FeedbackFilterMenu> {
             },
           ),
         if (_types.isNotEmpty || _statuses.isNotEmpty)
-          _MenuRow(
+          CommunityMenuRow(
             label: Text(l.resetFilter, style: TextStyle(color: Theme.of(context).colorScheme.primary)),
             centered: true,
             onTap: () {
@@ -115,132 +113,35 @@ class _FeedbackFilterMenuState extends State<FeedbackFilterMenu> {
       values.contains(value) ? ({...values}..remove(value)) : {...values, value};
 }
 
-/// The outlined box, with a divider between rows. Scrolls when the screen
-/// is too short for it.
-class _MenuFrame extends StatelessWidget {
-  const _MenuFrame({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final divider = Container(height: 1, color: scheme.primary);
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: CommunityTokens.topicMenuMinWidth),
-      child: Material(
-        color: scheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(CommunityTokens.topicRadius),
-          side: BorderSide(color: scheme.primary),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: SingleChildScrollView(
-          child: IntrinsicWidth(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var i = 0; i < children.length; i++) ...[
-                  if (i > 0) divider,
-                  children[i],
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+/// Opens [FeedbackSortMenu] under the button [anchor] belongs to and passes
+/// the chosen order to [onSelected].
+Future<void> showFeedbackSortMenu(
+  BuildContext anchor, {
+  required FeedbackSort selected,
+  required ValueChanged<FeedbackSort> onSelected,
+}) async {
+  final sort = await showCommunityDropdown<FeedbackSort>(
+    anchor,
+    builder: (_) => FeedbackSortMenu(selected: selected),
+  );
+  if (sort != null) onSelected(sort);
 }
 
-/// A group title inside the filter menu.
-class _MenuHeader extends StatelessWidget {
-  const _MenuHeader(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      height: CommunityTokens.menuHeaderHeight,
-      padding: const EdgeInsets.symmetric(horizontal: CommunityTokens.menuRowPadding),
-      alignment: Alignment.centerLeft,
-      child: Text(
-        label,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: CommunityColors.muted(context),
-        ),
-      ),
-    );
-  }
-}
-
-class _MenuRow extends StatelessWidget {
-  const _MenuRow({
-    this.emoji,
-    required this.label,
-    this.selected = false,
-    this.centered = false,
-    required this.onTap,
-  });
-
-  final String? emoji;
-  final Text label;
-  final bool selected;
-
-  /// A lone action such as reset: centred, no tick.
-  final bool centered;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final emoji = this.emoji;
-    final style = theme.textTheme.titleMedium?.copyWith(
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
-      color: theme.colorScheme.onSurface,
-    );
-    return Semantics(
-      selected: centered ? null : selected,
-      button: true,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          height: CommunityTokens.topicRowHeight,
-          padding: const EdgeInsets.symmetric(horizontal: CommunityTokens.menuRowPadding),
-          child: Row(
-            mainAxisAlignment: centered ? MainAxisAlignment.center : MainAxisAlignment.start,
-            children: [
-              if (emoji != null) ...[EmojiText(emoji, size: 16), const SizedBox(width: 6)],
-              // The only flexible child, so the label gets all the room left.
-              Flexible(
-                fit: centered ? FlexFit.loose : FlexFit.tight,
-                child: DefaultTextStyle.merge(
-                  style: style,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  child: label,
-                ),
-              ),
-              if (!centered) ...[
-                const SizedBox(width: 12),
-                // Space kept when not ticked, so the menu does not change width.
-                SizedBox(
-                  width: CommunityTokens.menuTickSize,
-                  child: selected
-                      ? Icon(Icons.check, size: CommunityTokens.menuTickSize, color: theme.colorScheme.primary)
-                      : null,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+/// Opens [FeedbackFilterMenu] under the button [anchor] belongs to.
+Future<void> showFeedbackFilterMenu(
+  BuildContext anchor, {
+  required Set<FeedbackType> types,
+  required Set<FeedbackStatus> statuses,
+  required ValueChanged<FeedbackType> onToggleType,
+  required ValueChanged<FeedbackStatus> onToggleStatus,
+  required VoidCallback onReset,
+}) => showCommunityDropdown<void>(
+  anchor,
+  builder: (_) => FeedbackFilterMenu(
+    types: types,
+    statuses: statuses,
+    onToggleType: onToggleType,
+    onToggleStatus: onToggleStatus,
+    onReset: onReset,
+  ),
+);
