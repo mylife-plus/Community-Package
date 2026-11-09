@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { appContext } from './lib/context';
 import { ApiError, errorResponse } from './lib/errors';
+import { comments } from './routes/comments';
 import { feedback } from './routes/feedback';
 import { health } from './routes/health';
 
@@ -13,6 +14,8 @@ app.route('/health', health);
 app.use('/feedback', appContext);
 app.use('/feedback/*', appContext);
 app.route('/feedback', feedback);
+app.use('/comments/*', appContext);
+app.route('/comments', comments);
 
 app.notFound((c) => errorResponse(c, new ApiError('not_found', 'Not found', 404)));
 

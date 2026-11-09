@@ -45,6 +45,18 @@
       "name": "REACTION_LIMIT_IP",
       "namespace_id": "1004",
       "simple": { "limit": 120, "period": 60 }
+    },
+    {
+      // New, edited and deleted comments per anonymous ID, apart from posts.
+      "name": "COMMENT_LIMIT_ANON",
+      "namespace_id": "1005",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      // Comments per IP.
+      "name": "COMMENT_LIMIT_IP",
+      "namespace_id": "1006",
+      "simple": { "limit": 60, "period": 60 }
     }
   ]
 }

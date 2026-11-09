@@ -34,7 +34,7 @@ export function readListQuery(query: (name: string) => string | undefined): List
     types: readList(query('type'), TYPES, 'type'),
     statuses: readList(query('status'), STATUSES, 'status'),
     ...search,
-    cursor: decodeCursor(query('cursor'), sort),
+    cursor: decodeCursor(query('cursor'), sort, COUNT_COLUMN[sort] !== undefined),
   };
 }
 
@@ -61,17 +61,34 @@ const WORD = /[\p{L}\p{N}\p{M}\p{Co}]+/gu;
 const NUMBER = /^#?\s*(\d{1,9})$/;
 
 function readSearch(value: string | undefined): { match: string | null; number: number | null } {
+  const text = searchText(value);
+  const number = NUMBER.exec(text)?.[1];
+  return { match: searchMatch(text), number: number === undefined ? null : Number(number) };
+}
+
+/** The search text, NFC and trimmed. Throws `bad_request` when it is too long. */
+function searchText(value: string | undefined): string {
   const text = (value ?? '').normalize('NFC').trim();
   if ([...text].length > MAX_SEARCH_LENGTH) {
     throw new ApiError('bad_request', `Search must be at most ${MAX_SEARCH_LENGTH} characters`, 400);
   }
+  return text;
+}
+
+/**
+ * The FTS5 expression for a search text, or null when it has no words.
+ * Every word must appear, each matching the start of a word in the text
+ * (FTS5 prefix query: https://www.sqlite.org/fts5.html#fts5_prefix_queries).
+ * Case and accents are ignored by the tokenizer.
+ */
+function searchMatch(text: string): string | null {
   const words = text.match(WORD) ?? [];
-  // Every word must appear, each matching the start of a word in the text
-  // (FTS5 prefix query: https://www.sqlite.org/fts5.html#fts5_prefix_queries).
-  // Case and accents are ignored by the tokenizer.
-  const match = words.length === 0 ? null : words.map((word) => `"${word}"*`).join(' ');
-  const number = NUMBER.exec(text)?.[1];
-  return { match, number: number === undefined ? null : Number(number) };
+  return words.length === 0 ? null : words.map((word) => `"${word}"*`).join(' ');
+}
+
+/** `q` as an FTS5 expression, or null without words. Throws `bad_request` when too long. */
+export function readSearchMatch(value: string | undefined): string | null {
+  return searchMatch(searchText(value));
 }
 
 /** ORDER BY for each sort. Ties go newest first, then by ID. */

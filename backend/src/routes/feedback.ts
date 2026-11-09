@@ -4,15 +4,11 @@ import { encodeCursor } from '../lib/cursor';
 import { ApiError } from '../lib/errors';
 import { FEEDBACK_SELECT, type FeedbackRow, toFeedbackJson } from '../lib/feedback';
 import { cursorAfter, listSql, readListQuery } from '../lib/listQuery';
-import { reactionRateLimit, writeRateLimit } from '../lib/rateLimit';
+import { commentRateLimit, reactionRateLimit, writeRateLimit } from '../lib/rateLimit';
+import { MAX_TEXT_LENGTH, graphemeCount, readJsonBody, readLang, readPathId, readText } from '../lib/text';
+import { createComment, listComments } from './comments';
 
 export const PAGE_SIZE = 20;
-
-/**
- * Longest feedback text and Problem description, in user-perceived
- * characters, after trimming.
- */
-export const MAX_TEXT_LENGTH = 2000;
 
 /** Problems: how many steps to reproduce, and the longest step. */
 export const MAX_STEPS = 10;
@@ -36,8 +32,6 @@ type NewFeedback = {
   deviceModel: string | null;
 };
 
-const LANG_PATTERN = /^[a-z]{2,3}$/;
-
 export const feedback = new Hono<AppEnv>();
 
 // List, sorted, filtered and searched as asked (lib/listQuery.ts).
@@ -56,13 +50,29 @@ feedback.get('/', async (c) => {
   return c.json({ items: page.map(toFeedbackJson), nextCursor });
 });
 
+// One feedback, for the detail screen.
+feedback.get('/:number', async (c) => {
+  const number = readNumber(c.req.param('number'));
+  const row = await c.env.DB.prepare(`SELECT ${FEEDBACK_SELECT} FROM feedback f WHERE f.app_id = ?2 AND f.number = ?3`)
+    .bind(c.get('anonId'), c.get('appId'), number)
+    .first<FeedbackRow>();
+  if (!row) throw new ApiError('not_found', 'Feedback not found', 404);
+  return c.json(toFeedbackJson(row));
+});
+
+// Comments and replies (routes/comments.ts).
+feedback.get('/:number/comments', (c) => listComments(c, readNumber(c.req.param('number'))));
+feedback.post('/:number/comments', requireAnonId, commentRateLimit, (c) =>
+  createComment(c, readNumber(c.req.param('number'))),
+);
+
 // Heart on and off. Both are safe to repeat. The count is recounted from
 // the reactions table, so it can never drift from the rows.
 feedback.put('/:number/reaction', requireAnonId, reactionRateLimit, (c) => setReaction(c, true));
 feedback.delete('/:number/reaction', requireAnonId, reactionRateLimit, (c) => setReaction(c, false));
 
 async function setReaction(c: Context<AppEnv>, on: boolean) {
-  const number = readNumber(c.req.param('number') ?? '');
+  const number = readNumber(c.req.param('number'));
   const db = c.env.DB;
   const appId = c.get('appId');
   const anonId = c.get('anonId');
@@ -100,11 +110,8 @@ async function setReaction(c: Context<AppEnv>, on: boolean) {
 }
 
 /** A feedback number from the path. */
-function readNumber(value: string): number {
-  if (!/^[1-9]\d{0,8}$/.test(value)) {
-    throw new ApiError('bad_request', 'Invalid number', 400);
-  }
-  return Number(value);
+function readNumber(value: string | undefined): number {
+  return readPathId(value, 'Invalid number');
 }
 
 // Create. The number is the app's next one; taking it, saving the post and
@@ -112,10 +119,7 @@ function readNumber(value: string): number {
 // transaction (https://developers.cloudflare.com/d1/worker-api/d1-database/#batch).
 feedback.post('/', requireAnonId, writeRateLimit, async (c) => {
   const post = await readCreateBody(c.req.raw);
-  const lang = c.req.query('lang');
-  if (!lang || !LANG_PATTERN.test(lang)) {
-    throw new ApiError('bad_request', 'Invalid lang', 400);
-  }
+  const lang = readLang(c.req.query('lang'));
 
   const db = c.env.DB;
   const appId = c.get('appId');
@@ -167,29 +171,15 @@ feedback.post('/', requireAnonId, writeRateLimit, async (c) => {
 });
 
 async function readCreateBody(request: Request): Promise<NewFeedback> {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    throw new ApiError('bad_request', 'Body must be JSON', 400);
-  }
-  const fields = (body ?? {}) as Record<string, unknown>;
-  const { type, text } = fields;
+  const fields = await readJsonBody(request);
+  const { type } = fields;
   if (type === 'problem') return readProblem(fields);
   if (typeof type !== 'string' || !TEXT_TYPES.has(type)) {
     throw new ApiError('bad_request', 'Invalid type', 400);
   }
-  if (typeof text !== 'string') {
-    throw new ApiError('bad_request', 'Invalid text', 400);
-  }
-  const trimmed = text.trim();
-  const length = graphemeCount(trimmed);
-  if (length === 0 || length > MAX_TEXT_LENGTH) {
-    throw new ApiError('bad_request', 'Text must be 1 to 2000 characters', 400, { field: 'text' });
-  }
   return {
     type,
-    text: trimmed,
+    text: readText(fields.text),
     screenPath: null,
     steps: null,
     description: null,
@@ -257,14 +247,4 @@ function readOptional(value: unknown, field: string, maxLength: number): string 
 export function problemText(description: string | null, steps: string[]): string {
   const numbered = steps.map((step, i) => `${i + 1}. ${step}`).join('\n');
   return description === null ? numbered : `${description}\n\n${numbered}`;
-}
-
-// Counts what the user sees as characters (an emoji is one), the way
-// Flutter's TextField maxLength does (LengthLimitingTextInputFormatter counts
-// `text.characters`, flutter/lib/src/services/text_formatter.dart), so both
-// sides agree on the limit.
-const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
-
-function graphemeCount(text: string): number {
-  return Array.from(segmenter.segment(text)).length;
 }

@@ -25,7 +25,7 @@ function rateLimit(anonLimit: LimitBinding, ipLimit: LimitBinding, message: stri
   });
 }
 
-/** New feedback (and, later, comments). */
+/** New feedback. */
 export const writeRateLimit = rateLimit('WRITE_LIMIT_ANON', 'WRITE_LIMIT_IP', 'Too many posts, try again soon');
 
 /** Hearts, counted apart from posts so tapping hearts never blocks a post. */
@@ -33,4 +33,11 @@ export const reactionRateLimit = rateLimit(
   'REACTION_LIMIT_ANON',
   'REACTION_LIMIT_IP',
   'Too many hearts, try again soon',
+);
+
+/** New, edited and deleted comments, counted apart from posts. */
+export const commentRateLimit = rateLimit(
+  'COMMENT_LIMIT_ANON',
+  'COMMENT_LIMIT_IP',
+  'Too many comments, try again soon',
 );
