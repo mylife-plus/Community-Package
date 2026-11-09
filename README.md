@@ -55,20 +55,52 @@ onTap: () => CommunityPackage.openNewFeedback(context), // "Give feedback"
 
 ## Backend
 
-Requires Node.js and a Cloudflare account with `wrangler login` done.
+Requires Node.js and a Cloudflare account with `npx wrangler login` done.
+
+### Set up your own backend
+
+The repository holds no account, database or Worker IDs. `backend/wrangler.example.jsonc` is a template; your own copy, `backend/wrangler.jsonc`, is git-ignored.
 
 ```bash
 cd backend
 npm install
-npm run typecheck   # TypeScript, src and tests
-npm test            # Vitest in the Workers runtime
-npm run dev         # local Worker on http://localhost:8787
-npm run deploy      # deploy to Cloudflare
+cp wrangler.example.jsonc wrangler.jsonc
+
+# Create the database. Add --jurisdiction eu to keep the data in the EU
+# (it can only be set when the database is created).
+npx wrangler d1 create community
 ```
 
-Run `npm run cf-typegen` after changing `wrangler.jsonc`, and commit the updated `worker-configuration.d.ts`.
+In `wrangler.jsonc`, set `name` (your Worker's name) and put the `database_name` and `database_id` that `d1 create` printed into `d1_databases`. Then:
 
-Writes are rate-limited per anonymous ID and per IP with the Workers Rate Limiting binding: posts 10 per minute per ID and 60 per IP, hearts 30 per minute per ID and 120 per IP, counted apart so hearts never block a post. The limits are set in `wrangler.jsonc` (`ratelimits`); each `namespace_id` must be unique within the Cloudflare account.
+```bash
+npx wrangler d1 migrations apply community --remote
+
+# One row per app that uses the package. The id is the app's `appId`.
+npx wrangler d1 execute community --remote \
+  --command "INSERT INTO apps (id, name) VALUES ('myapp', 'My App')"
+
+npm run deploy      # prints https://<name>.<your-subdomain>.workers.dev
+```
+
+Use that URL as `backendUrl` in the app. Check it with `GET /v1/health`.
+
+`seed/dev.sql` fills a database with invented sample data for development. It deletes everything first, so never run it on a database in use.
+
+Each rate limit's `namespace_id` must be unique within your Cloudflare account; change them if another Worker already uses 1001–1006.
+
+### Develop
+
+```bash
+npm run typecheck   # TypeScript, src and tests
+npm test            # Vitest in the Workers runtime, on wrangler.example.jsonc
+npm run dev         # local Worker on http://localhost:8787
+npm run deploy      # deploy with your wrangler.jsonc
+```
+
+Change bindings or limits in both `wrangler.example.jsonc` and your `wrangler.jsonc`: the tests stop with an error when the two differ in anything but the Worker name and the database. Run `npm run cf-typegen` after such a change and commit the updated `worker-configuration.d.ts`.
+
+Writes are rate-limited per anonymous ID and per IP with the Workers Rate Limiting binding: posts 10 per minute per ID and 60 per IP, hearts 30 per minute per ID and 120 per IP, comments 10 per minute per ID and 60 per IP, each counted apart so hearts or comments never block a post. The limits are set in `ratelimits` in the wrangler config.
 
 ### Endpoints
 
