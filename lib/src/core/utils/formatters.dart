@@ -37,6 +37,7 @@ String errorMessage(CommunityLocalizations l, AppError error) {
       return l.errorRateLimited;
     case AppErrorType.badRequest:
     case AppErrorType.unauthorized:
+    case AppErrorType.forbidden:
     case AppErrorType.blocked:
     case AppErrorType.notFound:
       return l.errorGeneric;

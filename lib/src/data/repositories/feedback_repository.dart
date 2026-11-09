@@ -10,12 +10,16 @@ import '../../core/identity/device_details.dart';
 import '../models/feedback_item.dart';
 import '../models/feedback_query.dart';
 
-/// Feedback of the host app. Owns the list stream.
+/// Feedback of the host app. Owns the list stream and the item stream.
 ///
 /// Each query (sort, filters, search) has its own list. The first page goes
 /// through the 3-tier cache: memory for every recent query, disk only for
 /// the default one, then the network. Every value it resolves, cached or
 /// fresh, is pushed to [feedbackListStream] with its query.
+///
+/// A single feedback (the detail screen) comes from the lists in memory
+/// first, then the network, and every change to it is pushed to
+/// [itemStream].
 class FeedbackRepository {
   FeedbackRepository(this._api, this._cache);
 
@@ -33,6 +37,12 @@ class FeedbackRepository {
   final PrefsCache _cache;
   final _listController = StreamController<FeedbackList>.broadcast();
   final _createdController = StreamController<FeedbackItem>.broadcast();
+  final _itemController = StreamController<FeedbackItem>.broadcast();
+
+  /// Feedback opened on a detail screen, by number, as last known. Kept
+  /// apart from the lists, which may not have it.
+  final _details = <int, FeedbackItem>{};
+  final _detailRequests = <int, Future<FeedbackItem>>{};
 
   /// Memory tier: the lists of [_memoryKey]'s app and language, least
   /// recently used first.
@@ -47,6 +57,10 @@ class FeedbackRepository {
 
   /// Feedback the user just posted.
   Stream<FeedbackItem> get createdStream => _createdController.stream;
+
+  /// A single feedback, each time it is loaded or changes: a heart, a new
+  /// comment count, a refresh.
+  Stream<FeedbackItem> get itemStream => _itemController.stream;
 
   String get _languageKey => '${_api.appId}_${_api.languageCode}';
 
@@ -91,6 +105,35 @@ class FeedbackRepository {
       return fallback;
     }
   }
+
+  /// Feedback [number], for the detail screen.
+  ///
+  /// A copy already in memory (opened before, or in a list) is pushed to
+  /// [itemStream] and returned at once, and the server's copy follows on
+  /// the stream. Without one it waits for the server. [forceRefresh] is
+  /// pull-to-refresh: it waits for the server and throws on failure.
+  Future<FeedbackItem> getFeedback(int number, {bool forceRefresh = false}) async {
+    _useCurrentLanguage();
+    final known = _knownItem(number);
+    if (!forceRefresh && known != null) {
+      _publishItem(known);
+      unawaited(_revalidateItem(number));
+      return known;
+    }
+    try {
+      return await _fetchItem(number);
+    } on AppError catch (e) {
+      // Gone from the server: a stale copy must not stand in for it.
+      if (forceRefresh || known == null || e.type == AppErrorType.notFound) rethrow;
+      return known;
+    }
+  }
+
+  /// Takes the server's copy of feedback [number], for example after a
+  /// comment changed its count, into every list, the detail copy and the
+  /// default list on disk.
+  Future<void> updateItem(FeedbackItem item) =>
+      _replaceItem(item.number, (_) => _withPendingReactions(FeedbackPage(items: [item])).items.single, persist: true);
 
   /// Loads the page after the last one loaded for [query] and publishes the
   /// longer list. Does nothing when everything is loaded or a load is
@@ -170,6 +213,7 @@ class FeedbackRepository {
   Future<void> clearCache() async {
     final diskKey = _diskKey;
     _lists.clear();
+    _details.clear();
     _memoryKey = null;
     await _cache.remove(diskKey);
   }
@@ -177,16 +221,62 @@ class FeedbackRepository {
   void dispose() {
     _listController.close();
     _createdController.close();
+    _itemController.close();
+  }
+
+  /// The detail copy of [number], else the first list in memory that has it.
+  /// Nothing counts once the app or language changed.
+  FeedbackItem? _knownItem(int number) {
+    if (_memoryKey != _languageKey) return null;
+    final detail = _details[number];
+    if (detail != null) return detail;
+    for (final lists in _lists.values) {
+      for (final item in lists.all?.items ?? const <FeedbackItem>[]) {
+        if (item.number == number) return item;
+      }
+    }
+    return null;
+  }
+
+  /// One request per number at a time; callers meanwhile share it.
+  Future<FeedbackItem> _fetchItem(int number) {
+    final running = _detailRequests[number];
+    if (running != null) return running;
+    final key = _languageKey;
+    late final Future<FeedbackItem> request;
+    request = () async {
+      final fresh = _withPendingReactions(
+        FeedbackPage(items: [FeedbackItem.fromJson(await _api.getJson('/feedback/$number'))]),
+      ).items.single;
+      // The language changed meanwhile: the answer belongs to the old one.
+      if (key != _languageKey) return fresh;
+      _useCurrentLanguage();
+      await _replaceItem(number, (_) => fresh, persist: true, fallback: fresh);
+      return fresh;
+    }().whenComplete(() {
+      if (identical(_detailRequests[number], request)) _detailRequests.remove(number);
+    });
+    _detailRequests[number] = request;
+    return request;
+  }
+
+  /// Background refresh of a detail copy. Never throws.
+  Future<void> _revalidateItem(int number) async {
+    try {
+      await _fetchItem(number);
+    } catch (e) {
+      debugPrint('community: feedback revalidation failed: $e');
+    }
+  }
+
+  void _publishItem(FeedbackItem item) {
+    if (!_itemController.isClosed) _itemController.add(item);
   }
 
   /// [query]'s lists, now the most recently used. Lists of another app or
   /// language are dropped first.
   _QueryLists _listsFor(FeedbackQuery query) {
-    final key = _languageKey;
-    if (_memoryKey != key) {
-      _lists.clear();
-      _memoryKey = key;
-    }
+    _useCurrentLanguage();
     final lists = _lists.remove(query) ?? _QueryLists();
     _lists[query] = lists;
 
@@ -195,6 +285,16 @@ class FeedbackRepository {
       _lists.remove(others[i]);
     }
     return lists;
+  }
+
+  /// Points the memory tier at the current app and language, dropping
+  /// what it held for another.
+  void _useCurrentLanguage() {
+    final key = _languageKey;
+    if (_memoryKey == key) return;
+    _lists.clear();
+    _details.clear();
+    _memoryKey = key;
   }
 
   /// Whether [lists] are still the memory tier's lists for [query]: not
@@ -308,14 +408,23 @@ class FeedbackRepository {
     _publish(_defaultQuery, lists, _prepend(shown, item));
   }
 
-  /// Applies [update] to feedback [number] in every list in memory and
-  /// publishes the lists that have it. [persist] also saves the default
-  /// list to disk.
+  /// Applies [update] to feedback [number] in every list in memory and to
+  /// its detail copy, publishes the lists that have it and the item.
+  /// [fallback] becomes the detail copy when nothing in memory has it yet.
+  /// [persist] also saves the default list to disk.
   Future<void> _replaceItem(
     int number,
     FeedbackItem Function(FeedbackItem) update, {
     bool persist = false,
+    FeedbackItem? fallback,
   }) async {
+    final known = _knownItem(number);
+    final item = known != null ? update(known) : fallback;
+    if (item != null) {
+      _details[number] = item;
+      _publishItem(item);
+    }
+
     FeedbackPage? replaced(FeedbackPage? page) {
       if (page == null || !page.items.any((i) => i.number == number)) return null;
       return page.copyWith(

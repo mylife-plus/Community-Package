@@ -13,6 +13,10 @@ enum AppErrorType {
   /// Admin token missing, wrong or expired.
   unauthorized,
 
+  /// The item belongs to someone else, for example editing another user's
+  /// comment.
+  forbidden,
+
   /// The user is blocked from posting on this item.
   blocked,
 
@@ -64,6 +68,8 @@ class AppError implements Exception {
         return AppErrorType.badRequest;
       case 'unauthorized':
         return AppErrorType.unauthorized;
+      case 'forbidden':
+        return AppErrorType.forbidden;
       case 'blocked':
         return AppErrorType.blocked;
       case 'not_found':

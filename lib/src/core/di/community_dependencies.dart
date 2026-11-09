@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 import '../../config/community_config.dart';
+import '../../data/repositories/comment_repository.dart';
 import '../../data/repositories/feedback_repository.dart';
 import '../../data/repositories/identity_repository.dart';
 import '../api/api_client.dart';
@@ -18,6 +19,7 @@ abstract final class CommunityDependencies {
   static const _apiTag = 'community_api';
   static const _cacheTag = 'community_cache';
   static const _feedbackTag = 'community_feedback_repository';
+  static const _commentTag = 'community_comment_repository';
   static const _deviceTag = 'community_device_details';
 
   /// [httpClient], [anonIdSource] and [deviceDetails] replace the network,
@@ -46,7 +48,8 @@ abstract final class CommunityDependencies {
       permanent: true,
     );
     final cache = Get.put(PrefsCache(), tag: _cacheTag, permanent: true);
-    Get.put(FeedbackRepository(api, cache), tag: _feedbackTag, permanent: true);
+    final feedback = Get.put(FeedbackRepository(api, cache), tag: _feedbackTag, permanent: true);
+    Get.put(CommentRepository(api, feedback), tag: _commentTag, permanent: true);
     Get.put<DeviceDetailsSource>(
       deviceDetails ?? DeviceDetailsSource.forPlatform(),
       tag: _deviceTag,
@@ -57,6 +60,10 @@ abstract final class CommunityDependencies {
   /// Removes everything [register] added. Safe to call when nothing is registered.
   static void unregister() {
     Get.delete<DeviceDetailsSource>(tag: _deviceTag, force: true);
+    if (Get.isRegistered<CommentRepository>(tag: _commentTag)) {
+      Get.find<CommentRepository>(tag: _commentTag).dispose();
+      Get.delete<CommentRepository>(tag: _commentTag, force: true);
+    }
     if (Get.isRegistered<FeedbackRepository>(tag: _feedbackTag)) {
       Get.find<FeedbackRepository>(tag: _feedbackTag).dispose();
       Get.delete<FeedbackRepository>(tag: _feedbackTag, force: true);
@@ -79,6 +86,8 @@ abstract final class CommunityDependencies {
 
   static FeedbackRepository get feedbackRepository =>
       Get.find<FeedbackRepository>(tag: _feedbackTag);
+
+  static CommentRepository get commentRepository => Get.find<CommentRepository>(tag: _commentTag);
 
   static DeviceDetailsSource get deviceDetails => Get.find<DeviceDetailsSource>(tag: _deviceTag);
 }

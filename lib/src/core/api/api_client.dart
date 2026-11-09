@@ -52,6 +52,13 @@ class ApiClient {
     return _send(() => _http.post(uri, headers: headers, body: jsonEncode(body)));
   }
 
+  /// PATCH [body] as JSON to `/v1[path]` and decode the JSON object it returns.
+  Future<Map<String, dynamic>> patchJson(String path, Map<String, Object?> body) async {
+    final uri = _uri(path, const {});
+    final headers = {...await _headers(), 'Content-Type': 'application/json; charset=utf-8'};
+    return _send(() => _http.patch(uri, headers: headers, body: jsonEncode(body)));
+  }
+
   /// PUT `/v1[path]` without a body and decode the JSON object it returns.
   Future<Map<String, dynamic>> putJson(String path) async {
     final uri = _uri(path, const {});
