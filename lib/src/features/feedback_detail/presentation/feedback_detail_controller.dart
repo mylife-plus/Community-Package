@@ -40,6 +40,7 @@ class FeedbackDetailController extends GetxController {
   final CommentRepository _comments;
   StreamSubscription<FeedbackItem>? _itemSubscription;
   StreamSubscription<CommentList>? _commentSubscription;
+  StreamSubscription<bool>? _reachableSubscription;
   Timer? _searchTimer;
   bool _closed = false;
 
@@ -83,6 +84,13 @@ class FeedbackDetailController extends GetxController {
 
   bool get isSwitching => commentsState == LoadingState.loading && comments.isNotEmpty;
 
+  /// The backend could not be reached.
+  bool offline = false;
+
+  /// The saved feedback is on screen while offline. Without it, the screen
+  /// shows the full connection message instead.
+  bool get showOfflineBar => offline && item != null;
+
   bool isSending(int key) => _sending.contains(key);
 
   bool isOpen(FeedbackComment thread) => query.narrows
@@ -98,6 +106,8 @@ class FeedbackDetailController extends GetxController {
     super.onInit();
     _itemSubscription = _feedback.itemStream.listen(_onItem);
     _commentSubscription = _comments.commentsStream.listen(_onComments);
+    _reachableSubscription = _feedback.reachableStream.listen(_onReachable);
+    offline = !_feedback.reachable;
     loadItem();
     loadComments();
   }
@@ -108,6 +118,7 @@ class FeedbackDetailController extends GetxController {
     _searchTimer?.cancel();
     _itemSubscription?.cancel();
     _commentSubscription?.cancel();
+    _reachableSubscription?.cancel();
     searchController.dispose();
     newCommentController.dispose();
     for (final controller in _replyControllers.values) {
@@ -326,6 +337,12 @@ class FeedbackDetailController extends GetxController {
     query = next;
     _closedThreads.clear();
     loadComments();
+  }
+
+  void _onReachable(bool reachable) {
+    if (_closed) return;
+    offline = !reachable;
+    update();
   }
 
   void _onItem(FeedbackItem fresh) {

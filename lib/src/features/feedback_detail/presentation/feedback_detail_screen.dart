@@ -10,6 +10,7 @@ import '../../../core/widgets/comment_query_menus.dart';
 import '../../../core/widgets/community_app_bar.dart';
 import '../../../core/widgets/community_list_toolbar.dart';
 import '../../../core/widgets/community_message.dart';
+import '../../../core/widgets/community_offline_banner.dart';
 import '../../../core/widgets/community_popups.dart';
 import '../../../core/widgets/controller_scope.dart';
 import '../../../core/widgets/feedback_card.dart';
@@ -64,15 +65,33 @@ class FeedbackDetailScreen extends StatelessWidget {
           ),
       builder: (controller) => Scaffold(
         appBar: _appBar(context, controller.item),
-        body: _Body(
-          controller: controller,
-          onReact: () => _react(context, controller),
-          onSendComment: () => _sendComment(context, controller),
-          onSendReply: (thread) => _sendReply(context, controller, thread),
-          onEdit: (comment) => _edit(context, controller, comment),
+        body: Column(
+          children: [
+            CommunityOfflineBanner(
+              visible: controller.showOfflineBar,
+              message: CommunityLocalizations.of(context).offlineShowingSaved,
+              actionLabel: CommunityLocalizations.of(context).retry,
+              onAction: () => _retry(context, controller),
+            ),
+            Expanded(
+              child: _Body(
+                controller: controller,
+                onReact: () => _react(context, controller),
+                onSendComment: () => _sendComment(context, controller),
+                onSendReply: (thread) => _sendReply(context, controller, thread),
+                onEdit: (comment) => _edit(context, controller, comment),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  /// The offline bar's button: reloads everything, like pull-to-refresh.
+  Future<void> _retry(BuildContext context, FeedbackDetailController controller) async {
+    final error = await controller.refreshAll();
+    if (error != null && context.mounted) _showError(context, error);
   }
 
   PreferredSizeWidget _appBar(BuildContext context, FeedbackItem? item) {
@@ -347,7 +366,7 @@ class _LoadMoreError extends StatelessWidget {
     return Column(
       children: [
         Text(
-          l.loadMoreFailed,
+          l.loadMoreCommentsFailed,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: CommunityColors.muted(context)),
         ),

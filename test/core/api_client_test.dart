@@ -147,4 +147,50 @@ void main() {
 
     await expectLater(api.postJson('/feedback', {}), _appError(AppErrorType.offline));
   });
+
+  group('reachable', () {
+    test('turns false when the backend cannot be reached, true on any answer', () async {
+      var fail = true;
+      var status = 200;
+      final api = _client((request) async {
+        if (fail) throw const SocketException('Network is unreachable');
+        return http.Response('{"error":{"code":"server_error"}}', status);
+      });
+      final changes = <bool>[];
+      api.reachableStream.listen(changes.add);
+      expect(api.reachable, isTrue);
+
+      await expectLater(api.getJson('/feedback'), _appError(AppErrorType.offline));
+      expect(api.reachable, isFalse);
+
+      // A server error still means the backend answered.
+      fail = false;
+      status = 500;
+      await expectLater(api.getJson('/feedback'), _appError(AppErrorType.server));
+      await pumpEventQueue();
+
+      expect(api.reachable, isTrue);
+      expect(changes, [false, true]);
+    });
+
+    test('a timeout counts as not reachable', () async {
+      final api = _client(
+        (request) => Completer<http.Response>().future,
+        timeout: const Duration(milliseconds: 10),
+      );
+
+      await expectLater(api.getJson('/feedback'), _appError(AppErrorType.network));
+
+      expect(api.reachable, isFalse);
+    });
+
+    test('dispose closes the stream', () async {
+      final api = _client((request) async => http.Response('{}', 200));
+      final done = expectLater(api.reachableStream, emitsDone);
+
+      api.dispose();
+
+      await done;
+    });
+  });
 }

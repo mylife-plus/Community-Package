@@ -136,6 +136,8 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
         deleteCommentKeepsReplies: 'Delete this comment? Its replies stay.',
         commentNotFound: 'This comment no longer exists.',
         errorTooManyComments: 'Too many comments. Try again soon.',
+        offlineShowingSaved: 'Offline. Showing saved feedback.',
+        loadMoreCommentsFailed: 'Could not load more comments.',
       );
 
   static String _minutesAgo(int n) => '${n}m ago';

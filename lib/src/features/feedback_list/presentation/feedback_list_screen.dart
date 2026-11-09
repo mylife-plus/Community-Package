@@ -9,6 +9,7 @@ import '../../../core/theme/community_tokens.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/community_app_bar.dart';
 import '../../../core/widgets/community_message.dart';
+import '../../../core/widgets/community_offline_banner.dart';
 import '../../../core/widgets/community_popups.dart';
 import '../../../core/widgets/controller_scope.dart';
 import '../../../core/widgets/feedback_card.dart';
@@ -48,6 +49,12 @@ class FeedbackListScreen extends StatelessWidget {
             () => FeedbackListController(CommunityDependencies.feedbackRepository),
         builder: (controller) => Column(
           children: [
+            CommunityOfflineBanner(
+              visible: controller.showOfflineBar,
+              message: l.offlineShowingSaved,
+              actionLabel: l.retry,
+              onAction: () => _retry(context, controller),
+            ),
             CommunityListToolbar(
               sortActive: controller.query.sort != FeedbackSort.newest,
               filterActive: controller.query.hasFilter,
@@ -82,6 +89,14 @@ class FeedbackListScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// The offline bar's button: reloads the list, like pull-to-refresh.
+  Future<void> _retry(BuildContext context, FeedbackListController controller) async {
+    final error = await controller.refreshList();
+    if (error != null && context.mounted) {
+      showCommunitySnackBar(context, errorMessage(CommunityLocalizations.of(context), error));
+    }
   }
 
   /// A heart needs the privacy notice once, not the rules.

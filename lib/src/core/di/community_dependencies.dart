@@ -69,7 +69,10 @@ abstract final class CommunityDependencies {
       Get.delete<FeedbackRepository>(tag: _feedbackTag, force: true);
     }
     Get.delete<PrefsCache>(tag: _cacheTag, force: true);
-    Get.delete<ApiClient>(tag: _apiTag, force: true);
+    if (Get.isRegistered<ApiClient>(tag: _apiTag)) {
+      Get.find<ApiClient>(tag: _apiTag).dispose();
+      Get.delete<ApiClient>(tag: _apiTag, force: true);
+    }
     if (Get.isRegistered<IdentityRepository>(tag: _identityTag)) {
       Get.find<IdentityRepository>(tag: _identityTag).dispose();
       Get.delete<IdentityRepository>(tag: _identityTag, force: true);

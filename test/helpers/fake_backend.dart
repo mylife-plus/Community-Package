@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:community_package/src/core/api/api_client.dart';
 import 'package:community_package/src/core/cache/prefs_cache.dart';
@@ -37,6 +38,14 @@ class FakeBackend {
       _queue(method, path).add(
         (_) => http.Response(jsonEncode({'error': {'code': code, 'message': 'x'}}), status),
       );
+
+  /// The next `[method] [path]` request finds no connection.
+  void offlineAt(String method, String path) =>
+      _queue(method, path).add((_) => throw const SocketException('Network is unreachable'));
+
+  /// The next `[method] [path]` request answers [body] as it is.
+  void answerRawAt(String method, String path, String body, {int status = 200}) =>
+      _queue(method, path).add((_) => http.Response(body, status));
 
   List<FutureOr<http.Response> Function(http.Request)> _queue(String method, String path) =>
       _byPath.putIfAbsent('$method $path', () => []);

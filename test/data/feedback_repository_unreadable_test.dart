@@ -63,4 +63,19 @@ void main() {
     expect(shown.last, isFalse);
   });
 
+  test('reachable follows the API client', () async {
+    final changes = <bool>[];
+    repo.reachableStream.listen(changes.add);
+    backend.offlineAt('GET', '/v1/feedback');
+
+    await expectLater(repo.getFeedbackList(), throwsA(isA<AppError>()));
+    expect(repo.reachable, isFalse);
+
+    backend.answer(feedbackJson(3));
+    await repo.getFeedback(3);
+    await pumpEventQueue();
+
+    expect(repo.reachable, isTrue);
+    expect(changes, [false, true]);
+  });
 }

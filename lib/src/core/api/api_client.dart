@@ -35,6 +35,16 @@ class ApiClient {
   /// user agreed to the privacy notice, and then no `X-Anon-Id` is sent.
   final Future<String?> Function() _anonId;
 
+  final _reachableController = StreamController<bool>.broadcast();
+
+  /// False once a request could not reach the backend (offline, timeout,
+  /// dropped connection); true again after the next answer of any kind.
+  bool get reachable => _reachable;
+  bool _reachable = true;
+
+  /// Each change of [reachable].
+  Stream<bool> get reachableStream => _reachableController.stream;
+
   /// GET `/v1[path]` and decode the JSON object it returns.
   Future<Map<String, dynamic>> getJson(
     String path, {
@@ -92,14 +102,26 @@ class ApiClient {
       // implements SocketException (package:http lib/src/io_client.dart), so
       // this must come before the ClientException clause.
       debugPrint('community api: offline: $e');
+      _setReachable(false);
       throw const AppError(AppErrorType.offline);
     } on TimeoutException {
+      _setReachable(false);
       throw const AppError(AppErrorType.network, message: 'Request timed out');
     } on http.ClientException catch (e) {
+      _setReachable(false);
       throw AppError(AppErrorType.network, message: e.message);
     }
+    _setReachable(true);
     return _decode(response);
   }
+
+  void _setReachable(bool value) {
+    if (_reachable == value) return;
+    _reachable = value;
+    if (!_reachableController.isClosed) _reachableController.add(value);
+  }
+
+  void dispose() => _reachableController.close();
 
   Future<Map<String, String>> _headers() async {
     final anonId = await _anonId();

@@ -23,6 +23,7 @@ class FeedbackListController extends GetxController {
   final FeedbackRepository _repository;
   StreamSubscription<FeedbackList>? _listSubscription;
   StreamSubscription<FeedbackItem>? _createdSubscription;
+  StreamSubscription<bool>? _reachableSubscription;
   Timer? _searchTimer;
   bool _closed = false;
 
@@ -52,11 +53,20 @@ class FeedbackListController extends GetxController {
   /// True while another query loads with the previous list still on screen.
   bool get isSwitching => state == LoadingState.loading && items.isNotEmpty;
 
+  /// The backend could not be reached.
+  bool offline = false;
+
+  /// Saved feedback is on screen while offline. Without any, the screen
+  /// shows the full connection message instead.
+  bool get showOfflineBar => offline && items.isNotEmpty;
+
   @override
   void onInit() {
     super.onInit();
     _listSubscription = _repository.feedbackListStream.listen(_onList);
     _createdSubscription = _repository.createdStream.listen(_onCreated);
+    _reachableSubscription = _repository.reachableStream.listen(_onReachable);
+    offline = !_repository.reachable;
     load();
   }
 
@@ -66,6 +76,7 @@ class FeedbackListController extends GetxController {
     _searchTimer?.cancel();
     _listSubscription?.cancel();
     _createdSubscription?.cancel();
+    _reachableSubscription?.cancel();
     searchController.dispose();
     super.onClose();
   }
@@ -189,6 +200,12 @@ class FeedbackListController extends GetxController {
 
   /// A new post shows on top of the default list, so the list goes back to
   /// it from any sort, filter or search.
+  void _onReachable(bool reachable) {
+    if (_closed) return;
+    offline = !reachable;
+    update();
+  }
+
   void _onCreated(FeedbackItem _) {
     if (_closed || query.isDefault) return;
     _searchTimer?.cancel();

@@ -63,6 +63,13 @@ class FeedbackRepository {
   /// comment count, a refresh.
   Stream<FeedbackItem> get itemStream => _itemController.stream;
 
+  /// Whether the backend answered the last request. Screens with saved
+  /// data on show use it for the offline bar.
+  bool get reachable => _api.reachable;
+
+  /// Each change of [reachable].
+  Stream<bool> get reachableStream => _api.reachableStream;
+
   String get _languageKey => '${_api.appId}_${_api.languageCode}';
 
   // v2: the list cursor changed format, so lists saved by older versions

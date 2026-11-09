@@ -125,6 +125,8 @@ class CommunityLocalizations {
     required this.deleteCommentKeepsReplies,
     required this.commentNotFound,
     required this.errorTooManyComments,
+    required this.offlineShowingSaved,
+    required this.loadMoreCommentsFailed,
   });
 
   /// Add to the host app's `localizationsDelegates`.
@@ -337,6 +339,13 @@ class CommunityLocalizations {
 
   /// When comments hit the rate limit.
   final String errorTooManyComments;
+
+  /// The bar under the app bar while saved data is shown without a
+  /// connection.
+  final String offlineShowingSaved;
+
+  /// Under the comments when the next page failed.
+  final String loadMoreCommentsFailed;
 }
 
 class _CommunityLocalizationsDelegate extends LocalizationsDelegate<CommunityLocalizations> {

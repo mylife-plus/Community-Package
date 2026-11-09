@@ -87,4 +87,47 @@ void main() {
 
     expect(controller.isClosed, isTrue);
   });
+
+  group('offline bar', () {
+    final bar = find.textContaining('Offline. Showing saved feedback.', findRichText: true);
+
+    testWidgets('shows over saved cards when a refresh finds no connection; Try again clears it', (
+      tester,
+    ) async {
+      backend.answer(pageJson([2, 1]));
+      await tester.pumpWidget(app(ThemeData.dark()));
+      await tester.pumpAndSettle();
+      expect(bar, findsNothing);
+
+      backend.offlineAt('GET', '/v1/feedback');
+      await tester.fling(find.byType(FeedbackCard).first, const Offset(0, 400), 1000);
+      await tester.pumpAndSettle();
+
+      expect(bar, findsOneWidget);
+      expect(find.byType(FeedbackCard), findsNWidgets(2));
+
+      // Still offline: the bar stays and a snackbar says why.
+      backend.offlineAt('GET', '/v1/feedback');
+      await tester.tap(find.widgetWithText(TextButton, 'Try again'));
+      await tester.pumpAndSettle();
+      expect(bar, findsOneWidget);
+      expect(find.text('No internet connection. Check your connection and try again.'), findsOneWidget);
+
+      backend.answerAt('GET', '/v1/feedback', pageJson([3, 2, 1]));
+      await tester.tap(find.widgetWithText(TextButton, 'Try again'));
+      await tester.pumpAndSettle();
+
+      expect(bar, findsNothing);
+      expect(find.byType(FeedbackCard), findsNWidgets(3));
+    });
+
+    testWidgets('without saved cards the full message shows instead', (tester) async {
+      backend.offlineAt('GET', '/v1/feedback');
+      await tester.pumpWidget(app(ThemeData.light()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('No internet connection. Check your connection and try again.'), findsOneWidget);
+      expect(bar, findsNothing);
+    });
+  });
 }
