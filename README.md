@@ -46,8 +46,9 @@ onTap: () => CommunityPackage.openCommunity(context),   // "Community app"
 onTap: () => CommunityPackage.openNewFeedback(context), // "Give feedback"
 ```
 
+- Labels come in English, German, Spanish, French and Portuguese (Portugal), picked by the app's language code (`de_AT` gets German, `pt_BR` Portuguese). Other languages, and apps without the delegate, get English.
 - Without `privacyPolicyUrl` the privacy notice leaves out the "Read our full Privacy Policy" sentence.
-- `screens` lists the app's screens, top level first, in the order they should appear. Write the names in English: they are saved with each Problem as a path (`Inventory > Sell Items > Add Items`), so everyone reads the same names in every language. The picker adds the package's own screens under "Community". Without `screens` the Problem form asks no screen.
+- `screens` lists the app's screens, top level first, in the order they should appear. Write the names in English: they are saved with each Problem as a path (`Inventory > Sell Items > Add Items`), so everyone reads the same names in every language. Give each screen a `label` (`label: (context) => ...`) to show its title in the app's language in the picker and on Problem cards; the saved path stays in English, and screens without a label show their name. The picker adds the package's own screens under "Community", with their own labels. Without `screens` the Problem form asks no screen.
 - Problems carry the OS version, the app version and the phone model, read with `device_info_plus` and `package_info_plus`. Both are kept below the versions that need Android Gradle Plugin 8.12.1.
 - The anonymous ID is created only after the user agrees to the privacy notice. iOS keeps it in the Keychain; Android derives it from a SHA-256 hash of ANDROID_ID. Neither needs extra setup.
 - `flutter_secure_storage` 11 (picked on Dart 3.8+) and `android_id` 0.6 (picked on Flutter 3.47+) need Android `minSdk` 24.
