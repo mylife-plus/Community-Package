@@ -11,6 +11,7 @@ import '../../../core/widgets/community_form_actions.dart';
 import '../../../core/widgets/community_popups.dart';
 import '../../../core/widgets/community_text_field.dart';
 import '../../../core/widgets/controller_scope.dart';
+import '../../../core/widgets/emoji_text.dart';
 import '../../../core/widgets/feedback_type_picker.dart';
 import '../../../data/models/feedback_item.dart';
 import '../../privacy/presentation/post_gate.dart';
@@ -168,12 +169,22 @@ class _Form extends StatelessWidget {
     );
   }
 
-  /// Screen, steps, the optional description and the device details.
+  /// The optional description, screen, steps and the device details.
   List<Widget> _problemFields(BuildContext context, CommunityLocalizations l) {
     final submitting = controller.submitting;
     const gap = SizedBox(height: CommunityTokens.problemFieldGap);
     final steps = controller.steps;
     return [
+      if (NewFeedbackController.askProblemDescription) ...[
+        CommunityTextField(
+          controller: controller.descriptionController,
+          hint: l.problemDescriptionHint,
+          maxLength: NewFeedbackController.maxTextLength,
+          enabled: !submitting,
+          leading: const EmojiText('⚠️', size: 20),
+        ),
+        gap,
+      ],
       if (controller.asksScreen) ...[
         ScreenPickerField(
           screen: controller.screen,
@@ -190,15 +201,6 @@ class _Form extends StatelessWidget {
           enabled: !submitting,
           onChanged: (text) => controller.editStep(steps[i].id, text),
           onLeave: () => controller.leaveStep(steps[i].id),
-        ),
-      ],
-      if (NewFeedbackController.askProblemDescription) ...[
-        gap,
-        CommunityTextField(
-          controller: controller.descriptionController,
-          hint: l.problemDescriptionHint,
-          maxLength: NewFeedbackController.maxTextLength,
-          enabled: !submitting,
         ),
       ],
       gap,

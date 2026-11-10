@@ -134,6 +134,24 @@ void main() {
     expect(submitEnabled(tester), isFalse);
   });
 
+  testWidgets('asks what went wrong first, with a ⚠️, then the screen, the steps and the device', (tester) async {
+    await openProblem(tester);
+
+    final description = find.widgetWithText(TextField, 'What went wrong?');
+    double top(Finder finder) => tester.getTopLeft(finder).dy;
+    expect(top(description), lessThan(top(find.byType(ScreenPickerField))));
+    expect(top(find.byType(ScreenPickerField)), lessThan(top(find.byType(ProblemStepField))));
+    expect(top(find.byType(ProblemStepField)), lessThan(top(find.text('OS'))));
+
+    final warning = find.descendant(of: description, matching: find.text('⚠️'));
+    expect(warning, findsOneWidget);
+    expect(tester.getCenter(warning).dx, lessThan(tester.getTopLeft(find.text('What went wrong?')).dx));
+
+    await tester.enterText(description, 'Nothing happens');
+    await tester.pumpAndSettle();
+    expect(warning, findsOneWidget);
+  });
+
   testWidgets('a detail that cannot be read shows a dash', (tester) async {
     await openProblem(tester, device: const DeviceDetails(appVersion: '3.2.0'));
 

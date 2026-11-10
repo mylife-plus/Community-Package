@@ -10,6 +10,7 @@ class CommunityTextField extends StatelessWidget {
     required this.hint,
     this.maxLength,
     this.enabled = true,
+    this.leading,
   });
 
   /// Not tuned yet: how many characters before [maxLength] the counter shows.
@@ -22,6 +23,10 @@ class CommunityTextField extends StatelessWidget {
   final String hint;
   final int? maxLength;
   final bool enabled;
+
+  /// Always shown before the text and the hint, like the 📲 on the screen
+  /// field. A `prefix` would show only while focused or filled.
+  final Widget? leading;
 
   /// The typed text.
   static TextStyle? textStyle(BuildContext context) {
@@ -61,6 +66,9 @@ class CommunityTextField extends StatelessWidget {
       borderSide: BorderSide(color: color),
     );
 
+    final leading = this.leading;
+    const padding = CommunityTokens.fieldPadding;
+
     return TextField(
       controller: controller,
       enabled: enabled,
@@ -77,7 +85,11 @@ class CommunityTextField extends StatelessWidget {
         filled: true,
         fillColor: theme.colorScheme.surface,
         isDense: true,
-        contentPadding: CommunityTokens.fieldPadding,
+        contentPadding: leading == null ? padding : padding.copyWith(left: 0),
+        prefixIcon: leading == null
+            ? null
+            : Padding(padding: EdgeInsets.only(left: padding.left, right: 6), child: leading),
+        prefixIconConstraints: const BoxConstraints(),
         constraints: const BoxConstraints(minHeight: CommunityTokens.fieldMinHeight),
         enabledBorder: border(CommunityColors.fieldBorder(context)),
         disabledBorder: border(CommunityColors.fieldBorder(context)),
