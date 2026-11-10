@@ -32,6 +32,7 @@ class CommunityLocalizations {
     required this.errorNetwork,
     required this.errorServer,
     required this.errorGeneric,
+    required this.errorTooLong,
     required this.retry,
     required this.loadMoreFailed,
     required this.communityTitle,
@@ -181,6 +182,10 @@ class CommunityLocalizations {
   final String errorNetwork;
   final String errorServer;
   final String errorGeneric;
+
+  /// When the backend rejects a text as longer than [max] characters, for
+  /// example from an older app version with a higher limit.
+  final String Function(int max) errorTooLong;
   final String retry;
   final String loadMoreFailed;
 

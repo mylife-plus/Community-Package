@@ -37,6 +37,8 @@ String errorMessage(CommunityLocalizations l, AppError error) {
     case AppErrorType.rateLimited:
       return l.errorRateLimited;
     case AppErrorType.badRequest:
+      final max = error.details?['maxLength'];
+      return max is int ? l.errorTooLong(max) : l.errorGeneric;
     case AppErrorType.unauthorized:
     case AppErrorType.forbidden:
     case AppErrorType.blocked:

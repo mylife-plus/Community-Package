@@ -23,6 +23,7 @@ class CommunityLocalizationsEs extends CommunityLocalizations {
         errorNetwork: 'Se interrumpió la conexión. Inténtalo de nuevo.',
         errorServer: 'Algo salió mal por nuestra parte. Inténtalo más tarde.',
         errorGeneric: 'Algo salió mal. Inténtalo de nuevo.',
+        errorTooLong: _errorTooLong,
         retry: 'Reintentar',
         loadMoreFailed: 'No se pudieron cargar más sugerencias.',
         communityTitle: 'App de la Comunidad',
@@ -156,6 +157,7 @@ class CommunityLocalizationsEs extends CommunityLocalizations {
   static String _reactionCount(int n) => n == 1 ? '1 corazón' : '$n corazones';
   static String _yourId(String id) => 'Tu ID: $id';
   static String _postedAs(int n) => '¡Gracias! Publicado como #$n';
+  static String _errorTooLong(int max) => 'Demasiado largo. Usa como máximo $max caracteres.';
   static String _appVersionShort(String version) => 'App $version';
   static String _showReplies(int n) => n == 1 ? 'Mostrar 1 respuesta' : 'Mostrar $n respuestas';
 }

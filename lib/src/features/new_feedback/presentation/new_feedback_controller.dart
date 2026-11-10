@@ -38,7 +38,7 @@ class NewFeedbackController extends GetxController {
 
   /// Longest text and Problem description, in characters as the user sees
   /// them. The backend checks the same limits.
-  static const maxTextLength = 2000;
+  static const maxTextLength = 100;
   static const maxSteps = 10;
   static const maxStepLength = 500;
 

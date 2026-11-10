@@ -28,8 +28,8 @@ class FeedbackDetailController extends GetxController {
   /// Longest search text; the backend allows the same.
   static const maxSearchLength = 100;
 
-  /// Longest comment; the backend allows the same.
-  static const maxCommentLength = 2000;
+  /// Longest comment and reply; the backend allows the same.
+  static const maxCommentLength = 100;
 
   /// The key of the new comment field in [isSending]. Comment IDs start at 1.
   static const newCommentKey = 0;

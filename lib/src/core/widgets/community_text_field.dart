@@ -13,8 +13,9 @@ class CommunityTextField extends StatelessWidget {
     this.leading,
   });
 
-  /// Not tuned yet: how many characters before [maxLength] the counter shows.
-  static const counterThreshold = 200;
+  /// The counter shows from this share of [maxLength] on: 80 of 100, 400
+  /// of 500.
+  static const counterFrom = 0.8;
 
   /// Not tuned yet: lines the field grows to before it scrolls.
   static const maxLines = 8;
@@ -51,7 +52,7 @@ class CommunityTextField extends StatelessWidget {
     required bool isFocused,
     required int? maxLength,
   }) {
-    if (maxLength == null || currentLength < maxLength - counterThreshold) return null;
+    if (maxLength == null || currentLength < maxLength * counterFrom) return null;
     return Text(
       '$currentLength / $maxLength',
       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: CommunityColors.muted(context)),

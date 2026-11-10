@@ -24,6 +24,7 @@ class CommunityLocalizationsFr extends CommunityLocalizations {
         errorNetwork: 'La connexion a été interrompue. Veuillez réessayer.',
         errorServer: 'Un problème est survenu de notre côté. Veuillez réessayer plus tard.',
         errorGeneric: 'Un problème est survenu. Veuillez réessayer.',
+        errorTooLong: _errorTooLong,
         retry: 'Réessayer',
         loadMoreFailed: "Impossible de charger plus de feedback.",
         communityTitle: 'App Communautaire',
@@ -159,6 +160,7 @@ class CommunityLocalizationsFr extends CommunityLocalizations {
   static String _reactionCount(int n) => n <= 1 ? '$n cœur' : '$n cœurs';
   static String _yourId(String id) => 'Votre ID\u00A0: $id';
   static String _postedAs(int n) => 'Merci\u00A0! Publié en tant que #$n';
+  static String _errorTooLong(int max) => 'Trop long. Utilisez au maximum $max caractères.';
   static String _appVersionShort(String version) => 'App $version';
   static String _showReplies(int n) =>
       n == 1 ? 'Afficher 1 réponse' : 'Afficher $n réponses';

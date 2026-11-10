@@ -228,6 +228,25 @@ void main() {
     expect(submitEnabled(tester), isTrue);
   });
 
+  testWidgets('the text stops at 100 characters', (tester) async {
+    await openFromSettings(tester, agreed: true);
+    await fillForm(tester, text: 'a' * 150);
+
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, hasLength(100));
+    expect(find.text('100 / 100'), findsOneWidget);
+  });
+
+  testWidgets('a text the backend finds too long says the limit', (tester) async {
+    await openFromSettings(tester, agreed: true);
+    await fillForm(tester, text: 'Totals');
+    backend.fail(status: 400, code: 'bad_request', details: {'field': 'text', 'maxLength': 100});
+
+    await tapAndSettle(tester, submit);
+
+    expect(find.text('Too long. Use at most 100 characters.'), findsOneWidget);
+    expect(formScreens, findsOneWidget);
+  });
+
   // The bottom inset of an iPhone with a home indicator, and none.
   for (final inset in [0.0, 34.0]) {
     testWidgets('a failure message floats above ✗ and ✓ (bottom inset $inset)', (tester) async {

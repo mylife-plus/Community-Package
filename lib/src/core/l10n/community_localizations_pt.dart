@@ -24,6 +24,7 @@ class CommunityLocalizationsPt extends CommunityLocalizations {
         errorNetwork: 'A ligação foi interrompida. Tente novamente.',
         errorServer: 'Algo correu mal do nosso lado. Tente novamente mais tarde.',
         errorGeneric: 'Algo correu mal. Tente novamente.',
+        errorTooLong: _errorTooLong,
         retry: 'Tentar novamente',
         loadMoreFailed: 'Não foi possível carregar mais feedback.',
         communityTitle: 'App da Comunidade',
@@ -156,6 +157,7 @@ class CommunityLocalizationsPt extends CommunityLocalizations {
   static String _reactionCount(int n) => n == 1 ? '1 coração' : '$n corações';
   static String _yourId(String id) => 'O seu ID: $id';
   static String _postedAs(int n) => 'Obrigado! Publicado como #$n';
+  static String _errorTooLong(int max) => 'Demasiado longo. Use no máximo $max caracteres.';
   static String _appVersionShort(String version) => 'App $version';
   static String _showReplies(int n) => n == 1 ? 'Mostrar 1 resposta' : 'Mostrar $n respostas';
 }

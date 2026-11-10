@@ -23,6 +23,7 @@ class CommunityLocalizationsDe extends CommunityLocalizations {
         errorNetwork: 'Die Verbindung wurde unterbrochen. Bitte versuche es erneut.',
         errorServer: 'Bei uns ist etwas schiefgelaufen. Bitte versuche es später erneut.',
         errorGeneric: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
+        errorTooLong: _errorTooLong,
         retry: 'Erneut versuchen',
         loadMoreFailed: 'Weiteres Feedback konnte nicht geladen werden.',
         communityTitle: 'Community-App',
@@ -156,6 +157,7 @@ class CommunityLocalizationsDe extends CommunityLocalizations {
   static String _reactionCount(int n) => n == 1 ? '1 Herz' : '$n Herzen';
   static String _yourId(String id) => 'Deine ID: $id';
   static String _postedAs(int n) => 'Danke! Gepostet als #$n';
+  static String _errorTooLong(int max) => 'Zu lang. Bitte kürze den Text auf höchstens $max Zeichen.';
   static String _appVersionShort(String version) => 'App $version';
   static String _showReplies(int n) => n == 1 ? '1 Antwort anzeigen' : '$n Antworten anzeigen';
 }

@@ -60,8 +60,13 @@ class FakeBackend {
         return http.Response(jsonEncode(json), status);
       });
 
-  void fail({int status = 500, String code = 'server_error'}) => _responses.add(
-    (_) => http.Response(jsonEncode({'error': {'code': code, 'message': 'x'}}), status),
+  void fail({int status = 500, String code = 'server_error', Map<String, dynamic>? details}) => _responses.add(
+    (_) => http.Response(
+      jsonEncode({
+        'error': {'code': code, 'message': 'x', if (details != null) 'details': details},
+      }),
+      status,
+    ),
   );
 
   late final http.Client client = MockClient((request) async {

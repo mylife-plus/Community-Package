@@ -23,6 +23,7 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
         errorNetwork: 'The connection was interrupted. Please try again.',
         errorServer: 'Something went wrong on our side. Please try again later.',
         errorGeneric: 'Something went wrong. Please try again.',
+        errorTooLong: _errorTooLong,
         retry: 'Try again',
         loadMoreFailed: 'Could not load more feedback.',
         communityTitle: 'Community App',
@@ -154,6 +155,7 @@ class CommunityLocalizationsEn extends CommunityLocalizations {
   static String _reactionCount(int n) => n == 1 ? '1 heart' : '$n hearts';
   static String _yourId(String id) => 'Your ID: $id';
   static String _postedAs(int n) => 'Thanks! Posted as #$n';
+  static String _errorTooLong(int max) => 'Too long. Use at most $max characters.';
   static String _appVersionShort(String version) => 'App $version';
   static String _showReplies(int n) => n == 1 ? 'Show 1 reply' : 'Show $n replies';
 }
