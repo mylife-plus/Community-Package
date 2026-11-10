@@ -2,9 +2,10 @@ import { ApiError } from './errors';
 
 /**
  * Longest feedback text, Problem description and comment, in
- * user-perceived characters, after trimming.
+ * user-perceived characters, after trimming. Older rows can be longer:
+ * the limit was 2000 before, and only new posts and edits are checked.
  */
-export const MAX_TEXT_LENGTH = 2000;
+export const MAX_TEXT_LENGTH = 100;
 
 const LANG_PATTERN = /^[a-z]{2,3}$/;
 
@@ -29,7 +30,8 @@ export async function readJsonBody(request: Request): Promise<Record<string, unk
 
 /**
  * A required text field, trimmed, 1 to [MAX_TEXT_LENGTH] characters.
- * Throws `bad_request` with `details.field` otherwise.
+ * Throws `bad_request` with `details.field` otherwise, plus
+ * `details.maxLength` when it is too long.
  */
 export function readText(value: unknown): string {
   if (typeof value !== 'string') {
@@ -38,7 +40,13 @@ export function readText(value: unknown): string {
   const trimmed = value.trim();
   const length = graphemeCount(trimmed);
   if (length === 0 || length > MAX_TEXT_LENGTH) {
-    throw new ApiError('bad_request', `Text must be 1 to ${MAX_TEXT_LENGTH} characters`, 400, { field: 'text' });
+    // `maxLength` only when too long, so the app can say so.
+    throw new ApiError(
+      'bad_request',
+      `Text must be 1 to ${MAX_TEXT_LENGTH} characters`,
+      400,
+      length === 0 ? { field: 'text' } : { field: 'text', maxLength: MAX_TEXT_LENGTH },
+    );
   }
   return trimmed;
 }

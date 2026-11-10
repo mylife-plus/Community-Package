@@ -61,6 +61,12 @@ describe('POST /v1/feedback with a Problem', () => {
     });
   });
 
+  it('accepts a description of 100 characters', async () => {
+    const res = await post({ ...problem, description: 'a'.repeat(100) });
+
+    expect(res.status).toBe(201);
+  });
+
   it('builds the text from the steps alone without a description', async () => {
     const res = await post({ ...problem, description: '   ' });
     const item = (await res.json()) as Item;
@@ -113,12 +119,12 @@ describe('POST /v1/feedback rejects a Problem with', () => {
     ['an empty step list', { steps: [] }, 'Problems need 1 to 10 steps', { field: 'steps' }],
     ['11 steps', { steps: Array.from({ length: 11 }, () => 'Tap') }, 'Problems need 1 to 10 steps', { field: 'steps' }],
     ['a blank step', { steps: ['Tap plus', '  '] }, 'Each step must be 1 to 500 characters', { field: 'steps', index: 1 }],
-    ['a step over 500 characters', { steps: ['a'.repeat(501)] }, 'Each step must be 1 to 500 characters', { field: 'steps', index: 0 }],
-    ['a description over 2000 characters', { description: 'a'.repeat(2001) }, 'description must be at most 2000 characters', { field: 'description' }],
+    ['a step over 500 characters', { steps: ['a'.repeat(501)] }, 'Each step must be 1 to 500 characters', { field: 'steps', index: 0, maxLength: 500 }],
+    ['a description over 100 characters', { description: 'a'.repeat(101) }, 'description must be at most 100 characters', { field: 'description', maxLength: 100 }],
     ['a description that is not text', { description: 5 }, 'Invalid description', { field: 'description' }],
-    ['a screen path over 300 characters', { screenPath: 'a'.repeat(301) }, 'screenPath must be at most 300 characters', { field: 'screenPath' }],
+    ['a screen path over 300 characters', { screenPath: 'a'.repeat(301) }, 'screenPath must be at most 300 characters', { field: 'screenPath', maxLength: 300 }],
     ['a screen path that is not text', { screenPath: ['Sell Items'] }, 'Invalid screenPath', { field: 'screenPath' }],
-    ['a device detail over 100 characters', { deviceModel: 'a'.repeat(101) }, 'deviceModel must be at most 100 characters', { field: 'deviceModel' }],
+    ['a device detail over 100 characters', { deviceModel: 'a'.repeat(101) }, 'deviceModel must be at most 100 characters', { field: 'deviceModel', maxLength: 100 }],
     ['a device detail that is not text', { osVersion: 18 }, 'Invalid osVersion', { field: 'osVersion' }],
   ];
 

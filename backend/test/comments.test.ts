@@ -315,8 +315,8 @@ describe('POST /v1/feedback/:number/comments', () => {
     const cases: [Options, unknown, string, string][] = [
       [{ anonId: null }, { text: 'Hi' }, 'en', 'Missing X-Anon-Id header'],
       [{}, { text: 'Hi' }, 'english', 'Invalid lang'],
-      [{}, { text: '   ' }, 'en', 'Text must be 1 to 2000 characters'],
-      [{}, { text: 'x'.repeat(2001) }, 'en', 'Text must be 1 to 2000 characters'],
+      [{}, { text: '   ' }, 'en', 'Text must be 1 to 100 characters'],
+      [{}, { text: 'x'.repeat(101) }, 'en', 'Text must be 1 to 100 characters'],
       [{}, { text: 5 }, 'en', 'Invalid text'],
       [{}, 'not json', 'en', 'Body must be JSON'],
     ];
@@ -330,8 +330,24 @@ describe('POST /v1/feedback/:number/comments', () => {
   });
 
   it('counts emoji as one character each', async () => {
-    const res = await comment(12, { text: '👍'.repeat(2000) });
+    const res = await comment(12, { text: '👍'.repeat(100) });
     expect(res.status).toBe(201);
+  });
+
+  it('accepts 100 characters and says the limit above it', async () => {
+    expect((await comment(12, { text: 'x'.repeat(100) })).status).toBe(201);
+
+    const tooLong = await comment(12, { text: 'x'.repeat(101) });
+    expect(await tooLong.json()).toEqual({
+      error: {
+        code: 'bad_request',
+        message: 'Text must be 1 to 100 characters',
+        details: { field: 'text', maxLength: 100 },
+      },
+    });
+
+    const blank = await comment(12, { text: ' ' });
+    expect(((await blank.json()) as { error: { details: unknown } }).error.details).toEqual({ field: 'text' });
   });
 });
 
@@ -354,6 +370,19 @@ describe('PATCH /v1/comments/:id', () => {
     const { comment: c } = await created(13, { text: 'Same' }, { anonId });
     const res = await request('PATCH', `/comments/${c.id}`, { anonId }, { text: 'Same ' });
     expect(((await res.json()) as { comment: Comment }).comment.edited).toBe(false);
+  });
+
+  it('limits an edit to 100 characters, also of an older longer comment', async () => {
+    const anonId = crypto.randomUUID();
+    const id = await seed(23, 'x'.repeat(2000), { author: anonId });
+    expect((await list(23)).items.find((c) => c.id === id)?.text).toHaveLength(2000);
+
+    const tooLong = await request('PATCH', `/comments/${id}`, { anonId }, { text: 'y'.repeat(101) });
+    expect(tooLong.status).toBe(400);
+    expect(await tooLong.json()).toMatchObject({ error: { details: { field: 'text', maxLength: 100 } } });
+
+    const res = await request('PATCH', `/comments/${id}`, { anonId }, { text: 'y'.repeat(100) });
+    expect(res.status).toBe(200);
   });
 
   it('returns a top-level comment with its replies', async () => {

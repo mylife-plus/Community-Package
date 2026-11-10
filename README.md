@@ -110,7 +110,7 @@ Feedback routes need `X-App-Id`; writes also need `X-Anon-Id`.
 |---|---|---|
 | GET | `/v1/health` | `{"status":"ok","db":"ok"}` when the Worker can reach D1 |
 | GET | `/v1/feedback` | 20 items and a `nextCursor`. Optional: `sort` (`newest`, `oldest`, `reactions`, `comments`), `type` and `status` (comma lists), `q` (words in the text, or a number such as `21` or `#21`), `cursor` |
-| POST | `/v1/feedback` | Creates feedback, returns the item |
+| POST | `/v1/feedback` | Creates feedback, returns the item. Text and a Problem's description: up to 100 characters; steps: up to 500 each |
 | PUT / DELETE | `/v1/feedback/:number/reaction` | Heart on / off, returns the item |
 
 Errors always use this shape:

@@ -129,9 +129,22 @@ describe('POST /v1/feedback', () => {
   });
 
   it('counts emoji as one character each', async () => {
-    const res = await post({ type: 'idea', text: '👍🏽'.repeat(2000) });
+    const res = await post({ type: 'idea', text: '👍🏽'.repeat(100) });
 
     expect(res.status).toBe(201);
+  });
+
+  it('accepts 100 characters and says the limit above it', async () => {
+    expect((await post({ type: 'improvement', text: 'a'.repeat(100) })).status).toBe(201);
+
+    const res = await post({ type: 'improvement', text: 'a'.repeat(101) });
+    expect(await res.json()).toEqual({
+      error: {
+        code: 'bad_request',
+        message: 'Text must be 1 to 100 characters',
+        details: { field: 'text', maxLength: 100 },
+      },
+    });
   });
 });
 
@@ -141,9 +154,9 @@ describe('POST /v1/feedback rejects', () => {
     ['a problem without steps', { type: 'problem', text: 'Crash' }, {}, 'Invalid steps'],
     ['an unknown type', { type: 'bug', text: 'Crash' }, {}, 'Invalid type'],
     ['a missing text', { type: 'idea' }, {}, 'Invalid text'],
-    ['an empty text', { type: 'idea', text: '' }, {}, 'Text must be 1 to 2000 characters'],
-    ['a text of only spaces', { type: 'idea', text: ' \n\t ' }, {}, 'Text must be 1 to 2000 characters'],
-    ['a text over 2000 characters', { type: 'idea', text: 'a'.repeat(2001) }, {}, 'Text must be 1 to 2000 characters'],
+    ['an empty text', { type: 'idea', text: '' }, {}, 'Text must be 1 to 100 characters'],
+    ['a text of only spaces', { type: 'idea', text: ' \n\t ' }, {}, 'Text must be 1 to 100 characters'],
+    ['a text over 100 characters', { type: 'idea', text: 'a'.repeat(101) }, {}, 'Text must be 1 to 100 characters'],
     ['a body that is not JSON', 'type=idea', {}, 'Body must be JSON'],
     ['a missing lang', { type: 'idea', text: 'Hi' }, { lang: null }, 'Invalid lang'],
     ['a malformed lang', { type: 'idea', text: 'Hi' }, { lang: 'EN-us' }, 'Invalid lang'],

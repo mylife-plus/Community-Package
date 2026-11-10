@@ -220,6 +220,7 @@ function readSteps(value: unknown): string[] {
       throw new ApiError('bad_request', `Each step must be 1 to ${MAX_STEP_LENGTH} characters`, 400, {
         field: 'steps',
         index,
+        ...(length === 0 ? {} : { maxLength: MAX_STEP_LENGTH }),
       });
     }
     return trimmed;
@@ -235,7 +236,7 @@ function readOptional(value: unknown, field: string, maxLength: number): string 
   const trimmed = value.trim();
   if (trimmed === '') return null;
   if (graphemeCount(trimmed) > maxLength) {
-    throw new ApiError('bad_request', `${field} must be at most ${maxLength} characters`, 400, { field });
+    throw new ApiError('bad_request', `${field} must be at most ${maxLength} characters`, 400, { field, maxLength });
   }
   return trimmed;
 }
