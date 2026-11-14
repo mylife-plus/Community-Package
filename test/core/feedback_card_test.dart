@@ -1,4 +1,6 @@
+import 'package:community_package/src/core/theme/community_theme.dart';
 import 'package:community_package/src/core/widgets/feedback_card.dart';
+import 'package:community_package/src/core/widgets/inner_shadow.dart';
 import 'package:community_package/src/data/models/feedback_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -126,5 +128,74 @@ void main() {
     });
 
     expect(tester.takeException(), isNull);
+  });
+
+  group('Figma layout (Settings-15, Settings-8)', () {
+    Future<Offset> pumpAt390(WidgetTester tester, Map<String, dynamic> json) async {
+      tester.view
+        ..physicalSize = const Size(390, 844)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          // Figma's dark colours: black cards on the dark blue screen.
+          theme: communityTheme(
+            ThemeData(colorScheme: const ColorScheme.dark(surface: Color(0xFF000000), onSurface: Color(0xFFFFFFFF))),
+          ),
+          home: Material(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: FeedbackCard(item: FeedbackItem.fromJson(json)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      return tester.getTopLeft(find.byType(FeedbackCard));
+    }
+
+    testWidgets('a two-line card is 121 high with Figma positions', (tester) async {
+      final card = await pumpAt390(tester, {
+        ...feedbackJson(2, status: 'in_progress', reactionCount: 5),
+        'text': 'First line\nsecond line',
+      });
+
+      expect(tester.getSize(find.byType(FeedbackCard)).height, 121);
+      expect(tester.getTopLeft(find.text('💡')) - card, const Offset(5, 6));
+      expect(tester.getTopLeft(find.text('#2')).dy - card.dy, 10);
+      expect(tester.getTopLeft(find.text('First line\nsecond line')) - card, const Offset(12, 41));
+      // The test font is wider than real ones, so only the chip's right edge.
+      final chip = tester.getRect(find.byType(InnerShadow)).shift(-card);
+      expect((chip.top, chip.bottom, chip.right), (90.0, 116.0, 370.0));
+      expect(tester.getTopLeft(find.text('in progress')).dx - card.dx, moreOrLessEquals(34, epsilon: 0.5));
+    });
+
+    testWidgets('the heart chip has a red border outside it only when hearted', (tester) async {
+      BoxDecoration chip() => tester.widget<AnimatedContainer>(find.byType(AnimatedContainer)).decoration! as BoxDecoration;
+
+      await pumpAt390(tester, feedbackJson(2, reactionCount: 5));
+      expect((chip().border! as Border).top.color.a, 0);
+
+      await pumpAt390(tester, {...feedbackJson(2, reactionCount: 5), 'reacted': true});
+      await tester.pumpAndSettle();
+      final side = (chip().border! as Border).top;
+      expect(side.color, const Color(0xFFFF0000));
+      expect(side.strokeAlign, BorderSide.strokeAlignOutside);
+    });
+
+    testWidgets('Problem lines: steps 11.5 under the path, device 9 under the steps', (tester) async {
+      await pumpAt390(tester, _problem(description: null));
+
+      final path = tester.getRect(richText('Inventory →').first);
+      final steps = tester.getRect(richText('1. Tap plus').first);
+      final device = find.text('iOS 17.4.1  App 3.2.0  iPhone 17 Pro');
+      expect(steps.top - path.bottom, 11.5);
+      expect(tester.getTopLeft(device).dy - steps.bottom, 9);
+      final style = tester.widget<Text>(device).style!;
+      expect((style.fontSize, style.fontWeight, style.color?.toARGB32()), (16.0, FontWeight.w500, 0xFFBABABA));
+    });
   });
 }

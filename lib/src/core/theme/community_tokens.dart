@@ -166,6 +166,9 @@ class CommunityColors {
   /// Inactive icons (sort, filter, search, +): Figma's #909090.
   static Color icon(BuildContext context) => _grey(context, 0x90);
 
+  /// The device line on Problem cards: Figma's #BABABA.
+  static Color deviceLine(BuildContext context) => _grey(context, 0xBA);
+
   /// Card and chip borders: Figma's #404040 on black is white at 25%.
   static Color border(BuildContext context) =>
       Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25);
