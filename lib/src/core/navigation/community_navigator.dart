@@ -7,6 +7,7 @@ import '../../features/feedback_list/presentation/feedback_list_screen.dart';
 import '../../features/new_feedback/presentation/new_feedback_screen.dart';
 import '../di/community_dependencies.dart';
 import '../l10n/community_localizations.dart';
+import '../theme/community_theme.dart';
 import '../widgets/community_popups.dart';
 import 'community_screens.dart';
 
@@ -105,17 +106,20 @@ class _CommunityNavigatorState extends State<CommunityNavigator> {
   Widget build(BuildContext context) {
     // System back pops the inner Navigator first; from its first route the
     // outer route (this whole flow) pops as usual.
-    return CommunityScreens(
-      screens: CommunityDependencies.config.screens,
-      child: NavigatorPopHandler<Object?>(
-        onPopWithResult: (_) => _navigatorKey.currentState?.maybePop(),
-        child: Navigator(
-          key: _navigatorKey,
-          initialRoute: widget.initialRoute,
-          // One route per flow start. The default splits '/feedback' into
-          // '/' and '/feedback' and pushes both.
-          onGenerateInitialRoutes: (_, name) => [_route(RouteSettings(name: name))],
-          onGenerateRoute: _route,
+    return Theme(
+      data: communityTheme(Theme.of(context)),
+      child: CommunityScreens(
+        screens: CommunityDependencies.config.screens,
+        child: NavigatorPopHandler<Object?>(
+          onPopWithResult: (_) => _navigatorKey.currentState?.maybePop(),
+          child: Navigator(
+            key: _navigatorKey,
+            initialRoute: widget.initialRoute,
+            // One route per flow start. The default splits '/feedback' into
+            // '/' and '/feedback' and pushes both.
+            onGenerateInitialRoutes: (_, name) => [_route(RouteSettings(name: name))],
+            onGenerateRoute: _route,
+          ),
         ),
       ),
     );

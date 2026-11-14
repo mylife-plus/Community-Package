@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import '../theme/community_tokens.dart';
+
 // Color emoji fonts: iOS first, then Android.
 //
 // Emoji are drawn in one of these, never in the host app's font. Flutter takes
@@ -9,9 +11,15 @@ import 'package:flutter/widgets.dart';
 const _emojiFont = 'Apple Color Emoji';
 const _emojiFallback = ['Noto Color Emoji'];
 
-/// Text style for an emoji of [size], in the platform's color emoji font.
-TextStyle emojiStyle(double size) =>
-    TextStyle(fontSize: size, fontFamily: _emojiFont, fontFamilyFallback: _emojiFallback);
+/// Text style for an emoji of [size], in the platform's color emoji font,
+/// with Figma's line height like the text around it.
+TextStyle emojiStyle(double size) => TextStyle(
+  fontSize: size,
+  fontFamily: _emojiFont,
+  fontFamilyFallback: _emojiFallback,
+  height: CommunityTokens.lineHeight,
+  leadingDistribution: TextLeadingDistribution.even,
+);
 
 /// A single emoji in the platform's color emoji font.
 class EmojiText extends StatelessWidget {

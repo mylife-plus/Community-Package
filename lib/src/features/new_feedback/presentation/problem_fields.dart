@@ -265,7 +265,6 @@ class _DeviceBox extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                height: 1.2,
                 color: CommunityColors.muted(context),
               ),
             ),
@@ -279,7 +278,6 @@ class _DeviceBox extends StatelessWidget {
                 style: theme.textTheme.bodyLarge?.copyWith(
                   fontSize: 20,
                   fontWeight: FontWeight.w400,
-                  height: 1.2,
                   color: theme.colorScheme.onSurface,
                 ),
               ),

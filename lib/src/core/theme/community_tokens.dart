@@ -4,6 +4,10 @@ import '../../data/models/feedback_item.dart';
 
 /// Spacing, radius and size tokens from the Figma file.
 abstract final class CommunityTokens {
+  /// Figma's line height: 20 px for 16 px text, the same ratio at every
+  /// size, with the extra space split evenly above and below the glyphs.
+  static const lineHeight = 1.25;
+
   static const screenPadding = 6.0;
   static const cardGap = 8.0;
   static const cardRadius = 5.0;

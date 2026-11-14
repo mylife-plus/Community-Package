@@ -161,6 +161,19 @@ void main() {
       expect(homeScreens, findsNothing);
     });
 
+    // The test theme is Material 3's, like Inventory's: 1.5 for bodyLarge.
+    testWidgets("every text uses Figma's line height, whatever the host's", (tester) async {
+      await openList(tester);
+
+      final texts = find.descendant(of: find.byType(Text), matching: find.byType(RichText));
+      expect(texts, findsWidgets);
+      for (final text in tester.widgetList<RichText>(texts)) {
+        final style = text.text.style;
+        expect(style?.height, 1.25, reason: text.text.toPlainText());
+        expect(style?.leadingDistribution, TextLeadingDistribution.even, reason: text.text.toPlainText());
+      }
+    });
+
     testWidgets('system back on the Community App screen closes the flow', (tester) async {
       await open(tester);
 
