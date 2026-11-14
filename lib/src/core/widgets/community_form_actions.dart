@@ -43,8 +43,7 @@ class CommunityFormActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final error = Theme.of(context).colorScheme.error;
-    final submit = CommunityColors.of(context).submit;
+    final colors = CommunityColors.of(context);
     final onDelete = this.onDelete;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -52,7 +51,7 @@ class CommunityFormActions extends StatelessWidget {
         _ActionButton(
           label: cancelLabel,
           onPressed: onCancel,
-          icon: CustomPaint(size: const Size(20, 20), painter: _CrossPainter(error)),
+          icon: CustomPaint(size: const Size(20, 20), painter: _CrossPainter(colors.cancel)),
         ),
         if (onDelete == null)
           const SizedBox(width: CommunityTokens.actionButtonGap)
@@ -66,7 +65,7 @@ class CommunityFormActions extends StatelessWidget {
           onPressed: onSubmit,
           icon: Opacity(
             opacity: onSubmit == null ? disabledOpacity : 1,
-            child: CustomPaint(size: const Size(30, 27), painter: _CheckPainter(submit)),
+            child: CustomPaint(size: const Size(30, 27), painter: _CheckPainter(colors.submit)),
           ),
         ),
       ],
@@ -90,15 +89,21 @@ class _ActionButton extends StatelessWidget {
       excludeSemantics: true,
       child: Tooltip(
         message: label,
-        child: Material(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(CommunityTokens.actionButtonRadius),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onPressed,
-            child: SizedBox.fromSize(
-              size: CommunityTokens.actionButtonSize,
-              child: Center(child: icon),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(CommunityTokens.actionButtonRadius),
+            boxShadow: const [CommunityTokens.actionButtonShadow],
+          ),
+          child: Material(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(CommunityTokens.actionButtonRadius),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onPressed,
+              child: SizedBox.fromSize(
+                size: CommunityTokens.actionButtonSize,
+                child: Center(child: icon),
+              ),
             ),
           ),
         ),

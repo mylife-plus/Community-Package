@@ -41,8 +41,8 @@ class CommunityTextField extends StatelessWidget {
 
   static TextStyle? hintStyle(BuildContext context) => Theme.of(context).textTheme.bodyLarge?.copyWith(
     fontSize: 20,
-    fontWeight: FontWeight.w300,
-    color: CommunityColors.muted(context),
+    fontWeight: FontWeight.w400,
+    color: CommunityColors.placeholder(context),
   );
 
   /// The count, shown only close to the limit.

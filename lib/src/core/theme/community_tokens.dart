@@ -63,29 +63,38 @@ abstract final class CommunityTokens {
   // New Feedback form. Measured from the Figma PNG exports (frames 1:144
   // and 1:181), not read from Figma itself.
   static const formPadding = 14.0;
+
+  /// Form fields are 368 wide on a 390 px phone (Settings-1 to -4).
+  static const formFieldInset = 11.0;
   static const fieldMinHeight = 47.0;
-  static const fieldRadius = 3.0;
+  static const fieldRadius = 4.0;
   static const fieldPadding = EdgeInsets.symmetric(horizontal: 17, vertical: 10);
   static const topicPillMinWidth = 176.0;
   static const topicMenuMinWidth = 182.0;
-  static const topicRowHeight = 42.0;
-  static const topicRadius = 8.0;
+  static const topicRowHeight = 43.0;
+  static const topicRadius = 10.0;
 
-  // Problem form, measured from the PNG exports of frames Settings-3 and
-  // Settings-4: fields 46 px high and 5 px apart; the device boxes are
-  // 93, 79 and 189 px wide with 4 px between them.
-  static const problemFieldGap = 5.0;
+  /// The open topic menu's bottom corners (its top ones are [topicRadius]).
+  static const topicMenuBottomRadius = 9.0;
+
+  // Problem form (Settings-3 and -4): fields 47 px high and 4 px apart; the
+  // device boxes are 93, 79 and 189 px wide with 4 px between them, the
+  // caption at (6, 3) and the value at (9, 18), counted from the outside of
+  // the 1 px border.
+  static const problemFieldGap = 4.0;
   static const deviceBoxGap = 4.0;
   static const deviceBoxFlex = (os: 93, app: 79, phone: 189);
-  static const deviceBoxPadding = EdgeInsets.fromLTRB(7, 3, 7, 4);
+  static const deviceBoxPadding = EdgeInsets.fromLTRB(5, 2, 5, 3);
+  static const deviceValueIndent = 3.0;
 
   /// Screen picker rows: each level is indented this much more.
   static const screenIndent = 20.0;
 
-  /// The ✗ / ✓ buttons at the bottom of a form.
+  /// The ✗ / ✓ buttons at the bottom of a form, with Figma's drop shadow.
   static const actionButtonSize = Size(61, 59);
-  static const actionButtonRadius = 9.0;
+  static const actionButtonRadius = 11.0;
   static const actionButtonGap = 80.0;
+  static const actionButtonShadow = BoxShadow(color: Color(0x40000000), offset: Offset(0, 4), blurRadius: 4);
 
   /// The red 🗑 between ✗ and ✓ (Edit Comment, Settings-12): 43 px square,
   /// about 30 px from each.
@@ -116,6 +125,7 @@ class CommunityColors {
     required this.cost,
     required this.reacted,
     required this.submit,
+    required this.cancel,
   });
 
   static const _dark = CommunityColors._(
@@ -125,6 +135,7 @@ class CommunityColors {
     cost: Color(0xFFFF0000),
     reacted: Color(0xFFFF0000),
     submit: Color(0xFF4BE000),
+    cancel: Color(0xFFFF0000),
   );
 
   static const _light = CommunityColors._(
@@ -134,6 +145,7 @@ class CommunityColors {
     cost: Color(0xFFD00000),
     reacted: Color(0xFFD00000),
     submit: Color(0xFF2E8B00),
+    cancel: Color(0xFFD00000),
   );
 
   static CommunityColors of(BuildContext context) =>
@@ -155,6 +167,10 @@ class CommunityColors {
   /// The ✓ of a form's submit button.
   final Color submit;
 
+  /// The ✗ of a form's cancel button and the "agree to Rules" link
+  /// (specs.md: #FF0000 on dark).
+  final Color cancel;
+
   /// A solid grey: [amount] of onSurface over the surface colour. On
   /// Figma's black it gives the exact Figma grey; in light mode the
   /// matching shade on white.
@@ -165,6 +181,12 @@ class CommunityColors {
 
   /// Inactive icons (sort, filter, search, +): Figma's #909090.
   static Color icon(BuildContext context) => _grey(context, 0x90);
+
+  /// Small captions (OS / App / Phone): Figma's #909090.
+  static Color caption(BuildContext context) => _grey(context, 0x90);
+
+  /// Placeholders and field labels: Figma's #898989.
+  static Color placeholder(BuildContext context) => _grey(context, 0x89);
 
   /// The device line on Problem cards: Figma's #BABABA.
   static Color deviceLine(BuildContext context) => _grey(context, 0xBA);

@@ -24,11 +24,9 @@ class ScreenPickerField extends StatelessWidget {
     final l = CommunityLocalizations.of(context);
     final theme = Theme.of(context);
     final chosen = screen;
-    final style = theme.textTheme.bodyLarge?.copyWith(
-      fontSize: 20,
-      fontWeight: chosen == null ? FontWeight.w300 : FontWeight.w400,
-      color: chosen == null ? CommunityColors.muted(context) : theme.colorScheme.onSurface,
-    );
+    final style = chosen == null
+        ? CommunityTextField.hintStyle(context)
+        : CommunityTextField.textStyle(context);
     final radius = BorderRadius.circular(CommunityTokens.fieldRadius);
 
     return Semantics(
@@ -265,20 +263,23 @@ class _DeviceBox extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                color: CommunityColors.muted(context),
+                color: CommunityColors.caption(context),
               ),
             ),
             // Long values shrink to fit instead of being cut off.
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                maxLines: 1,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w400,
-                  color: theme.colorScheme.onSurface,
+            Padding(
+              padding: const EdgeInsets.only(left: CommunityTokens.deviceValueIndent),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w400,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
               ),
             ),

@@ -285,4 +285,19 @@ void main() {
       expect(rules, findsOneWidget);
     });
   }
+
+  // Settings-18: decline and agree 79 apart, centred.
+  testWidgets('the privacy buttons sit 79 apart in the middle', (tester) async {
+    // Wide enough for the test font's labels side by side.
+    tester.view
+      ..physicalSize = const Size(600, 844)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: PrivacyNoticeSheet())));
+
+    final decline = tester.getRect(find.widgetWithText(FilledButton, 'decline'));
+    final agree = tester.getRect(find.widgetWithText(FilledButton, 'agree'));
+    expect(agree.left - decline.right, 79);
+    expect(decline.left, moreOrLessEquals(600 - agree.right, epsilon: 0.5));
+  });
 }

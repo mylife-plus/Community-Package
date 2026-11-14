@@ -54,11 +54,13 @@ class NewFeedbackScreen extends StatelessWidget {
   }
 }
 
-// Gaps between the form's parts, from the Figma export. The rules link's
-// 48 px tap area adds about 14 px above its text, so Figma's 33 px is 19.
+// Gaps between the form's parts, from the Figma export: the first field 37
+// under the pill, 28 on the Problem form. The rules link's 48 px tap area
+// adds 14 px above its text, so Figma's 33 px is 19.
 // The pill's top is 46.5 below the title's centre (Settings-1).
 const _pillTop = 24.5;
 const _pillToField = 37.0;
+const _pillToProblemField = 28.0;
 const _fieldToRules = 19.0;
 
 class _Form extends StatelessWidget {
@@ -94,9 +96,9 @@ class _Form extends StatelessWidget {
                   children: [
                     SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(
-                        CommunityTokens.formPadding,
+                        CommunityTokens.formFieldInset,
                         _pillTop,
-                        CommunityTokens.formPadding,
+                        CommunityTokens.formFieldInset,
                         24,
                       ),
                       child: Column(
@@ -112,7 +114,9 @@ class _Form extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(height: _pillToField),
+                          SizedBox(
+                            height: controller.type == FeedbackType.problem ? _pillToProblemField : _pillToField,
+                          ),
                           if (controller.type == FeedbackType.problem)
                             ..._problemFields(context, l)
                           else
@@ -287,8 +291,8 @@ class _RulesLink extends StatelessWidget {
     return TextButton(
       onPressed: onTap,
       style: TextButton.styleFrom(
-        foregroundColor: agreed ? CommunityColors.muted(context) : theme.colorScheme.error,
-        textStyle: theme.textTheme.titleSmall?.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
+        foregroundColor: agreed ? CommunityColors.muted(context) : CommunityColors.of(context).cancel,
+        textStyle: theme.textTheme.titleSmall?.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.padded,

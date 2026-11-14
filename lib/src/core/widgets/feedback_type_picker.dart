@@ -50,6 +50,7 @@ class FeedbackTypeMenu extends StatelessWidget {
     final divider = Container(height: 1, color: Theme.of(context).colorScheme.primary);
     return _Frame(
       minWidth: CommunityTokens.topicMenuMinWidth,
+      bottomRadius: CommunityTokens.topicMenuBottomRadius,
       child: IntrinsicWidth(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -73,15 +74,21 @@ class FeedbackTypeMenu extends StatelessWidget {
 
 /// Black box with the blue outline shared by the pill and the menu.
 class _Frame extends StatelessWidget {
-  const _Frame({required this.minWidth, required this.child});
+  const _Frame({required this.minWidth, this.bottomRadius = CommunityTokens.topicRadius, required this.child});
 
   final double minWidth;
+
+  /// Settings-1: the open menu's bottom corners are a little tighter.
+  final double bottomRadius;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(CommunityTokens.topicRadius);
+    final radius = BorderRadius.vertical(
+      top: const Radius.circular(CommunityTokens.topicRadius),
+      bottom: Radius.circular(bottomRadius),
+    );
     return ConstrainedBox(
       constraints: BoxConstraints(minWidth: minWidth),
       child: Material(

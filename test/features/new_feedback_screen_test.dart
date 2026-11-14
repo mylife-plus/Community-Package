@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:community_package/community_package.dart';
 import 'package:community_package/src/core/di/community_dependencies.dart';
+import 'package:community_package/src/core/widgets/feedback_type_picker.dart';
 import 'package:community_package/src/data/repositories/identity_repository.dart';
 import 'package:community_package/src/features/feedback_list/presentation/feedback_list_screen.dart';
 import 'package:community_package/src/features/new_feedback/presentation/new_feedback_screen.dart';
@@ -112,6 +113,47 @@ void main() {
     expect(find.text('Your improvement idea...'), findsOneWidget);
     expect(find.text('agree to Rules'), findsOneWidget);
     expect(backend.requests, isEmpty);
+  });
+
+  // Settings-1 and -2, at 390 px in dark mode.
+  testWidgets('the menu, pill, field, rules link and buttons match Figma', (tester) async {
+    tester.view
+      ..physicalSize = const Size(390, 844)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await openFromSettings(tester, theme: ThemeData.dark());
+
+    final menu = find.byType(FeedbackTypeMenu);
+    final menuShape = tester.widget<Material>(find.descendant(of: menu, matching: find.byType(Material)).first).shape!
+        as RoundedRectangleBorder;
+    expect(
+      menuShape.borderRadius,
+      const BorderRadius.vertical(top: Radius.circular(10), bottom: Radius.circular(9)),
+    );
+    expect(tester.getSize(find.ancestor(of: find.text('Idea'), matching: find.byType(Container)).first).height, 43);
+
+    await tapAndSettle(tester, find.text('Improvement'));
+    final titleCentre = tester.getCenter(find.text('new Feedback')).dy;
+    final pill = tester.getRect(find.byType(FeedbackTypePill));
+    final field = tester.getRect(find.byType(TextField));
+    expect(pill.top - titleCentre, 46.5);
+    expect(pill.height, 43);
+    expect(field.top - pill.bottom, 37);
+    expect((field.left, field.width), (11.0, 368.0));
+
+    final link = find.text('agree to Rules');
+    expect(tester.getTopLeft(link).dy - field.bottom, 33);
+    final linkStyle = tester.widget<TextButton>(find.ancestor(of: link, matching: find.byType(TextButton))).style!;
+    expect(linkStyle.textStyle!.resolve({})!.fontWeight, FontWeight.w700);
+    expect(linkStyle.foregroundColor!.resolve({}), const Color(0xFFFF0000));
+
+    final cancelBox = tester.getRect(cancel);
+    expect(tester.getRect(submit).left - cancelBox.right, 80);
+    expect(cancelBox.size, const Size(61, 59));
+    final button = tester.widget<DecoratedBox>(find.descendant(of: cancel, matching: find.byType(DecoratedBox)).first);
+    final decoration = button.decoration as BoxDecoration;
+    expect(decoration.borderRadius, BorderRadius.circular(11));
+    expect(decoration.boxShadow, [const BoxShadow(color: Color(0x40000000), offset: Offset(0, 4), blurRadius: 4)]);
   });
 
   testWidgets('a topic closes the list and sets the prompt', (tester) async {

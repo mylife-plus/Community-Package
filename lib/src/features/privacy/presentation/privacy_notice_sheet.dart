@@ -87,20 +87,23 @@ class PrivacyNoticeSheet extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(19, 8, 19, 32),
           child: anonId == null
-              // Wraps onto two lines when long labels or a large text size
-              // don't fit side by side.
-              ? Wrap(
-                  alignment: WrapAlignment.spaceEvenly,
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    CommunityButton(
-                      label: l.decline,
-                      destructive: true,
-                      onPressed: () => closePopup(context, false),
-                    ),
-                    CommunityButton(label: l.agree, onPressed: () => closePopup(context, true)),
-                  ],
+              // Settings-18: 79 apart (x50 and x234), closer on narrow
+              // phones. Wraps onto two lines when long labels or a large
+              // text size don't fit side by side.
+              ? LayoutBuilder(
+                  builder: (context, box) => Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: (box.maxWidth - 2 * CommunityTokens.buttonSize.width).clamp(_minButtonGap, _buttonGap),
+                    runSpacing: 12,
+                    children: [
+                      CommunityButton(
+                        label: l.decline,
+                        destructive: true,
+                        onPressed: () => closePopup(context, false),
+                      ),
+                      CommunityButton(label: l.agree, onPressed: () => closePopup(context, true)),
+                    ],
+                  ),
                 )
               : Center(
                   child: CommunityButton(label: l.close, onPressed: () => closePopup(context)),
@@ -111,6 +114,10 @@ class PrivacyNoticeSheet extends StatelessWidget {
   }
 
   static const _gap = SizedBox(height: 19);
+
+  /// Between decline and agree: Figma's 79, at least 12 on narrow phones.
+  static const _buttonGap = 79.0;
+  static const _minButtonGap = 12.0;
 
   static Widget _headed(String title, String text, TextStyle? bold, TextStyle? body) {
     return Text.rich(
