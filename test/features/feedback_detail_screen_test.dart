@@ -12,6 +12,7 @@ import 'package:community_package/src/features/feedback_list/presentation/feedba
 import 'package:community_package/src/features/privacy/presentation/post_gate.dart';
 import 'package:community_package/src/features/privacy/presentation/rules_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -225,6 +226,21 @@ void main() {
     expect(find.byType(EditCommentSheet), findsNothing);
     expect(find.text('Any news?'), findsOneWidget);
     expect(find.textContaining('· edited'), findsOneWidget);
+  });
+
+  // Settings-12: 70% scrim, a #404040 field border, a 43×42 🗑 with the
+  // outline trash.
+  testWidgets('Edit Comment looks like Figma', (tester) async {
+    await open(tester, theme: ThemeData(colorScheme: const ColorScheme.dark(surface: Color(0xFF000000))));
+    await tapAndSettle(tester, editButton);
+
+    final barrier = tester.widgetList<ModalBarrier>(find.byType(ModalBarrier)).last;
+    expect(barrier.color, const Color(0xB3000000));
+    final field = tester.widget<TextField>(find.descendant(of: find.byType(EditCommentSheet), matching: find.byType(TextField)));
+    expect((field.decoration!.enabledBorder! as OutlineInputBorder).borderSide.color.toARGB32(), 0xFF404040);
+    final delete = find.byTooltip('delete');
+    expect(tester.getSize(find.descendant(of: delete, matching: find.byType(InkWell))), const Size(43, 42));
+    expect(find.descendant(of: delete, matching: find.byType(SvgPicture)), findsOneWidget);
   });
 
   testWidgets('Edit Comment: 🗑 asks first, then leaves a placeholder above the replies', (tester) async {

@@ -11,6 +11,7 @@ class CommunityTextField extends StatelessWidget {
     this.maxLength,
     this.enabled = true,
     this.leading,
+    this.borderColor,
   });
 
   /// The counter shows from this share of [maxLength] on: 80 of 100, 400
@@ -28,6 +29,10 @@ class CommunityTextField extends StatelessWidget {
   /// Always shown before the text and the hint, like the 📲 on the screen
   /// field. A `prefix` would show only while focused or filled.
   final Widget? leading;
+
+  /// The border while not focused. Defaults to the forms' blue; sheets use
+  /// Figma's greys.
+  final Color? borderColor;
 
   /// The typed text.
   static TextStyle? textStyle(BuildContext context) {
@@ -92,8 +97,8 @@ class CommunityTextField extends StatelessWidget {
             : Padding(padding: EdgeInsets.only(left: padding.left, right: 6), child: leading),
         prefixIconConstraints: const BoxConstraints(),
         constraints: const BoxConstraints(minHeight: CommunityTokens.fieldMinHeight),
-        enabledBorder: border(CommunityColors.fieldBorder(context)),
-        disabledBorder: border(CommunityColors.fieldBorder(context)),
+        enabledBorder: border(borderColor ?? CommunityColors.fieldBorder(context)),
+        disabledBorder: border(borderColor ?? CommunityColors.fieldBorder(context)),
         focusedBorder: border(theme.colorScheme.primary),
       ),
     );

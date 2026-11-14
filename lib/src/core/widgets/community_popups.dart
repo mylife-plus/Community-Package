@@ -13,10 +13,12 @@ import 'community_button.dart';
 /// A bottom sheet in the package's style. It grows with its content up to
 /// the whole screen below the status bar, so long content must scroll; a
 /// Column with an Expanded child fills that height. Dragging the sheet down
-/// closes it with null.
-Future<T?> showCommunitySheet<T>(BuildContext context, {required WidgetBuilder builder}) {
+/// closes it with null. [barrierColor] dims the screen behind it; null
+/// keeps Flutter's default.
+Future<T?> showCommunitySheet<T>(BuildContext context, {required WidgetBuilder builder, Color? barrierColor}) {
   return showModalBottomSheet<T>(
     context: context,
+    barrierColor: barrierColor,
     // Without this Flutter caps the sheet at 9/16 of the screen height.
     isScrollControlled: true,
     useSafeArea: true,

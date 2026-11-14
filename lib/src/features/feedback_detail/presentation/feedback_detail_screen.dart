@@ -136,6 +136,7 @@ class FeedbackDetailScreen extends StatelessWidget {
   Future<void> _edit(BuildContext context, FeedbackDetailController controller, FeedbackComment comment) async {
     final result = await showCommunitySheet<EditCommentResult>(
       context,
+      barrierColor: CommunityTokens.sheetScrim,
       builder: (_) => EditCommentSheet(comment: comment, maxLength: FeedbackDetailController.maxCommentLength),
     );
     if (result == null || !context.mounted) return;

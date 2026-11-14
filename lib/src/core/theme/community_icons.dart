@@ -14,5 +14,9 @@ abstract final class CommunityIcons {
   static const search = 'assets/icons/search.svg';
   static const sort = 'assets/icons/sort.svg';
 
-  static const all = [add, arrowLeft, arrowRight, filter, search, sort];
+  /// The outline trash of the 🗑 button, a 1.5 px line icon drawn from the
+  /// Figma export.
+  static const trash = 'assets/icons/trash.svg';
+
+  static const all = [add, arrowLeft, arrowRight, filter, search, sort, trash];
 }

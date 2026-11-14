@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
+import '../theme/community_icons.dart';
 import '../theme/community_tokens.dart';
 
 /// The ✗ (cancel) and ✓ (submit) buttons at the bottom of a form, with an
@@ -112,7 +114,8 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-/// The red 🗑 button: smaller than ✗ and ✓, in the theme's error colour.
+/// The red 🗑 button: smaller than ✗ and ✓, in the theme's error colour,
+/// with Figma's outline trash.
 class _DeleteButton extends StatelessWidget {
   const _DeleteButton({required this.label, required this.onPressed});
 
@@ -136,7 +139,15 @@ class _DeleteButton extends StatelessWidget {
             onTap: onPressed,
             child: SizedBox.fromSize(
               size: CommunityTokens.deleteButtonSize,
-              child: Icon(Icons.delete_outline, size: 24, color: scheme.onError),
+              child: Center(
+                child: SvgPicture.asset(
+                  CommunityIcons.trash,
+                  package: CommunityIcons.package,
+                  width: 20,
+                  height: 22,
+                  colorFilter: ColorFilter.mode(scheme.onError, BlendMode.srcIn),
+                ),
+              ),
             ),
           ),
         ),

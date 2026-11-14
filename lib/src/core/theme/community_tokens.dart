@@ -36,6 +36,9 @@ abstract final class CommunityTokens {
   static const rowEmojiGap = 10.0;
 
   static const sheetRadius = 5.0;
+
+  /// Behind the edit sheets: black at 70% (Settings-9, -12, -14).
+  static const sheetScrim = Color(0xB3000000);
   static const buttonSize = Size(105, 42);
   static const buttonRadius = 5.0;
 
@@ -96,9 +99,9 @@ abstract final class CommunityTokens {
   static const actionButtonGap = 80.0;
   static const actionButtonShadow = BoxShadow(color: Color(0x40000000), offset: Offset(0, 4), blurRadius: 4);
 
-  /// The red 🗑 between ✗ and ✓ (Edit Comment, Settings-12): 43 px square,
+  /// The red 🗑 between ✗ and ✓ (Edit Comment, Settings-12): 43 × 42,
   /// about 30 px from each.
-  static const deleteButtonSize = Size(43, 43);
+  static const deleteButtonSize = Size(43, 42);
   static const deleteButtonGap = 30.0;
 
   /// Space under the ✗ / ✓ buttons on phones without a bottom inset.
@@ -184,6 +187,9 @@ class CommunityColors {
 
   /// Small captions (OS / App / Phone): Figma's #909090.
   static Color caption(BuildContext context) => _grey(context, 0x90);
+
+  /// The edit Comment field's border: Figma's #404040.
+  static Color commentFieldBorder(BuildContext context) => _grey(context, 0x40);
 
   /// Placeholders and field labels: Figma's #898989.
   static Color placeholder(BuildContext context) => _grey(context, 0x89);

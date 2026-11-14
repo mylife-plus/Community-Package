@@ -103,6 +103,7 @@ class _EditCommentSheetState extends State<EditCommentSheet> {
                       controller: _controller,
                       hint: l.newCommentHint,
                       maxLength: widget.maxLength,
+                      borderColor: CommunityColors.commentFieldBorder(context),
                     ),
                     const SizedBox(height: 24),
                     CommunityFormActions(
