@@ -8,6 +8,17 @@ abstract final class CommunityTokens {
   /// size, with the extra space split evenly above and below the glyphs.
   static const lineHeight = 1.25;
 
+  /// The header: 44 high, the back arrow's 24 px box 8 from the left edge.
+  /// Its tap area stays 44 px square.
+  static const headerHeight = 44.0;
+  static const backArrowInset = 8.0;
+
+  /// Lists: the toolbar starts 14.5 under the header, the first card 2
+  /// under the toolbar (Settings-15: toolbar icons 59.5 and the first card
+  /// 84.5 below the title's centre).
+  static const listToolbarTop = 14.5;
+  static const listTop = 2.0;
+
   static const screenPadding = 6.0;
   static const cardGap = 8.0;
   static const cardRadius = 5.0;
@@ -143,6 +154,17 @@ class CommunityColors {
 
   /// The ✓ of a form's submit button.
   final Color submit;
+
+  /// A solid grey: [amount] of onSurface over the surface colour. On
+  /// Figma's black it gives the exact Figma grey; in light mode the
+  /// matching shade on white.
+  static Color _grey(BuildContext context, int figmaGrey) {
+    final scheme = Theme.of(context).colorScheme;
+    return Color.alphaBlend(scheme.onSurface.withValues(alpha: figmaGrey / 0xFF), scheme.surface);
+  }
+
+  /// Inactive icons (sort, filter, search, +): Figma's #909090.
+  static Color icon(BuildContext context) => _grey(context, 0x90);
 
   /// Card and chip borders: Figma's #404040 on black is white at 25%.
   static Color border(BuildContext context) =>

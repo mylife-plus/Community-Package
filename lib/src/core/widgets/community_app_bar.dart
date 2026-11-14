@@ -29,17 +29,25 @@ class CommunityAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onBack;
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(CommunityTokens.headerHeight);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
     return AppBar(
+      toolbarHeight: CommunityTokens.headerHeight,
       centerTitle: true,
+      leadingWidth: CommunityTokens.headerHeight,
       leading: IconButton(
         tooltip: CommunityLocalizations.of(context).back,
         onPressed: onBack ?? () => CommunityNavigator.back(context),
+        constraints: const BoxConstraints.tightFor(
+          width: CommunityTokens.headerHeight,
+          height: CommunityTokens.headerHeight,
+        ),
+        padding: const EdgeInsets.only(left: CommunityTokens.backArrowInset),
+        alignment: Alignment.centerLeft,
         icon: SvgPicture.asset(
           CommunityIcons.arrowLeft,
           package: CommunityIcons.package,

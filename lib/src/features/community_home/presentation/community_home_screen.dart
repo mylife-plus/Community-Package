@@ -38,9 +38,10 @@ class CommunityHomeScreen extends StatelessWidget {
           children: [
             Expanded(
               child: ListView(
+                // The intro's top is 38.5 below the title's centre.
                 padding: const EdgeInsets.fromLTRB(
                   CommunityTokens.screenPadding,
-                  8,
+                  16.5,
                   CommunityTokens.screenPadding,
                   16,
                 ),

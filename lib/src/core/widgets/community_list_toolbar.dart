@@ -140,7 +140,7 @@ class _ToolbarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? Theme.of(context).colorScheme.primary : CommunityColors.muted(context);
+    final color = active ? Theme.of(context).colorScheme.primary : CommunityColors.icon(context);
     return Semantics(
       selected: active,
       child: IconButton(
@@ -225,7 +225,7 @@ class _SearchField extends StatelessWidget {
                   package: CommunityIcons.package,
                   width: 16,
                   height: 17,
-                  colorFilter: ColorFilter.mode(muted, BlendMode.srcIn),
+                  colorFilter: ColorFilter.mode(CommunityColors.icon(context), BlendMode.srcIn),
                 ),
               ),
               prefixIconConstraints: const BoxConstraints(),
@@ -239,7 +239,7 @@ class _SearchField extends StatelessWidget {
         IconButton(
           tooltip: l.closeSearch,
           onPressed: onClose,
-          icon: Icon(Icons.close, size: 24, color: muted),
+          icon: Icon(Icons.close, size: 24, color: CommunityColors.icon(context)),
         ),
       ],
     );

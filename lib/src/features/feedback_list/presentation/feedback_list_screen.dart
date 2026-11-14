@@ -55,6 +55,7 @@ class FeedbackListScreen extends StatelessWidget {
               actionLabel: l.retry,
               onAction: () => _retry(context, controller),
             ),
+            const SizedBox(height: CommunityTokens.listToolbarTop),
             CommunityListToolbar(
               sortActive: controller.query.sort != FeedbackSort.newest,
               filterActive: controller.query.hasFilter,
@@ -197,7 +198,7 @@ class _Body extends StatelessWidget {
 
 const _listPadding = EdgeInsets.fromLTRB(
   CommunityTokens.screenPadding,
-  CommunityTokens.cardGap,
+  CommunityTokens.listTop,
   CommunityTokens.screenPadding,
   CommunityTokens.cardGap * 3,
 );

@@ -348,9 +348,10 @@ class _Body extends StatelessWidget {
   }
 }
 
+// Settings-6: the card's top is 27 below the title's centre.
 const _padding = EdgeInsets.fromLTRB(
   CommunityTokens.screenPadding,
-  CommunityTokens.cardGap,
+  5,
   CommunityTokens.screenPadding,
   CommunityTokens.cardGap * 3,
 );

@@ -1,8 +1,10 @@
+import 'package:community_package/src/core/theme/community_theme.dart';
 import 'package:community_package/src/core/widgets/feedback_card.dart';
 import 'package:community_package/src/core/widgets/feedback_card_skeleton.dart';
 import 'package:community_package/src/features/feedback_list/presentation/feedback_list_controller.dart';
 import 'package:community_package/src/features/feedback_list/presentation/feedback_list_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -44,6 +46,26 @@ void main() {
     expect(find.text('in progress'), findsOneWidget);
     expect(find.text('💰 50 \$'), findsOneWidget);
     expect(find.text('❤️ 5'), findsOneWidget);
+  });
+
+  // Settings-15, measured from the title's centre: the toolbar icons 59.5
+  // and the first card 84.5 below it; the back arrow's box at x8.
+  testWidgets('header, toolbar and first card sit where Figma has them', (tester) async {
+    tester.view
+      ..physicalSize = const Size(390, 844)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    backend.answer(pageJson([1]));
+
+    await tester.pumpWidget(app(communityTheme(ThemeData.dark())));
+    await tester.pumpAndSettle();
+
+    final titleCentre = tester.getCenter(find.text('Feedback')).dy;
+    expect(titleCentre, 22);
+    expect(tester.getTopLeft(find.descendant(of: find.byTooltip('Back'), matching: find.byType(SvgPicture))).dx, 8);
+    expect(tester.getSize(find.byTooltip('Back')), const Size(44, 44));
+    expect(tester.getCenter(find.byTooltip('Sort')).dy - titleCentre, 59.5);
+    expect(tester.getTopLeft(find.byType(FeedbackCard)).dy - titleCentre, 84.5);
   });
 
   testWidgets('shows the error with a working retry', (tester) async {

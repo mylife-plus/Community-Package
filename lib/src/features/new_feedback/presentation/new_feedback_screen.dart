@@ -56,7 +56,8 @@ class NewFeedbackScreen extends StatelessWidget {
 
 // Gaps between the form's parts, from the Figma export. The rules link's
 // 48 px tap area adds about 14 px above its text, so Figma's 33 px is 19.
-const _pillTop = 16.0;
+// The pill's top is 46.5 below the title's centre (Settings-1).
+const _pillTop = 24.5;
 const _pillToField = 37.0;
 const _fieldToRules = 19.0;
 
