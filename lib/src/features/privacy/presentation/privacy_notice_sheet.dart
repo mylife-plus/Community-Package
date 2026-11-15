@@ -34,6 +34,7 @@ class PrivacyNoticeSheet extends StatelessWidget {
     final body = theme.textTheme.bodyLarge?.copyWith(
       fontSize: 16,
       fontWeight: FontWeight.w300,
+      height: CommunityTokens.readingLineHeight,
       color: onSurface,
     );
     final bold = body?.copyWith(fontWeight: FontWeight.w700);

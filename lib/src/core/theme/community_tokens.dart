@@ -8,6 +8,11 @@ abstract final class CommunityTokens {
   /// size, with the extra space split evenly above and below the glyphs.
   static const lineHeight = 1.25;
 
+  /// Long reading text (privacy notice, Rules) is set looser than Figma's
+  /// 1.25, for comfortable reading of whole paragraphs (WCAG 1.4.8:
+  /// https://www.w3.org/WAI/WCAG22/Understanding/visual-presentation.html).
+  static const readingLineHeight = 1.4;
+
   /// The header: 44 high, the back arrow's 24 px box 8 from the left edge.
   /// Its tap area stays 44 px square.
   static const headerHeight = 44.0;

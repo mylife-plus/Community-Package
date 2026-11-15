@@ -49,7 +49,11 @@ class RulesSheet extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 26),
             child: Column(
               children: [
-                Text(l.rulesWarning, textAlign: TextAlign.center, style: heading),
+                Text(
+                  l.rulesWarning,
+                  textAlign: TextAlign.center,
+                  style: heading?.copyWith(height: CommunityTokens.readingLineHeight),
+                ),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -101,6 +105,7 @@ class _Rule extends StatelessWidget {
               style: theme.textTheme.bodyLarge?.copyWith(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
+                height: CommunityTokens.readingLineHeight,
                 color: theme.colorScheme.onError,
               ),
             ),
