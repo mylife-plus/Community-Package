@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/l10n/community_localizations.dart';
+import '../../../core/theme/community_icons.dart';
 import '../../../core/theme/community_tokens.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/emoji_text.dart';
+import '../../../core/widgets/inner_shadow.dart';
 import '../../../data/models/feedback_comment.dart';
 import 'comment_field.dart';
 
@@ -19,6 +22,9 @@ class CommentThread extends StatelessWidget {
     required this.onToggle,
     required this.onEdit,
     required this.replyController,
+    required this.replying,
+    required this.onReply,
+    required this.onLeaveReply,
     required this.sendingReply,
     required this.onSendReply,
     required this.maxLength,
@@ -34,6 +40,16 @@ class CommentThread extends StatelessWidget {
   /// The ✏️ of one of the user's own comments: [thread] or a reply.
   final ValueChanged<FeedbackComment> onEdit;
   final TextEditingController replyController;
+
+  /// The reply field shows instead of the "+".
+  final bool replying;
+
+  /// The "+": show the reply field.
+  final VoidCallback onReply;
+
+  /// The reply field lost focus; the screen turns it back into the "+" if
+  /// it is empty.
+  final VoidCallback onLeaveReply;
   final bool sendingReply;
   final VoidCallback onSendReply;
   final int maxLength;
@@ -48,9 +64,10 @@ class CommentThread extends StatelessWidget {
       height: 1,
       thickness: 1,
       indent: CommunityTokens.commentDividerIndent,
-      endIndent: CommunityTokens.commentDividerIndent,
-      color: CommunityColors.border(context),
+      endIndent: CommunityTokens.commentDividerEndIndent,
+      color: CommunityColors.commentDivider(context),
     );
+    final l = CommunityLocalizations.of(context);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -62,14 +79,19 @@ class CommentThread extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: CommunityTokens.commentPadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _CommentBody(comment: thread, onEdit: onEdit, now: now, topLevel: true),
-                const SizedBox(height: CommunityTokens.commentGap),
-                _RepliesChip(count: thread.replies.length, open: open, onTap: onToggle),
-              ],
+            padding: CommunityTokens.commentPadding.copyWith(bottom: 0),
+            child: _CommentBody(comment: thread, onEdit: onEdit, now: now, topLevel: true),
+          ),
+          const SizedBox(height: CommunityTokens.commentGap),
+          // Settings-6: the chip sits 2 further out than the text.
+          Padding(
+            padding: EdgeInsets.only(
+              left: CommunityTokens.repliesChipInset,
+              bottom: open ? CommunityTokens.repliesChipToDivider : CommunityTokens.commentPadding.bottom,
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _RepliesChip(count: thread.replies.length, open: open, onTap: onToggle),
             ),
           ),
           if (open) ...[
@@ -81,15 +103,41 @@ class CommentThread extends StatelessWidget {
               ),
             ],
             divider,
-            Padding(
-              padding: CommunityTokens.commentPadding,
-              child: CommentField(
-                controller: replyController,
-                sending: sendingReply,
-                onSend: onSendReply,
-                maxLength: maxLength,
+            if (replying)
+              Padding(
+                padding: CommunityTokens.commentPadding,
+                child: Focus(
+                  canRequestFocus: false,
+                  skipTraversal: true,
+                  onFocusChange: (focused) {
+                    if (!focused) onLeaveReply();
+                  },
+                  child: CommentField(
+                    controller: replyController,
+                    sending: sendingReply,
+                    onSend: onSendReply,
+                    maxLength: maxLength,
+                    autofocus: true,
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: CommunityTokens.replyAddRowHeight,
+                child: Center(
+                  child: IconButton(
+                    tooltip: l.reply,
+                    onPressed: onReply,
+                    icon: SvgPicture.asset(
+                      CommunityIcons.add,
+                      package: CommunityIcons.package,
+                      width: CommunityTokens.toolbarIconSize,
+                      height: CommunityTokens.toolbarIconSize,
+                      colorFilter: ColorFilter.mode(CommunityColors.commentAdd(context), BlendMode.srcIn),
+                    ),
+                  ),
+                ),
               ),
-            ),
           ],
         ],
       ),
@@ -162,7 +210,7 @@ class _CommentBody extends StatelessWidget {
             comment.text,
             style: theme.textTheme.bodyLarge?.copyWith(
               fontSize: 16,
-              fontWeight: topLevel ? FontWeight.w500 : FontWeight.w400,
+              fontWeight: topLevel ? FontWeight.w500 : FontWeight.w300,
               color: theme.colorScheme.onSurface,
             ),
           ),
@@ -172,13 +220,17 @@ class _CommentBody extends StatelessWidget {
 }
 
 /// "💬 2 ▼": opens the replies (▼) or closes them (▲). Without replies it
-/// shows only 💬 and opens the reply field.
+/// shows only 💬 and opens the reply field. Like the heart chip, it has
+/// Figma's inner shadow and no border.
 class _RepliesChip extends StatelessWidget {
   const _RepliesChip({required this.count, required this.open, required this.onTap});
 
   final int count;
   final bool open;
   final VoidCallback onTap;
+
+  /// Settings-6: a ▼ about 12 × 8.5 in Figma's icon grey.
+  static const _arrowSize = Size(12, 8.5);
 
   @override
   Widget build(BuildContext context) {
@@ -192,45 +244,69 @@ class _RepliesChip extends StatelessWidget {
       excludeSemantics: true,
       child: Material(
         color: theme.colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: CommunityColors.border(context)),
-          borderRadius: BorderRadius.circular(CommunityTokens.cardRadius),
-        ),
+        borderRadius: BorderRadius.circular(CommunityTokens.cardRadius),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          child: Container(
-            constraints: BoxConstraints(
-              minWidth: CommunityTokens.repliesChipSize.width,
-              minHeight: CommunityTokens.repliesChipSize.height,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const EmojiText('💬', size: 16),
-                if (count > 0) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    '$count',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w300,
-                      color: theme.colorScheme.onSurface,
+          child: InnerShadow(
+            radius: CommunityTokens.cardRadius,
+            child: Container(
+              constraints: BoxConstraints(
+                minWidth: CommunityTokens.repliesChipSize.width,
+                minHeight: CommunityTokens.repliesChipSize.height,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const EmojiText('💬', size: 16),
+                  if (count > 0) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      '$count',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w300,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
+                  ],
+                  const SizedBox(width: 6),
+                  CustomPaint(
+                    size: _arrowSize,
+                    painter: _ArrowPainter(up: open, color: CommunityColors.icon(context)),
                   ),
                 ],
-                Icon(
-                  open ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                  size: 24,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+class _ArrowPainter extends CustomPainter {
+  const _ArrowPainter({required this.up, required this.color});
+
+  final bool up;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = up
+        ? (Path()
+            ..moveTo(0, size.height)
+            ..lineTo(size.width / 2, 0)
+            ..lineTo(size.width, size.height))
+        : (Path()
+            ..moveTo(0, 0)
+            ..lineTo(size.width / 2, size.height)
+            ..lineTo(size.width, 0));
+    canvas.drawPath(path..close(), Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_ArrowPainter old) => old.up != up || old.color != color;
 }

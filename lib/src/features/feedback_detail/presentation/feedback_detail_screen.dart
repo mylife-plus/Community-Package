@@ -94,6 +94,9 @@ class FeedbackDetailScreen extends StatelessWidget {
     if (error != null && context.mounted) _showError(context, error);
   }
 
+  /// Settings-6, -7: the header's emoji is 20, like the card's.
+  static const _headerEmojiSize = 20.0;
+
   PreferredSizeWidget _appBar(BuildContext context, FeedbackItem? item) {
     final l = CommunityLocalizations.of(context);
     if (item == null) return CommunityAppBar(emoji: '✍️', title: l.feedbackTitle);
@@ -101,11 +104,17 @@ class FeedbackDetailScreen extends StatelessWidget {
     if (status != null) {
       return CommunityAppBar(
         emoji: '💪',
+        emojiSize: _headerEmojiSize,
         title: feedbackStatusLabel(l, status),
+        titleWeight: FontWeight.w500,
         titleColor: CommunityColors.of(context).status(status),
       );
     }
-    return CommunityAppBar(emoji: feedbackTypeEmoji(item.type), title: feedbackTypeLabel(l, item.type));
+    return CommunityAppBar(
+      emoji: feedbackTypeEmoji(item.type),
+      emojiSize: _headerEmojiSize,
+      title: feedbackTypeLabel(l, item.type),
+    );
   }
 
   /// A heart needs the privacy notice once, not the rules.
@@ -236,6 +245,7 @@ class _Body extends StatelessWidget {
         onAdd: controller.toggleNewComment,
         addTooltip: l.writeComment,
         addActive: controller.newCommentOpen,
+        addColor: CommunityColors.commentAdd(context),
       ),
       if (controller.newCommentOpen && !controller.searchOpen)
         CommentField(
@@ -264,12 +274,12 @@ class _Body extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           itemCount: children.length,
-          // Card, toolbar and the first comment sit about 60 px apart in
-          // Settings-6 (the toolbar is 46); threads keep the list's gap.
+          // Settings-6: the comments start 66 under the card (the toolbar
+          // is 46); threads keep the list's gap.
           separatorBuilder: (_, index) => SizedBox(
             height: switch (index) {
-              0 => 4,
-              1 => 6,
+              0 => CommunityTokens.detailCardToToolbar,
+              1 => CommunityTokens.detailToolbarToComments,
               _ => CommunityTokens.cardGap,
             },
           ),
@@ -336,6 +346,9 @@ class _Body extends StatelessWidget {
     onToggle: () => controller.toggleThread(thread),
     onEdit: onEdit,
     replyController: controller.replyController(thread),
+    replying: controller.isReplying(thread),
+    onReply: () => controller.openReply(thread),
+    onLeaveReply: () => controller.closeReply(thread),
     sendingReply: controller.isSending(thread.id),
     onSendReply: () => onSendReply(thread),
     maxLength: FeedbackDetailController.maxCommentLength,

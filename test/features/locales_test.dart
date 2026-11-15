@@ -44,6 +44,10 @@ Map<String, dynamic> _list() => {
   'nextCursor': null,
 };
 
+/// A widget whose own Semantics carries [label], such as a replies chip.
+Finder _semantics(String label) =>
+    find.byWidgetPredicate((widget) => widget is Semantics && widget.properties.label == label);
+
 void main() {
   late FakeBackend backend;
   late BuildContext hostContext;
@@ -169,7 +173,8 @@ void main() {
         await tapAndSettle(tester, find.text('Feedback 2'));
         expect(find.text(l.commentDeleted), findsOneWidget);
         expectNoOverflow(tester, 'Feedback Detail');
-        await tapAndSettle(tester, find.byIcon(Icons.arrow_drop_down).first);
+        await tapAndSettle(tester, _semantics(l.showReplies(1)).first);
+        await tapAndSettle(tester, find.byTooltip(l.reply));
         await tapAndSettle(tester, find.byTooltip(l.writeComment));
         expectNoOverflow(tester, 'replies and comment field');
         await tapAndSettle(tester, find.byTooltip(l.editComment).first);

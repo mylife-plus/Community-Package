@@ -109,13 +109,25 @@ abstract final class CommunityTokens {
 
   // Feedback detail and comments, measured from the PNG export of
   // Settings-6: the new comment field 45 px high, a reply field 32 px, the
-  // replies chip 64 × 26, dividers inset about 10 px in the thread box.
+  // replies chip 65 × 26 at 10 from the box's edge and 4 above the
+  // divider, dividers 352 wide (11 in from the left, 15 from the right),
+  // the reply "+" on a 56 px row.
   static const commentPadding = EdgeInsets.fromLTRB(12, 8, 12, 10);
   static const commentFieldMinHeight = 45.0;
   static const replyFieldMinHeight = 32.0;
-  static const repliesChipSize = Size(64, 26);
-  static const commentDividerIndent = 10.0;
+  static const repliesChipSize = Size(65, 26);
+  static const repliesChipInset = 10.0;
+  static const repliesChipToDivider = 4.0;
+  static const commentDividerIndent = 11.0;
+  static const commentDividerEndIndent = 15.0;
   static const commentGap = 6.0;
+  static const replyAddRowHeight = 56.0;
+
+  /// The detail card's distance to the comment toolbar, and the toolbar's to
+  /// the first comment (Settings-6: the card's bottom is 32 above the
+  /// toolbar's centre, the box 34 below it).
+  static const detailCardToToolbar = 9.0;
+  static const detailToolbarToComments = 11.0;
 }
 
 /// Colours with no matching role in the host theme. The dark values are the
@@ -187,6 +199,12 @@ class CommunityColors {
 
   /// Small captions (OS / App / Phone): Figma's #909090.
   static Color caption(BuildContext context) => _grey(context, 0x90);
+
+  /// The comment "+" (toolbar and under a thread): Figma's #A4A4A4.
+  static Color commentAdd(BuildContext context) => _grey(context, 0xA4);
+
+  /// Dividers between comments: Figma's #5C5C5C.
+  static Color commentDivider(BuildContext context) => _grey(context, 0x5C);
 
   /// The edit Comment field's border: Figma's #404040.
   static Color commentFieldBorder(BuildContext context) => _grey(context, 0x40);

@@ -97,6 +97,23 @@ class FeedbackDetailController extends GetxController {
       ? !_closedThreads.contains(thread.id)
       : _openThreads.contains(thread.id);
 
+  /// Open threads whose reply field shows in place of the "+".
+  final _replying = <int>{};
+
+  /// The reply field shows instead of the "+" under [thread].
+  bool isReplying(FeedbackComment thread) => _replying.contains(thread.id);
+
+  /// The "+" under [thread]: shows its reply field.
+  void openReply(FeedbackComment thread) {
+    if (_replying.add(thread.id)) update();
+  }
+
+  /// The reply field lost focus: an empty one turns back into the "+".
+  void closeReply(FeedbackComment thread) {
+    if (replyController(thread).text.trim().isNotEmpty) return;
+    if (_replying.remove(thread.id)) update();
+  }
+
   /// The reply field of [thread], made when first asked for.
   TextEditingController replyController(FeedbackComment thread) =>
       _replyControllers.putIfAbsent(thread.id, TextEditingController.new);
@@ -264,6 +281,12 @@ class FeedbackDetailController extends GetxController {
     } else {
       open ? _openThreads.remove(id) : _openThreads.add(id);
     }
+    // Without replies the chip goes straight to the reply field.
+    if (!open && thread.replies.isEmpty) {
+      _replying.add(id);
+    } else if (open && replyController(thread).text.trim().isEmpty) {
+      _replying.remove(id);
+    }
     update();
   }
 
@@ -293,6 +316,7 @@ class FeedbackDetailController extends GetxController {
         searchOpen = false;
         _openThreads.clear();
         _closedThreads.clear();
+        _replying.removeWhere((id) => _replyControllers[id]?.text.trim().isEmpty ?? true);
         _show(const CommentQuery());
       });
 
@@ -302,6 +326,7 @@ class FeedbackDetailController extends GetxController {
     return _send(thread.id, field, () async {
       await _comments.createComment(number, field.text.trim(), parentId: thread.id);
       field.clear();
+      _replying.remove(thread.id);
       if (query.narrows) {
         _closedThreads.remove(thread.id);
       } else {

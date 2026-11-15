@@ -16,6 +16,8 @@ class CommunityAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.actions,
     this.onBack,
     this.titleColor,
+    this.emojiSize = 27,
+    this.titleWeight = FontWeight.w600,
   });
 
   final String emoji;
@@ -27,6 +29,11 @@ class CommunityAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   /// Replaces the default back, for screens that ask before leaving.
   final VoidCallback? onBack;
+
+  /// Screen titles have a 27 px emoji in SemiBold; the detail header's
+  /// status a 20 px one in Medium (specs.md §2).
+  final double emojiSize;
+  final FontWeight titleWeight;
 
   @override
   Size get preferredSize => const Size.fromHeight(CommunityTokens.headerHeight);
@@ -59,7 +66,7 @@ class CommunityAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          EmojiText(emoji, size: 27),
+          EmojiText(emoji, size: emojiSize),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
@@ -68,7 +75,7 @@ class CommunityAppBar extends StatelessWidget implements PreferredSizeWidget {
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontSize: 18,
-                fontWeight: FontWeight.w600,
+                fontWeight: titleWeight,
                 color: titleColor ?? color,
               ),
             ),

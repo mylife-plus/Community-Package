@@ -4,6 +4,8 @@ import 'package:community_package/src/core/navigation/community_navigator.dart';
 import 'package:community_package/src/core/widgets/comment_query_menus.dart';
 import 'package:community_package/src/core/widgets/feedback_card.dart';
 import 'package:community_package/src/data/repositories/identity_repository.dart';
+import 'package:community_package/src/core/widgets/inner_shadow.dart';
+import 'package:community_package/src/features/feedback_detail/presentation/comment_thread.dart';
 import 'package:community_package/src/features/feedback_detail/presentation/edit_comment_sheet.dart';
 import 'package:community_package/src/features/feedback_detail/presentation/feedback_detail_controller.dart';
 import 'package:community_package/src/features/feedback_detail/presentation/feedback_detail_screen.dart';
@@ -23,12 +25,19 @@ import '../helpers/feedback_json.dart';
 const _item = '/v1/feedback/3';
 const _comments = '/v1/feedback/3/comments';
 
+/// A widget whose own Semantics carries [label], such as a replies chip.
+Finder _semantics(String label) =>
+    find.byWidgetPredicate((widget) => widget is Semantics && widget.properties.label == label);
+
 void main() {
   late FakeBackend backend;
 
   final editButton = find.byTooltip('Edit comment');
   final addButton = find.byTooltip('Write a comment');
   final sendButton = find.byTooltip('Send');
+  final showReplies = _semantics('Show 2 replies');
+  final hideReplies = _semantics('Hide replies');
+  final replyPlus = find.byTooltip('Reply');
 
   /// A thread (#2, the user's, with two replies, one of them the user's)
   /// and a plain comment (#1).
@@ -94,6 +103,25 @@ void main() {
       expect(find.descendant(of: find.byType(AppBar), matching: find.text('in progress')), findsOneWidget);
     });
 
+    // specs.md §2: the status is 18 Medium after a 20 px 💪.
+    testWidgets('the status title is Medium with a 20 px emoji', (tester) async {
+      await open(tester);
+
+      final title = tester.widget<Text>(find.descendant(of: find.byType(AppBar), matching: find.text('in progress')));
+      expect(title.style?.fontWeight, FontWeight.w500);
+      expect(tester.widget<Text>(find.descendant(of: find.byType(AppBar), matching: find.text('💪'))).style?.fontSize, 20);
+    });
+
+    // Settings-6: the comments start 66 under the card.
+    testWidgets('card, toolbar and comments are spaced like Figma', (tester) async {
+      await open(tester);
+
+      final card = tester.getRect(find.byType(FeedbackCard));
+      final thread = tester.getRect(find.byType(CommentThread).first);
+      expect(thread.top - card.bottom, 66);
+      expect(tester.getCenter(find.byTooltip('Sort')).dy - card.bottom, 32);
+    });
+
     testWidgets('shows the type while there is no status', (tester) async {
       await open(tester, item: feedbackJson(3, type: 'problem'));
 
@@ -108,27 +136,87 @@ void main() {
     expect(find.text('Any update?'), findsOneWidget);
     expect(find.text('Me too'), findsOneWidget);
     expect(find.text('Working on it'), findsNothing);
-    expect(find.byIcon(Icons.arrow_drop_down), findsNWidgets(2));
+    expect(showReplies, findsOneWidget);
+    // The comment without replies: its chip opens the reply field.
+    expect(_semantics('Reply'), findsOneWidget);
   });
 
-  testWidgets('the replies chip opens the thread (▲) with a reply field, and closes it (▼)', (tester) async {
+  testWidgets('the replies chip opens the thread (▲) with a +, and closes it (▼)', (tester) async {
     await open(tester);
 
-    await tapAndSettle(tester, find.byIcon(Icons.arrow_drop_down).first);
+    await tapAndSettle(tester, showReplies);
     expect(find.text('Working on it'), findsOneWidget);
     expect(find.text('Thanks!'), findsOneWidget);
-    expect(find.byIcon(Icons.arrow_drop_up), findsOneWidget);
-    expect(find.widgetWithText(TextField, 'new Comment...'), findsOneWidget);
+    expect(hideReplies, findsOneWidget);
+    expect(replyPlus, findsOneWidget);
+    expect(find.widgetWithText(TextField, 'new Comment...'), findsNothing);
 
-    await tapAndSettle(tester, find.byIcon(Icons.arrow_drop_up));
+    await tapAndSettle(tester, hideReplies);
     expect(find.text('Working on it'), findsNothing);
+  });
+
+  // Settings-6, 11 Nov: the + under a thread turns into a focused reply
+  // field, and back into the + when the field is left empty.
+  testWidgets('the + shows a focused reply field; left empty it turns back', (tester) async {
+    await open(tester);
+    await tapAndSettle(tester, showReplies);
+
+    await tapAndSettle(tester, replyPlus);
+    final field = find.widgetWithText(TextField, 'new Comment...');
+    expect(field, findsOneWidget);
+    expect(replyPlus, findsNothing);
+    expect(tester.widget<EditableText>(find.descendant(of: field, matching: find.byType(EditableText))).focusNode.hasFocus, isTrue);
+
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    expect(field, findsNothing);
+    expect(replyPlus, findsOneWidget);
+  });
+
+  testWidgets('a reply field with text stays when it loses focus', (tester) async {
+    await open(tester);
+    await tapAndSettle(tester, showReplies);
+    await tapAndSettle(tester, replyPlus);
+
+    await tester.enterText(find.widgetWithText(TextField, 'new Comment...'), 'Half a thought');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Half a thought'), findsOneWidget);
+    expect(replyPlus, findsNothing);
+  });
+
+  testWidgets('the chip of a comment without replies opens the reply field at once', (tester) async {
+    await open(tester);
+
+    await tapAndSettle(tester, _semantics('Reply'));
+
+    expect(find.widgetWithText(TextField, 'new Comment...'), findsOneWidget);
+  });
+
+  testWidgets('comment chips and dividers look like Figma', (tester) async {
+    await open(tester, theme: ThemeData(colorScheme: const ColorScheme.dark(surface: Color(0xFF000000))));
+    await tapAndSettle(tester, showReplies);
+
+    final thread = tester.getRect(find.byType(CommentThread).first);
+    final chip = tester.getRect(find.descendant(of: find.byType(CommentThread).first, matching: find.byType(InnerShadow)));
+    expect(chip.left - thread.left, 10);
+    expect(chip.height, 26);
+    expect(chip.width, greaterThanOrEqualTo(65));
+    final divider = tester.widgetList<Divider>(find.byType(Divider)).first;
+    expect((divider.indent, divider.endIndent, divider.color?.toARGB32()), (11.0, 15.0, 0xFF5C5C5C));
+    final firstDivider = tester.getRect(find.byType(Divider).first);
+    expect(firstDivider.top - chip.bottom, 4);
+    expect(tester.getSize(find.ancestor(of: replyPlus, matching: find.byType(SizedBox)).first).height, 56);
+    final reply = tester.widget<Text>(find.text('Working on it'));
+    expect(reply.style?.fontWeight, FontWeight.w300);
   });
 
   testWidgets('only the user\'s own comments have ✏️; edited ones say so', (tester) async {
     await open(tester);
     expect(editButton, findsOneWidget);
 
-    await tapAndSettle(tester, find.byIcon(Icons.arrow_drop_down).first);
+    await tapAndSettle(tester, showReplies);
     expect(editButton, findsNWidgets(2));
     expect(find.textContaining('· edited'), findsOneWidget);
   });
@@ -187,7 +275,8 @@ void main() {
 
   testWidgets('a reply is sent with its thread and shows at the end of it', (tester) async {
     await open(tester);
-    await tapAndSettle(tester, find.byIcon(Icons.arrow_drop_down).first);
+    await tapAndSettle(tester, showReplies);
+    await tapAndSettle(tester, replyPlus);
 
     await tester.enterText(find.widgetWithText(TextField, 'new Comment...'), 'Me as well');
     await tester.pump();
@@ -202,6 +291,8 @@ void main() {
       tester.getTopLeft(find.text('Me as well')).dy,
       greaterThan(tester.getTopLeft(find.text('Thanks!')).dy),
     );
+    // Sent: the field turns back into the +.
+    expect(replyPlus, findsOneWidget);
   });
 
   testWidgets('Edit Comment saves the new text', (tester) async {
@@ -338,7 +429,8 @@ void main() {
       await open(tester, theme: theme);
       expect(tester.takeException(), isNull);
 
-      await tapAndSettle(tester, find.byIcon(Icons.arrow_drop_down).first);
+      await tapAndSettle(tester, showReplies);
+      await tapAndSettle(tester, replyPlus);
       await tapAndSettle(tester, addButton);
       await tester.enterText(find.widgetWithText(TextField, 'new Comment...').first, 'A long comment ' * 10);
       await tester.pump();

@@ -30,6 +30,7 @@ class CommunityListToolbar extends StatelessWidget {
     this.onAdd,
     this.addTooltip,
     this.addActive = false,
+    this.addColor,
   });
 
   /// The list is not in its default order.
@@ -57,6 +58,9 @@ class CommunityListToolbar extends StatelessWidget {
 
   /// The + in the primary colour, while what it opened is open.
   final bool addActive;
+
+  /// The + while not active. Defaults to the other icons' grey.
+  final Color? addColor;
 
   @override
   Widget build(BuildContext context) {
@@ -115,6 +119,7 @@ class CommunityListToolbar extends StatelessWidget {
             size: const Size.square(CommunityTokens.toolbarIconSize),
             tooltip: addTooltip,
             active: addActive,
+            color: addColor,
             onPressed: onAdd,
           ),
       ],
@@ -129,6 +134,7 @@ class _ToolbarButton extends StatelessWidget {
     required this.tooltip,
     required this.active,
     required this.onPressed,
+    this.color,
   });
 
   /// One of [CommunityIcons].
@@ -138,9 +144,12 @@ class _ToolbarButton extends StatelessWidget {
   final bool active;
   final VoidCallback onPressed;
 
+  /// While not active. Defaults to [CommunityColors.icon].
+  final Color? color;
+
   @override
   Widget build(BuildContext context) {
-    final color = active ? Theme.of(context).colorScheme.primary : CommunityColors.icon(context);
+    final color = active ? Theme.of(context).colorScheme.primary : this.color ?? CommunityColors.icon(context);
     return Semantics(
       selected: active,
       child: IconButton(

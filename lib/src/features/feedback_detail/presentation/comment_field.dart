@@ -67,8 +67,8 @@ class CommentField extends StatelessWidget {
             hintText: l.newCommentHint,
             hintStyle: theme.textTheme.bodyLarge?.copyWith(
               fontSize: fontSize,
-              fontWeight: FontWeight.w300,
-              color: CommunityColors.muted(context),
+              fontWeight: FontWeight.w400,
+              color: CommunityColors.placeholder(context),
             ),
             filled: true,
             fillColor: theme.colorScheme.surface,
