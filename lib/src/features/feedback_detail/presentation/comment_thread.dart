@@ -82,16 +82,21 @@ class CommentThread extends StatelessWidget {
             padding: CommunityTokens.commentPadding.copyWith(bottom: 0),
             child: _CommentBody(comment: thread, onEdit: onEdit, now: now, topLevel: true),
           ),
-          const SizedBox(height: CommunityTokens.commentGap),
-          // Settings-6: the chip sits 2 further out than the text.
-          Padding(
-            padding: EdgeInsets.only(
-              left: CommunityTokens.repliesChipInset,
-              bottom: open ? CommunityTokens.repliesChipToDivider : CommunityTokens.commentPadding.bottom,
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: _RepliesChip(count: thread.replies.length, open: open, onTap: onToggle),
+          // Settings-6: the chip sits 2 further out than the text and 6 under
+          // it. The space around it takes taps too, so the chip is easier to
+          // hit than its 26 px height.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _RepliesChip(
+              count: thread.replies.length,
+              open: open,
+              onTap: onToggle,
+              tapPadding: EdgeInsets.only(
+                left: CommunityTokens.repliesChipInset,
+                top: CommunityTokens.commentGap,
+                right: CommunityTokens.repliesChipInset,
+                bottom: open ? CommunityTokens.repliesChipToDivider : CommunityTokens.commentPadding.bottom,
+              ),
             ),
           ),
           if (open) ...[
@@ -157,8 +162,10 @@ class _CommentBody extends StatelessWidget {
   /// Top-level text is a step bolder than replies, as in Settings-6.
   final bool topLevel;
 
-  /// The ✏️'s tap area. Smaller than 48 px so the row keeps Figma's height.
+  /// The ✏️'s place in the row, as in Figma, and its tap area: 8 wider,
+  /// reaching over the end of the age.
   static const _editButtonSize = Size(40, 32);
+  static const _editTapWidth = 48.0;
 
   @override
   Widget build(BuildContext context) {
@@ -172,25 +179,39 @@ class _CommentBody extends StatelessWidget {
       children: [
         SizedBox(
           height: _editButtonSize.height,
-          child: Row(
+          child: Stack(
+            // The row fills the 32 px, as it did on its own.
+            fit: StackFit.expand,
             children: [
-              Expanded(
-                child: Text(
-                  comment.edited ? '$age · ${l.edited}' : age,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w300,
-                    color: muted,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      comment.edited ? '$age · ${l.edited}' : age,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w300,
+                        color: muted,
+                      ),
+                    ),
                   ),
-                ),
+                  if (comment.isMine) SizedBox(width: _editButtonSize.width),
+                ],
               ),
               if (comment.isMine)
-                IconButton(
-                  tooltip: l.editComment,
-                  onPressed: () => onEdit(comment),
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints.tight(_editButtonSize),
-                  icon: const EmojiText('✏️', size: 16),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  width: _editTapWidth,
+                  height: _editButtonSize.height,
+                  child: IconButton(
+                    tooltip: l.editComment,
+                    onPressed: () => onEdit(comment),
+                    // The ✏️ stays centred on its Figma place.
+                    padding: EdgeInsets.only(left: _editTapWidth - _editButtonSize.width),
+                    constraints: BoxConstraints.tight(Size(_editTapWidth, _editButtonSize.height)),
+                    icon: const EmojiText('✏️', size: 16),
+                  ),
                 ),
             ],
           ),
@@ -223,11 +244,14 @@ class _CommentBody extends StatelessWidget {
 /// shows only 💬 and opens the reply field. Like the heart chip, it has
 /// Figma's inner shadow and no border.
 class _RepliesChip extends StatelessWidget {
-  const _RepliesChip({required this.count, required this.open, required this.onTap});
+  const _RepliesChip({required this.count, required this.open, required this.onTap, required this.tapPadding});
 
   final int count;
   final bool open;
   final VoidCallback onTap;
+
+  /// Space around the chip that takes taps as well.
+  final EdgeInsets tapPadding;
 
   /// Settings-6: a ▼ about 12 × 8.5 in Figma's icon grey.
   static const _arrowSize = Size(12, 8.5);
@@ -242,42 +266,51 @@ class _RepliesChip extends StatelessWidget {
       expanded: open,
       label: label,
       excludeSemantics: true,
-      child: Material(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(CommunityTokens.cardRadius),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: InnerShadow(
-            radius: CommunityTokens.cardRadius,
-            child: Container(
-              constraints: BoxConstraints(
-                minWidth: CommunityTokens.repliesChipSize.width,
-                minHeight: CommunityTokens.repliesChipSize.height,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const EmojiText('💬', size: 16),
-                  if (count > 0) ...[
-                    const SizedBox(width: 6),
-                    Text(
-                      '$count',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w300,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(width: 6),
-                  CustomPaint(
-                    size: _arrowSize,
-                    painter: _ArrowPainter(up: open, color: CommunityColors.icon(context)),
+      // A tap on the chip goes to its InkWell (the ripple); a tap in the
+      // space around it to the GestureDetector.
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Padding(
+          padding: tapPadding,
+          child: Material(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(CommunityTokens.cardRadius),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onTap,
+              child: InnerShadow(
+                radius: CommunityTokens.cardRadius,
+                child: Container(
+                  constraints: BoxConstraints(
+                    minWidth: CommunityTokens.repliesChipSize.width,
+                    minHeight: CommunityTokens.repliesChipSize.height,
                   ),
-                ],
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const EmojiText('💬', size: 16),
+                      if (count > 0) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          '$count',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w300,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(width: 6),
+                      CustomPaint(
+                        size: _arrowSize,
+                        painter: _ArrowPainter(up: open, color: CommunityColors.icon(context)),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

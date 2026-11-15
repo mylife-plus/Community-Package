@@ -173,6 +173,16 @@ void main() {
       expect(tester.getTopLeft(find.text('in progress')).dx - card.dx, moreOrLessEquals(34, epsilon: 0.5));
     });
 
+    testWidgets('the heart takes taps in 48 × 40 around its 26 px box', (tester) async {
+      await pumpAt390(tester, feedbackJson(2, reactionCount: 5));
+
+      final chip = find.byType(InnerShadow);
+      final tapArea = find.ancestor(of: chip, matching: find.byType(GestureDetector)).first;
+      expect(tester.getSize(tapArea).height, 40);
+      expect(tester.getSize(tapArea).width, greaterThanOrEqualTo(48));
+      expect(tester.getSize(chip).height, 26);
+    });
+
     testWidgets('the age ends 13 before the card edge, the heart chip 8', (tester) async {
       final card = await pumpAt390(tester, feedbackJson(2, reactionCount: 5));
 

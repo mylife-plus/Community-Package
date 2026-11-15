@@ -367,7 +367,9 @@ class _ReactionButton extends StatelessWidget {
 
   /// Space around the box that still takes taps. The left part is the gap
   /// to the comment count; top and bottom are the card's own spacing.
-  static const _tapTop = 8.0;
+  /// 9 is the whole gap between the text and the chip, so the tap area is
+  /// 48 × 40 without moving the chip.
+  static const _tapTop = 9.0;
   static const _tapBottom = 5.0;
   static const tapPadding = EdgeInsets.fromLTRB(8, _tapTop, 0, _tapBottom);
 

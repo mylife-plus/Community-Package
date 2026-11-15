@@ -23,6 +23,12 @@ class CommunityFormActions extends StatelessWidget {
   /// Not tuned yet: how faint the ✓ is while the form can't be sent.
   static const disabledOpacity = 0.35;
 
+  /// The 🗑 takes taps a little outside its 43 × 42 box, so the tap area is
+  /// 44 × 44. The gaps beside it are shorter by the same amount, so nothing
+  /// moves.
+  static const smallButtonTapInset = EdgeInsets.symmetric(horizontal: 0.5, vertical: 1);
+  static const _gapToSmall = CommunityTokens.deleteButtonGap - 0.5;
+
   /// How far a snackbar must rise to clear these buttons, on a form that
   /// keeps them at the bottom of its body with
   /// [CommunityTokens.actionsBottomGap] under them. A floating snackbar
@@ -58,9 +64,9 @@ class CommunityFormActions extends StatelessWidget {
         if (onDelete == null)
           const SizedBox(width: CommunityTokens.actionButtonGap)
         else ...[
-          const SizedBox(width: CommunityTokens.deleteButtonGap),
+          const SizedBox(width: _gapToSmall),
           _DeleteButton(label: deleteLabel ?? '', onPressed: onDelete),
-          const SizedBox(width: CommunityTokens.deleteButtonGap),
+          const SizedBox(width: _gapToSmall),
         ],
         _ActionButton(
           label: submitLabel,
@@ -131,21 +137,30 @@ class _DeleteButton extends StatelessWidget {
       excludeSemantics: true,
       child: Tooltip(
         message: label,
-        child: Material(
-          color: scheme.error,
-          borderRadius: BorderRadius.circular(CommunityTokens.actionButtonRadius),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onPressed,
-            child: SizedBox.fromSize(
-              size: CommunityTokens.deleteButtonSize,
-              child: Center(
-                child: SvgPicture.asset(
-                  CommunityIcons.trash,
-                  package: CommunityIcons.package,
-                  width: 20,
-                  height: 22,
-                  colorFilter: ColorFilter.mode(scheme.onError, BlendMode.srcIn),
+        // A tap on the box itself goes to its InkWell (the ripple); a tap
+        // just outside it to the GestureDetector.
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onPressed,
+          child: Padding(
+            padding: CommunityFormActions.smallButtonTapInset,
+            child: Material(
+              color: scheme.error,
+              borderRadius: BorderRadius.circular(CommunityTokens.actionButtonRadius),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: onPressed,
+                child: SizedBox.fromSize(
+                  size: CommunityTokens.deleteButtonSize,
+                  child: Center(
+                    child: SvgPicture.asset(
+                      CommunityIcons.trash,
+                      package: CommunityIcons.package,
+                      width: 20,
+                      height: 22,
+                      colorFilter: ColorFilter.mode(scheme.onError, BlendMode.srcIn),
+                    ),
+                  ),
                 ),
               ),
             ),

@@ -349,6 +349,52 @@ void main() {
     expect(find.descendant(of: delete, matching: find.byType(SvgPicture)), findsOneWidget);
   });
 
+  testWidgets('Edit Comment: the 🗑 takes taps in 44 × 44 and the buttons stay in place', (tester) async {
+    await open(tester);
+    await tapAndSettle(tester, editButton);
+
+    Finder inSheet(Finder f) => find.descendant(of: find.byType(EditCommentSheet), matching: f);
+    final delete = inSheet(find.byTooltip('delete'));
+    expect(tester.getSize(delete), const Size(44, 44));
+    final box = tester.getRect(find.descendant(of: delete, matching: find.byType(InkWell)));
+    expect(box.left - tester.getRect(inSheet(find.byTooltip('cancel'))).right, 30);
+    expect(tester.getRect(inSheet(find.byTooltip('save'))).left - box.right, 30);
+
+    // Just above the red box still counts.
+    await tester.tapAt(Offset(box.center.dx, box.top - 0.5));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete this comment? Its replies stay.'), findsOneWidget);
+  });
+
+  testWidgets('a comment ✏️ takes taps 48 wide and stays in its Figma place', (tester) async {
+    await open(tester);
+
+    final button = editButton.first;
+    final rect = tester.getRect(button);
+    expect(rect.size, const Size(48, 32));
+    // The ✏️ is centred on the 40 px place at the row's end, as before.
+    expect(tester.getCenter(find.descendant(of: button, matching: find.text('✏️'))).dx, rect.right - 20);
+
+    await tester.tapAt(Offset(rect.left + 3, rect.center.dy));
+    await tester.pumpAndSettle();
+    expect(find.byType(EditCommentSheet), findsOneWidget);
+  });
+
+  testWidgets('the replies chip takes taps in the space around it', (tester) async {
+    await open(tester);
+
+    final chip = tester.getRect(find.descendant(of: showReplies, matching: find.byType(InnerShadow)));
+    expect(tester.getSize(showReplies).height, 42);
+    expect(chip.size.height, 26);
+
+    // 4 px above the chip, in the gap under the text.
+    await tester.tapAt(Offset(chip.center.dx, chip.top - 4));
+    await tester.pumpAndSettle();
+    expect(hideReplies, findsOneWidget);
+    // Open, the divider is 4 under the chip.
+    expect(tester.getSize(hideReplies).height, 36);
+  });
+
   testWidgets('Edit Comment: 🗑 asks first, then leaves a placeholder above the replies', (tester) async {
     await open(tester);
     await tapAndSettle(tester, editButton);
