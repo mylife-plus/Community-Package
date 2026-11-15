@@ -212,25 +212,44 @@ class DeviceDetailsRow extends StatelessWidget {
       return pick(d) ?? '–';
     }
 
+    final os = _DeviceBox(label: l.deviceOs, value: value((d) => d.osVersion));
+    final app = _DeviceBox(label: l.deviceApp, value: value((d) => d.appVersion));
+    final phone = _DeviceBox(label: l.devicePhone, value: value((d) => d.deviceModel));
     const flex = CommunityTokens.deviceBoxFlex;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: flex.os,
-          child: _DeviceBox(label: l.deviceOs, value: value((d) => d.osVersion)),
-        ),
-        const SizedBox(width: CommunityTokens.deviceBoxGap),
-        Expanded(
-          flex: flex.app,
-          child: _DeviceBox(label: l.deviceApp, value: value((d) => d.appVersion)),
-        ),
-        const SizedBox(width: CommunityTokens.deviceBoxGap),
-        Expanded(
-          flex: flex.phone,
-          child: _DeviceBox(label: l.devicePhone, value: value((d) => d.deviceModel)),
-        ),
-      ],
+    const gap = CommunityTokens.deviceBoxGap;
+
+    // Settings-3: one row in Figma's widths. Values keep their size; when one
+    // doesn't fit, the phone moves to a line of its own, and with very large
+    // text every box does.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        bool fit(List<(_DeviceBox, int)> line) {
+          final unit = (width - gap * (line.length - 1)) / line.fold(0, (sum, box) => sum + box.$2);
+          return line.every((box) => box.$1.neededWidth(context) <= unit * box.$2);
+        }
+
+        Widget row(List<(_DeviceBox, int)> line) => Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final (i, box) in line.indexed) ...[
+              if (i > 0) const SizedBox(width: gap),
+              Expanded(flex: box.$2, child: box.$1),
+            ],
+          ],
+        );
+
+        final osApp = [(os, flex.os), (app, flex.app)];
+        if (fit([...osApp, (phone, flex.phone)])) return row([...osApp, (phone, flex.phone)]);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (fit(osApp)) row(osApp) else ...[os, const SizedBox(height: gap), app],
+            const SizedBox(height: gap),
+            phone,
+          ],
+        );
+      },
     );
   }
 }
@@ -240,6 +259,29 @@ class _DeviceBox extends StatelessWidget {
 
   final String label;
   final String value;
+
+  static TextStyle? _valueStyle(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.textTheme.bodyLarge?.copyWith(
+      fontSize: 20,
+      fontWeight: FontWeight.w400,
+      color: theme.colorScheme.onSurface,
+    );
+  }
+
+  /// The box's width with [value] on one line at full size.
+  double neededWidth(BuildContext context) {
+    final painter = TextPainter(
+      text: TextSpan(text: value, style: _valueStyle(context)),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final text = painter.width;
+    painter.dispose();
+    // The 1 px border on each side.
+    return text + CommunityTokens.deviceBoxPadding.horizontal + CommunityTokens.deviceValueIndent + 2;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -266,22 +308,11 @@ class _DeviceBox extends StatelessWidget {
                 color: CommunityColors.caption(context),
               ),
             ),
-            // Long values shrink to fit instead of being cut off.
+            // Full size, so all three values share one baseline; the row
+            // gives a long value a line of its own instead.
             Padding(
               padding: const EdgeInsets.only(left: CommunityTokens.deviceValueIndent),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w400,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ),
+              child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: _valueStyle(context)),
             ),
           ],
         ),
