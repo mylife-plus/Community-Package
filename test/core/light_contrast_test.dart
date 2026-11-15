@@ -47,6 +47,7 @@ void main() {
         CommunityColors.placeholder(context),
         CommunityColors.caption(context),
         CommunityColors.muted(context),
+        CommunityColors.deviceLine(context),
       ]) {
         for (final bg in backgrounds) {
           expect(contrast(color, bg), greaterThanOrEqualTo(4.5));
@@ -57,6 +58,15 @@ void main() {
     testWidgets('$name: field and comment field borders are at least 3:1', (tester) async {
       final context = await pump(tester, theme);
       for (final color in [CommunityColors.fieldBorder(context), CommunityColors.commentFieldBorder(context)]) {
+        for (final bg in backgrounds) {
+          expect(contrast(color, bg), greaterThanOrEqualTo(3));
+        }
+      }
+    });
+
+    testWidgets('$name: grey icons are at least 3:1', (tester) async {
+      final context = await pump(tester, theme);
+      for (final color in [CommunityColors.icon(context), CommunityColors.commentAdd(context)]) {
         for (final bg in backgrounds) {
           expect(contrast(color, bg), greaterThanOrEqualTo(3));
         }
