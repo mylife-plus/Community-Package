@@ -44,6 +44,10 @@ class FeedbackCard extends StatelessWidget {
   static const _headerGap = 10.0;
   static const _textToChip = 9.0;
 
+  /// Settings-15: the age ends 13 before the card's right edge; the heart
+  /// chip below it 8.
+  static const _ageRightInset = 13.0;
+
   final FeedbackItem item;
 
   /// Tapping the card outside the heart, for example to open its detail.
@@ -102,12 +106,15 @@ class FeedbackCard extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  Text(
-                    formatAge(l, item.createdAt, now: now),
-                    style: text.bodyMedium?.copyWith(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w300,
-                      color: muted,
+                  Padding(
+                    padding: EdgeInsets.only(right: _ageRightInset - CommunityTokens.cardPadding.right),
+                    child: Text(
+                      formatAge(l, item.createdAt, now: now),
+                      style: text.bodyMedium?.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w300,
+                        color: muted,
+                      ),
                     ),
                   ),
                 ],

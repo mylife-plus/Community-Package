@@ -173,6 +173,16 @@ void main() {
       expect(tester.getTopLeft(find.text('in progress')).dx - card.dx, moreOrLessEquals(34, epsilon: 0.5));
     });
 
+    testWidgets('the age ends 13 before the card edge, the heart chip 8', (tester) async {
+      final card = await pumpAt390(tester, feedbackJson(2, reactionCount: 5));
+
+      final cardRight = tester.getTopRight(find.byType(FeedbackCard)).dx;
+      final age = find.descendant(of: find.byType(FeedbackCard), matching: find.textContaining('ago'));
+      expect(cardRight - tester.getTopRight(age).dx, 13);
+      expect(cardRight - tester.getRect(find.byType(InnerShadow)).right, 8);
+      expect(card.dx, 6);
+    });
+
     testWidgets('the heart chip has a red border outside it only when hearted', (tester) async {
       BoxDecoration chip() => tester.widget<AnimatedContainer>(find.byType(AnimatedContainer)).decoration! as BoxDecoration;
 
