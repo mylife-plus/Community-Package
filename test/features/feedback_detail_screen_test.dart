@@ -173,6 +173,21 @@ void main() {
     expect(replyPlus, findsOneWidget);
   });
 
+  // Flutter keeps the focus on a touch outside a field on phones
+  // (EditableText's tap-outside action), so the field closes it itself.
+  testWidgets('a tap outside the empty reply field turns it back into the +', (tester) async {
+    await open(tester);
+    await tapAndSettle(tester, showReplies);
+    await tapAndSettle(tester, replyPlus);
+    expect(find.widgetWithText(TextField, 'new Comment...'), findsOneWidget);
+
+    await tester.tapAt(tester.getCenter(find.byType(AppBar)));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(TextField, 'new Comment...'), findsNothing);
+    expect(replyPlus, findsOneWidget);
+  });
+
   testWidgets('a reply field with text stays when it loses focus', (tester) async {
     await open(tester);
     await tapAndSettle(tester, showReplies);

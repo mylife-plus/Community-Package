@@ -49,6 +49,11 @@ class CommentField extends StatelessWidget {
           controller: controller,
           enabled: !sending,
           autofocus: autofocus,
+          // On phones Flutter keeps the focus when the user taps elsewhere
+          // (EditableText's tap-outside action unfocuses only for mouse and
+          // web), so the keyboard could not be closed. The send button is
+          // inside the field's tap region, so it doesn't count as outside.
+          onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
           maxLength: maxLength,
           minLines: 1,
           maxLines: maxLines,
