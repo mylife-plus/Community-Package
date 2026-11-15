@@ -2,6 +2,7 @@ import 'package:community_package/community_package.dart';
 import 'package:community_package/src/core/identity/device_details.dart';
 import 'package:community_package/src/features/new_feedback/presentation/problem_fields.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -37,6 +38,16 @@ void main() {
 
     expect(top(tester, '2'), top(tester, '1'));
     expect(top(tester, 'P'), top(tester, '1'));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a value a little too wide borrows room and keeps the row', (tester) async {
+    // '1234' needs 95 px; Figma's OS box is 89 here, and App has room.
+    await pumpRow(tester, const DeviceDetails(osVersion: '1234', appVersion: '2', deviceModel: 'P'));
+
+    expect(top(tester, '2'), top(tester, '1234'));
+    expect(top(tester, 'P'), top(tester, '1234'));
+    expect(tester.renderObject<RenderParagraph>(find.text('1234')).didExceedMaxLines, isFalse);
     expect(tester.takeException(), isNull);
   });
 

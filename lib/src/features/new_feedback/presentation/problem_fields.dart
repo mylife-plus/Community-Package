@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/identity/device_details.dart';
@@ -218,33 +220,51 @@ class DeviceDetailsRow extends StatelessWidget {
     const flex = CommunityTokens.deviceBoxFlex;
     const gap = CommunityTokens.deviceBoxGap;
 
-    // Settings-3: one row in Figma's widths. Values keep their size; when one
-    // doesn't fit, the phone moves to a line of its own, and with very large
-    // text every box does.
+    // Settings-3: one row in Figma's widths. A value too wide for its box
+    // borrows spare room from the others; values never shrink. When the row
+    // has no room left, the phone moves to a line of its own, and with very
+    // large text every box does.
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        bool fit(List<(_DeviceBox, int)> line) {
-          final unit = (width - gap * (line.length - 1)) / line.fold(0, (sum, box) => sum + box.$2);
-          return line.every((box) => box.$1.neededWidth(context) <= unit * box.$2);
+        // Each box's width on one line, or null when the values don't fit.
+        List<double>? widths(List<(_DeviceBox, int)> line) {
+          final space = constraints.maxWidth - gap * (line.length - 1);
+          final flexTotal = line.fold(0, (sum, box) => sum + box.$2);
+          final figma = [for (final box in line) space * box.$2 / flexTotal];
+          final need = [for (final box in line) box.$1.neededWidth(context)];
+          if (need.fold(0.0, (sum, w) => sum + w) > space) return null;
+          var deficit = 0.0;
+          var slack = 0.0;
+          for (var i = 0; i < line.length; i++) {
+            deficit += max(0, need[i] - figma[i]);
+            slack += max(0, figma[i] - need[i]);
+          }
+          return [
+            for (var i = 0; i < line.length; i++)
+              need[i] > figma[i] ? need[i] : figma[i] - (slack == 0 ? 0 : deficit * (figma[i] - need[i]) / slack),
+          ];
         }
 
-        Widget row(List<(_DeviceBox, int)> line) => Row(
+        Widget row(List<(_DeviceBox, int)> line, List<double> widths) => Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final (i, box) in line.indexed) ...[
               if (i > 0) const SizedBox(width: gap),
-              Expanded(flex: box.$2, child: box.$1),
+              // The last box takes what rounding leaves.
+              if (i == line.length - 1) Expanded(child: box.$1) else SizedBox(width: widths[i], child: box.$1),
             ],
           ],
         );
 
         final osApp = [(os, flex.os), (app, flex.app)];
-        if (fit([...osApp, (phone, flex.phone)])) return row([...osApp, (phone, flex.phone)]);
+        final all = [...osApp, (phone, flex.phone)];
+        final oneRow = widths(all);
+        if (oneRow != null) return row(all, oneRow);
+        final osAppRow = widths(osApp);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (fit(osApp)) row(osApp) else ...[os, const SizedBox(height: gap), app],
+            if (osAppRow != null) row(osApp, osAppRow) else ...[os, const SizedBox(height: gap), app],
             const SizedBox(height: gap),
             phone,
           ],
