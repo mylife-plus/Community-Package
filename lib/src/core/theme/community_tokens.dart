@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../data/models/feedback_item.dart';
@@ -160,7 +162,8 @@ class CommunityColors {
 
   static const _light = CommunityColors._(
     statusPlanned: Color(0xFF0066CC),
-    statusInProgress: Color(0xFF9A7400),
+    // 4.5:1 on white and on a light grey screen (#9A7400 was 4.3).
+    statusInProgress: Color(0xFF876600),
     statusDone: Color(0xFF00850A),
     cost: Color(0xFFD00000),
     reacted: Color(0xFFD00000),
@@ -202,8 +205,44 @@ class CommunityColors {
   /// Inactive icons (sort, filter, search, +): Figma's #909090.
   static Color icon(BuildContext context) => _grey(context, 0x90);
 
-  /// Small captions (OS / App / Phone): Figma's #909090.
-  static Color caption(BuildContext context) => _grey(context, 0x90);
+  /// Light mode only: [color] mixed over the surface at [alpha], or at
+  /// just enough more for a contrast of [ratio] against both the surface
+  /// and the screen background. Dark mode keeps Figma's mix. WCAG 1.4.3
+  /// (text 4.5:1) and 1.4.11 (field borders 3:1):
+  /// https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html
+  /// https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html
+  static Color _readable(BuildContext context, Color color, double alpha, double ratio) {
+    final theme = Theme.of(context);
+    final surface = theme.colorScheme.surface;
+    Color mix(double a) => Color.alphaBlend(color.withValues(alpha: a), surface);
+    if (theme.brightness == Brightness.dark) return mix(alpha);
+    final backgrounds = [surface, theme.scaffoldBackgroundColor];
+    bool enough(Color c) => backgrounds.every((bg) => _contrast(c, bg) >= ratio);
+    if (enough(mix(alpha))) return mix(alpha);
+    if (!enough(mix(1))) return mix(1);
+    var low = alpha;
+    var high = 1.0;
+    for (var i = 0; i < 12; i++) {
+      final mid = (low + high) / 2;
+      if (enough(mix(mid))) {
+        high = mid;
+      } else {
+        low = mid;
+      }
+    }
+    return mix(high);
+  }
+
+  static double _contrast(Color a, Color b) {
+    final la = a.computeLuminance();
+    final lb = b.computeLuminance();
+    return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
+  }
+
+  /// Small captions (OS / App / Phone): Figma's #909090; in light mode at
+  /// least 4.5:1.
+  static Color caption(BuildContext context) =>
+      _readable(context, Theme.of(context).colorScheme.onSurface, 0x90 / 0xFF, 4.5);
 
   /// The comment "+" (toolbar and under a thread): Figma's #A4A4A4.
   static Color commentAdd(BuildContext context) => _grey(context, 0xA4);
@@ -211,11 +250,15 @@ class CommunityColors {
   /// Dividers between comments: Figma's #5C5C5C.
   static Color commentDivider(BuildContext context) => _grey(context, 0x5C);
 
-  /// The edit Comment field's border: Figma's #404040.
-  static Color commentFieldBorder(BuildContext context) => _grey(context, 0x40);
+  /// The edit Comment field's border: Figma's #404040; in light mode at
+  /// least 3:1.
+  static Color commentFieldBorder(BuildContext context) =>
+      _readable(context, Theme.of(context).colorScheme.onSurface, 0x40 / 0xFF, 3);
 
-  /// Placeholders and field labels: Figma's #898989.
-  static Color placeholder(BuildContext context) => _grey(context, 0x89);
+  /// Placeholders and field labels: Figma's #898989; in light mode at least
+  /// 4.5:1.
+  static Color placeholder(BuildContext context) =>
+      _readable(context, Theme.of(context).colorScheme.onSurface, 0x89 / 0xFF, 4.5);
 
   /// The device line on Problem cards: Figma's #BABABA.
   static Color deviceLine(BuildContext context) => _grey(context, 0xBA);
@@ -224,9 +267,13 @@ class CommunityColors {
   static Color border(BuildContext context) =>
       Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25);
 
-  /// Text field borders: Figma's #004C93 is #0088FF at 55% on black.
-  static Color fieldBorder(BuildContext context) =>
-      Theme.of(context).colorScheme.primary.withValues(alpha: 0.55);
+  /// Text field borders: Figma's #004C93 is #0088FF at 55% on black. In
+  /// light mode at least 3:1.
+  static Color fieldBorder(BuildContext context) {
+    final theme = Theme.of(context);
+    if (theme.brightness == Brightness.dark) return theme.colorScheme.primary.withValues(alpha: 0.55);
+    return _readable(context, theme.colorScheme.primary, 0.55, 3);
+  }
 
   /// Secondary text such as the age: Figma's #9B9B9B on black.
   static Color muted(BuildContext context) =>
