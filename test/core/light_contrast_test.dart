@@ -41,9 +41,13 @@ void main() {
   for (final MapEntry(key: name, value: theme) in themes.entries) {
     final backgrounds = [theme.colorScheme.surface, theme.scaffoldBackgroundColor];
 
-    testWidgets('$name: placeholders and captions are at least 4.5:1', (tester) async {
+    testWidgets('$name: placeholders, captions and muted text are at least 4.5:1', (tester) async {
       final context = await pump(tester, theme);
-      for (final color in [CommunityColors.placeholder(context), CommunityColors.caption(context)]) {
+      for (final color in [
+        CommunityColors.placeholder(context),
+        CommunityColors.caption(context),
+        CommunityColors.muted(context),
+      ]) {
         for (final bg in backgrounds) {
           expect(contrast(color, bg), greaterThanOrEqualTo(4.5));
         }
@@ -76,5 +80,6 @@ void main() {
     expect(CommunityColors.placeholder(context).toARGB32(), 0xFF898989);
     expect(CommunityColors.caption(context).toARGB32(), 0xFF909090);
     expect(CommunityColors.commentFieldBorder(context).toARGB32(), 0xFF404040);
+    expect(CommunityColors.muted(context), const Color(0xFFFFFFFF).withValues(alpha: 0.6));
   });
 }

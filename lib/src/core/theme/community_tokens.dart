@@ -275,7 +275,16 @@ class CommunityColors {
     return _readable(context, theme.colorScheme.primary, 0.55, 3);
   }
 
-  /// Secondary text such as the age: Figma's #9B9B9B on black.
-  static Color muted(BuildContext context) =>
-      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
+  /// Secondary text such as the age: Figma's #9B9B9B on black. In light
+  /// mode at least 4.5:1, also on the screen background.
+  static Color muted(BuildContext context) => _translucentText(context, 0.6);
+
+  /// Dark mode: onSurface at Figma's [alpha], as drawn so far. Light mode:
+  /// the same mix, raised just enough for 4.5:1 (see [_readable]).
+  static Color _translucentText(BuildContext context, double alpha) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return Theme.of(context).brightness == Brightness.dark
+        ? onSurface.withValues(alpha: alpha)
+        : _readable(context, onSurface, alpha, 4.5);
+  }
 }
