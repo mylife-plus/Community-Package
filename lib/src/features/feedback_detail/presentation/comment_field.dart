@@ -79,7 +79,7 @@ class CommentField extends StatelessWidget {
                       ? IconButton(
                           tooltip: l.sendComment,
                           onPressed: onSend,
-                          icon: Icon(Icons.send_rounded, size: RefreshTokens.iconSize, color: theme.colorScheme.primary),
+                          icon: Icon(Icons.send_outlined, size: RefreshTokens.iconSize, color: theme.colorScheme.primary),
                         )
                       : null,
                 )
@@ -120,7 +120,7 @@ class CommentField extends StatelessWidget {
                 ? IconButton(
                     tooltip: l.sendComment,
                     onPressed: onSend,
-                    icon: Icon(Icons.send_rounded, size: 22, color: theme.colorScheme.primary),
+                    icon: Icon(Icons.send_outlined, size: 22, color: theme.colorScheme.primary),
                   )
                 : null,
             suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 32),

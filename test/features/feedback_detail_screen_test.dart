@@ -132,7 +132,7 @@ void main() {
     testWidgets('toolbar: a funnel for filter, every icon 26 in a 48 button', (tester) async {
       await open(tester);
 
-      expect(find.descendant(of: find.byTooltip('Filter'), matching: find.byIcon(Icons.filter_alt_rounded)), findsOneWidget);
+      expect(find.descendant(of: find.byTooltip('Filter'), matching: find.byIcon(Icons.filter_alt_outlined)), findsOneWidget);
       expect(find.byIcon(Icons.filter_list_rounded), findsNothing);
       expect(find.descendant(of: find.byTooltip('Sort'), matching: find.byIcon(Icons.sort_rounded)), findsOneWidget);
       for (final tooltip in ['Sort', 'Filter', 'Search', 'Write a comment']) {
@@ -527,7 +527,7 @@ void main() {
 
     final button = editButton.first;
     expect(tester.getSize(button), const Size(48, 48));
-    expect(find.descendant(of: button, matching: find.byIcon(Icons.edit_rounded)), findsOneWidget);
+    expect(find.descendant(of: button, matching: find.byIcon(Icons.edit_outlined)), findsOneWidget);
     expect(find.text('✏️'), findsNothing);
 
     await tapAndSettle(tester, button);

@@ -191,7 +191,7 @@ class _CommentBody extends StatelessWidget {
                     tooltip: l.editComment,
                     onPressed: () => onEdit(comment),
                     color: RefreshColors.meta(context, on: card),
-                    icon: const Icon(Icons.edit_rounded, size: 20),
+                    icon: const Icon(Icons.edit_outlined, size: 20),
                   ),
               ],
             ),

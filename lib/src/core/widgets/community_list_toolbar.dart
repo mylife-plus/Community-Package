@@ -202,7 +202,7 @@ extension on CommunityListToolbar {
           const SizedBox(width: 4),
           Builder(
             builder: (buttonContext) => button(
-              icon: Icons.filter_alt_rounded,
+              icon: Icons.filter_alt_outlined,
               tooltip: l.filterTooltip,
               active: filterActive,
               onPressed: () => onFilter(buttonContext),
