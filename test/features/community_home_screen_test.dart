@@ -40,12 +40,12 @@ void main() {
 
     expect(find.text('Community App'), findsOneWidget);
     expect(find.textContaining('100% open source'), findsOneWidget);
-    expect(find.text('all Feedback'), findsOneWidget);
+    expect(find.text('All Feedback'), findsOneWidget);
     expect(find.text('Privacy Notice'), findsOneWidget);
     // These screens come in later slices.
-    expect(find.text('follow the Progress'), findsNothing);
+    expect(find.text('Follow the Progress'), findsNothing);
     expect(find.text('Costs & Tips'), findsNothing);
-    expect(find.text('give a Tip'), findsNothing);
+    expect(find.text('Give a Tip'), findsNothing);
   });
 
   testWidgets('Privacy Notice asks a new user; decline creates nothing', (tester) async {

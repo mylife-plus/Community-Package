@@ -5,6 +5,7 @@ import '../theme/community_icons.dart';
 import '../theme/community_tokens.dart';
 import '../theme/refresh_style.dart';
 import 'emoji_text.dart';
+import 'refresh_buttons.dart';
 
 /// Link rows stacked into one rounded block, 1 px apart.
 class CommunityLinkGroup extends StatelessWidget {
@@ -133,7 +134,7 @@ extension on CommunityLinkRow {
               const SizedBox(width: CommunityLinkGroup._refreshedEmojiGap),
               Expanded(
                 child: Text(
-                  label,
+                  sentenceCase(label),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: RefreshTokens.body(context, weight: FontWeight.w500),

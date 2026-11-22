@@ -228,7 +228,7 @@ void main() {
     backend.answer(pageJson([5, 4]));
     unawaited(CommunityPackage.openCommunity(hostContext));
     await tester.pumpAndSettle();
-    await tapAndSettle(tester, find.text('all Feedback'));
+    await tapAndSettle(tester, find.text('All Feedback'));
 
     await tapAndSettle(tester, find.byTooltip('new Feedback'));
     expect(formScreens, findsOneWidget);

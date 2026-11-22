@@ -4,6 +4,7 @@ import 'package:community_package/src/core/widgets/community_link_row.dart';
 import 'package:community_package/src/data/repositories/identity_repository.dart';
 import 'package:community_package/src/features/community_home/presentation/community_home_screen.dart';
 import 'package:community_package/src/features/privacy/presentation/post_gate.dart';
+import 'package:community_package/src/core/widgets/refresh_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -61,7 +62,7 @@ void main() {
         final context = tester.element(find.byType(CommunityLinkGroup));
         final card = RefreshColors.card(context);
         expect(card, isNot(background));
-        expect(RefreshColors.contrast(textColor(tester, find.text(l.allFeedback)), card), greaterThanOrEqualTo(4.5));
+        expect(RefreshColors.contrast(textColor(tester, find.text(sentenceCase(l.allFeedback))), card), greaterThanOrEqualTo(4.5));
         expect(RefreshColors.contrast(textColor(tester, find.text(l.communityIntro)), background), greaterThanOrEqualTo(4.5));
         expect(RefreshColors.contrast(textColor(tester, find.text(l.privacyNotice)), background), greaterThanOrEqualTo(4.5));
         final chevron = tester.widget<Icon>(find.byIcon(Icons.chevron_right_rounded).first);

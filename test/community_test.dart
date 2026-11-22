@@ -109,7 +109,7 @@ void main() {
     Future<void> openList(WidgetTester tester) async {
       await open(tester);
       backend.answer(pageJson([1]));
-      await tester.tap(find.text('all Feedback'));
+      await tester.tap(find.text('All Feedback'));
       await tester.pumpAndSettle();
     }
 

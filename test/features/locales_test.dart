@@ -123,7 +123,7 @@ void main() {
         await tapAndSettle(tester, find.text(sentenceCase(l.decline)));
 
         backend.answerAt('GET', '/v1/feedback', _list());
-        await tapAndSettle(tester, find.text(l.allFeedback));
+        await tapAndSettle(tester, find.text(sentenceCase(l.allFeedback)));
         expect(find.text(l.statusInProgress), findsOneWidget);
         expectNoOverflow(tester, 'All Feedback');
 
@@ -200,7 +200,7 @@ void main() {
         backend.offlineAt('GET', '/v1/feedback');
         unawaited(CommunityPackage.openCommunity(hostContext));
         await tester.pumpAndSettle();
-        await tapAndSettle(tester, find.text(l.allFeedback));
+        await tapAndSettle(tester, find.text(sentenceCase(l.allFeedback)));
         expect(find.text(l.errorOffline), findsOneWidget);
         expectNoOverflow(tester, 'offline');
 
