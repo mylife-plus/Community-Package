@@ -582,7 +582,7 @@ void main() {
 
     await tapAndSettle(tester, find.text('Delete'));
     expect(find.text('Delete this comment? Its replies stay.'), findsOneWidget);
-    await tapAndSettle(tester, find.text('keep'));
+    await tapAndSettle(tester, find.text('Keep'));
     expect(find.byType(EditCommentSheet), findsOneWidget);
     expect(backend.requests.where((r) => r.method == 'DELETE'), isEmpty);
 
@@ -590,7 +590,7 @@ void main() {
       'feedback': feedbackJson(3, status: 'in_progress', commentCount: 3),
     });
     await tapAndSettle(tester, find.text('Delete'));
-    await tapAndSettle(tester, find.text('delete'));
+    await tapAndSettle(tester, find.text('Delete').last);
 
     expect(find.byType(EditCommentSheet), findsNothing);
     expect(find.text('Comment deleted'), findsOneWidget);

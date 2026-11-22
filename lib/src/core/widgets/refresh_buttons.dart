@@ -171,3 +171,43 @@ class RefreshIconButton extends StatelessWidget {
     );
   }
 }
+
+/// Two buttons of the refreshed look on a two-column grid, [start] on the
+/// left (Cancel) and [end] on the right (the main action). When a label
+/// doesn't fit half the width at the user's text size, both go full width,
+/// stacked in the same order.
+class RefreshButtonPair extends StatelessWidget {
+  const RefreshButtonPair({super.key, required this.start, required this.end});
+
+  final RefreshButton start;
+  final RefreshButton end;
+
+  /// Across and down.
+  static const gap = 12.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final half = (constraints.maxWidth - gap) / 2;
+        final fits = [start, end].every(
+          (b) => RefreshButton.contentWidth(context, b.label, hasIcon: b.icon != null) <= half,
+        );
+        if (fits) {
+          return Row(
+            children: [
+              Expanded(child: start),
+              const SizedBox(width: gap),
+              Expanded(child: end),
+            ],
+          );
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [start, const SizedBox(height: gap), end],
+        );
+      },
+    );
+  }
+}

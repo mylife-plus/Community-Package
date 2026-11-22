@@ -392,12 +392,12 @@ void main() {
 
       await tapAndSettle(tester, cancel);
       expect(find.text('Discard this feedback?'), findsOneWidget);
-      await tapAndSettle(tester, find.text('keep editing'));
+      await tapAndSettle(tester, find.text('Keep editing'));
       expect(formScreens, findsOneWidget);
       expect(find.text('Totals'), findsOneWidget);
 
       await tapAndSettle(tester, cancel);
-      await tapAndSettle(tester, find.text('discard'));
+      await tapAndSettle(tester, find.text('Discard'));
       expect(formScreens, findsNothing);
     });
 

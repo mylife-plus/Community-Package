@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/community_tokens.dart';
 import '../theme/refresh_style.dart';
-import 'community_button.dart';
+import 'refresh_buttons.dart';
 
 // The only file that opens raw sheets, dialogs and snackbars. Everything uses
 // Flutter's own APIs with the package's context, so host apps need no
@@ -203,8 +203,9 @@ void showCommunitySnackBar(BuildContext context, String message, {double bottomC
     ..showSnackBar(snackBar);
 }
 
-/// Asks [title] with a red [confirmLabel] and a [cancelLabel]. True only
-/// when the user confirms; tapping outside or back counts as cancel.
+/// Asks [title] with a [cancelLabel] (outlined, left) and a red
+/// [confirmLabel] (right), as on Edit comment. True only when the user
+/// confirms; tapping outside or back counts as cancel.
 Future<bool> showCommunityConfirm(
   BuildContext context, {
   required String title,
@@ -213,47 +214,45 @@ Future<bool> showCommunityConfirm(
 }) async {
   final confirmed = await showDialog<bool>(
     context: context,
-    builder: (dialogContext) {
-      final theme = Theme.of(dialogContext);
-      return Dialog(
-        backgroundColor: theme.colorScheme.surface,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 9),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(CommunityTokens.sheetRadius),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 32, 20, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
+    builder: (dialogContext) => Dialog(
+      backgroundColor: RefreshColors.sheet(dialogContext),
+      surfaceTintColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: RefreshTokens.screenPadding, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RefreshTokens.sheetRadius)),
+      child: Padding(
+        padding: const EdgeInsets.all(RefreshTokens.sheetPadding),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Scrolls when a long question (German on a small phone) is
+            // taller than the screen allows.
+            Flexible(
+              child: SingleChildScrollView(
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: RefreshTokens.title(dialogContext)?.copyWith(height: RefreshTokens.bodyLineHeight),
                 ),
               ),
-              const SizedBox(height: 28),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 40,
-                runSpacing: 12,
-                children: [
-                  CommunityButton(
-                    label: confirmLabel,
-                    destructive: true,
-                    onPressed: () => closePopup(dialogContext, true),
-                  ),
-                  CommunityButton(label: cancelLabel, onPressed: () => closePopup(dialogContext, false)),
-                ],
+            ),
+            const SizedBox(height: RefreshTokens.sheetPadding),
+            RefreshButtonPair(
+              start: RefreshButton(
+                label: cancelLabel,
+                kind: RefreshButtonKind.secondary,
+                onPressed: () => closePopup(dialogContext, false),
               ),
-            ],
-          ),
+              end: RefreshButton(
+                label: confirmLabel,
+                kind: RefreshButtonKind.destructive,
+                onPressed: () => closePopup(dialogContext, true),
+              ),
+            ),
+          ],
         ),
-      );
-    },
+      ),
+    ),
   );
   return confirmed ?? false;
 }
