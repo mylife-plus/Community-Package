@@ -147,14 +147,14 @@ void main() {
         expectNoOverflow(tester, 'topic list');
         await tapAndSettle(tester, find.text(l.typeProblem));
         expectNoOverflow(tester, 'Problem form');
-        await tapAndSettle(tester, find.text(l.selectScreen));
+        await tapAndSettle(tester, find.text(sentenceCase(l.selectScreen)));
         expectNoOverflow(tester, 'screen picker');
         await dismiss(tester, find.text('Sell Items'));
-        await tapAndSettle(tester, find.text(l.agreeToRules));
+        await tapAndSettle(tester, find.text(sentenceCase(l.agreeToRules)));
         expect(find.text(l.rulesThanks), findsOneWidget);
         expectNoOverflow(tester, 'rules');
         await dismiss(tester, find.text(l.rulesThanks));
-        await tapAndSettle(tester, find.byTooltip(l.cancel));
+        await tapAndSettle(tester, find.widgetWithText(RefreshButton, sentenceCase(l.cancel)));
 
         backend.answerAt('GET', '/v1/feedback/2', feedbackJson(2, status: 'done', commentCount: 2));
         backend.answerAt(

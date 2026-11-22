@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import '../../../core/identity/device_details.dart';
 import '../../../core/l10n/community_localizations.dart';
 import '../../../core/theme/community_tokens.dart';
+import '../../../core/theme/refresh_style.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/community_text_field.dart';
 import '../../../core/widgets/emoji_text.dart';
+import '../../../core/widgets/refresh_buttons.dart';
 import '../domain/screen_tree.dart';
 import 'new_feedback_controller.dart';
 
@@ -29,30 +31,36 @@ class ScreenPickerField extends StatelessWidget {
     final style = chosen == null
         ? CommunityTextField.hintStyle(context)
         : CommunityTextField.textStyle(context);
-    final radius = BorderRadius.circular(CommunityTokens.fieldRadius);
+    // The refreshed look: a filled field (radius 12, no border), 48 high.
+    final refreshed = CommunityRefresh.of(context);
+    final radius = BorderRadius.circular(refreshed ? RefreshTokens.controlRadius : CommunityTokens.fieldRadius);
 
     return Semantics(
       button: true,
       child: Material(
-        color: theme.colorScheme.surface,
+        color: refreshed ? RefreshColors.field(context) : theme.colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: radius,
-          side: BorderSide(color: CommunityColors.fieldBorder(context)),
+          side: refreshed ? BorderSide.none : BorderSide(color: CommunityColors.fieldBorder(context)),
         ),
         child: InkWell(
           onTap: onTap,
           borderRadius: radius,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: CommunityTokens.fieldMinHeight),
+            constraints: BoxConstraints(
+              minHeight: refreshed ? RefreshTokens.minTarget : CommunityTokens.fieldMinHeight,
+            ),
             child: Padding(
-              padding: CommunityTokens.fieldPadding,
+              padding: refreshed ? RefreshTokens.fieldPadding : CommunityTokens.fieldPadding,
               child: Row(
                 children: [
                   const EmojiText('📲', size: 20),
-                  const SizedBox(width: 6),
+                  SizedBox(width: refreshed ? 8 : 6),
                   Expanded(
                     child: Text(
-                      chosen == null ? l.selectScreen : formatScreenNames(chosen.labels(context)),
+                      chosen == null
+                          ? (refreshed ? sentenceCase(l.selectScreen) : l.selectScreen)
+                          : formatScreenNames(chosen.labels(context)),
                       style: style,
                     ),
                   ),
@@ -127,29 +135,51 @@ class _ProblemStepFieldState extends State<ProblemStepField> {
     final l = CommunityLocalizations.of(context);
     final theme = Theme.of(context);
     final textStyle = CommunityTextField.textStyle(context);
-    final padding = CommunityTokens.fieldPadding;
+    final refreshed = CommunityRefresh.of(context);
+    final padding = refreshed ? RefreshTokens.fieldPadding : CommunityTokens.fieldPadding;
+    final fill = RefreshColors.field(context);
 
     // The number sits outside the TextField: a prefix inside it (prefixText)
     // shows only while the field is focused or filled (input_decorator.dart,
     // _labelShouldWithdraw), and Flutter 3.29 has no widget hint to colour
     // it in. Its own bordered box keeps it visible and on the first line.
+    // The refreshed look: filled like the other fields, the primary border
+    // only while focused (always 1.5 wide, transparent otherwise, so the
+    // text doesn't move); the number at 4.5:1 on the fill.
+    final decoration = refreshed
+        ? BoxDecoration(
+            color: fill,
+            border: Border.all(
+              color: _focused ? theme.colorScheme.primary : Colors.transparent,
+              width: RefreshTokens.focusBorderWidth,
+            ),
+            borderRadius: BorderRadius.circular(RefreshTokens.controlRadius),
+          )
+        : BoxDecoration(
+            color: theme.colorScheme.surface,
+            border: Border.all(
+              color: _focused ? theme.colorScheme.primary : CommunityColors.fieldBorder(context),
+            ),
+            borderRadius: BorderRadius.circular(CommunityTokens.fieldRadius),
+          );
+    final numberColor = refreshed
+        ? RefreshColors.readable(theme.colorScheme.primary, theme.colorScheme.onSurface, fill, 4.5)
+        : theme.colorScheme.primary;
+    // Inside the 1.5 border, so the text sits where a plain field's does.
+    final inset = refreshed ? RefreshTokens.focusBorderWidth : 0.0;
     return Container(
-      constraints: const BoxConstraints(minHeight: CommunityTokens.fieldMinHeight),
-      alignment: Alignment.centerLeft,
-      padding: EdgeInsets.only(left: padding.left),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border.all(
-          color: _focused ? theme.colorScheme.primary : CommunityColors.fieldBorder(context),
-        ),
-        borderRadius: BorderRadius.circular(CommunityTokens.fieldRadius),
+      constraints: BoxConstraints(
+        minHeight: refreshed ? RefreshTokens.minTarget : CommunityTokens.fieldMinHeight,
       ),
+      alignment: Alignment.centerLeft,
+      padding: EdgeInsets.only(left: padding.left - inset),
+      decoration: decoration,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
-          Text('${widget.number}.', style: textStyle?.copyWith(color: theme.colorScheme.primary)),
-          const SizedBox(width: 6),
+          Text('${widget.number}.', style: textStyle?.copyWith(color: numberColor)),
+          SizedBox(width: refreshed ? 8 : 6),
           Expanded(
             child: TextField(
               controller: _text,
@@ -187,7 +217,12 @@ class _ProblemStepFieldState extends State<ProblemStepField> {
                 focusedErrorBorder: InputBorder.none,
                 constraints: const BoxConstraints(),
                 isDense: true,
-                contentPadding: EdgeInsets.fromLTRB(0, padding.top, padding.right, padding.bottom),
+                contentPadding: EdgeInsets.fromLTRB(
+                  0,
+                  padding.top - inset,
+                  padding.right - inset,
+                  padding.bottom - inset,
+                ),
               ),
             ),
           ),
@@ -218,7 +253,7 @@ class DeviceDetailsRow extends StatelessWidget {
     final app = _DeviceBox(label: l.deviceApp, value: value((d) => d.appVersion));
     final phone = _DeviceBox(label: l.devicePhone, value: value((d) => d.deviceModel));
     const flex = CommunityTokens.deviceBoxFlex;
-    const gap = CommunityTokens.deviceBoxGap;
+    final gap = CommunityRefresh.of(context) ? _DeviceBox.refreshedGap : CommunityTokens.deviceBoxGap;
 
     // Settings-3: one row in Figma's widths. A value too wide for its box
     // borrows spare room from the others; values never shrink. When the row
@@ -249,7 +284,7 @@ class DeviceDetailsRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final (i, box) in line.indexed) ...[
-              if (i > 0) const SizedBox(width: gap),
+              if (i > 0) SizedBox(width: gap),
               // The last box takes what rounding leaves.
               if (i == line.length - 1) Expanded(child: box.$1) else SizedBox(width: widths[i], child: box.$1),
             ],
@@ -264,8 +299,8 @@ class DeviceDetailsRow extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (osAppRow != null) row(osApp, osAppRow) else ...[os, const SizedBox(height: gap), app],
-            const SizedBox(height: gap),
+            if (osAppRow != null) row(osApp, osAppRow) else ...[os, SizedBox(height: gap), app],
+            SizedBox(height: gap),
             phone,
           ],
         );
@@ -280,8 +315,14 @@ class _DeviceBox extends StatelessWidget {
   final String label;
   final String value;
 
+  /// The refreshed look: filled boxes (radius 12, no border), 8 apart,
+  /// the label at 13 and the value at 15 Medium.
+  static const refreshedGap = 8.0;
+  static const _refreshedPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 6);
+
   static TextStyle? _valueStyle(BuildContext context) {
     final theme = Theme.of(context);
+    if (CommunityRefresh.of(context)) return RefreshTokens.body(context, weight: FontWeight.w500);
     return theme.textTheme.bodyLarge?.copyWith(
       fontSize: 20,
       fontWeight: FontWeight.w400,
@@ -299,6 +340,7 @@ class _DeviceBox extends StatelessWidget {
     )..layout();
     final text = painter.width;
     painter.dispose();
+    if (CommunityRefresh.of(context)) return text + _refreshedPadding.horizontal;
     // The 1 px border on each side.
     return text + CommunityTokens.deviceBoxPadding.horizontal + CommunityTokens.deviceValueIndent + 2;
   }
@@ -306,6 +348,7 @@ class _DeviceBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    if (CommunityRefresh.of(context)) return _refreshed(context);
     return Semantics(
       label: '$label $value',
       excludeSemantics: true,
@@ -334,6 +377,28 @@ class _DeviceBox extends StatelessWidget {
               padding: const EdgeInsets.only(left: CommunityTokens.deviceValueIndent),
               child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: _valueStyle(context)),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _refreshed(BuildContext context) {
+    final fill = RefreshColors.field(context);
+    return Semantics(
+      label: '$label $value',
+      excludeSemantics: true,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: RefreshTokens.minTarget),
+        padding: _refreshedPadding,
+        decoration: BoxDecoration(color: fill, borderRadius: BorderRadius.circular(RefreshTokens.controlRadius)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: RefreshTokens.meta(context, on: fill)),
+            // Full size, so all three values share one baseline; the row
+            // gives a long value a line of its own instead.
+            Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: _valueStyle(context)),
           ],
         ),
       ),

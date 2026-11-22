@@ -9,6 +9,9 @@ import 'package:community_package/src/features/feedback_list/presentation/feedba
 import 'package:community_package/src/features/new_feedback/presentation/new_feedback_screen.dart';
 import 'package:community_package/src/features/new_feedback/presentation/problem_fields.dart';
 import 'package:community_package/src/features/new_feedback/presentation/screen_picker_sheet.dart';
+import 'package:community_package/src/core/theme/refresh_style.dart';
+import 'package:community_package/src/core/widgets/feedback_type_picker.dart';
+import 'package:community_package/src/core/widgets/refresh_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -50,8 +53,8 @@ void main() {
 
   final formScreens = find.byType(NewFeedbackScreen, skipOffstage: false);
   final listScreens = find.byType(FeedbackListScreen, skipOffstage: false);
-  final submit = find.byTooltip('submit');
-  final cancel = find.byTooltip('cancel');
+  final submit = find.widgetWithText(RefreshButton, 'Submit');
+  final cancel = find.widgetWithText(RefreshButton, 'Cancel');
   final picker = find.byType(ScreenPickerSheet);
 
   Finder stepField(int index) =>
@@ -122,7 +125,7 @@ void main() {
   testWidgets('shows the screen picker, one step, the description and the device', (tester) async {
     await openProblem(tester);
 
-    expect(find.text('select a screen'), findsOneWidget);
+    expect(find.text('Select a screen'), findsOneWidget);
     expect(find.byType(ProblemStepField), findsOneWidget);
     expect(find.text('1.'), findsOneWidget);
     expect(find.text('Step to reproduce the Problem'), findsOneWidget);
@@ -154,7 +157,7 @@ void main() {
 
   // Settings-3: the first field 28 under the pill, fields 47 high and 4
   // apart; a device box's caption at (6, 3) and its value at (9, 18).
-  testWidgets('the Problem form is spaced like Figma', (tester) async {
+  testWidgets('the Problem form: filled fields on the refreshed grid', (tester) async {
     tester.view
       ..physicalSize = const Size(390, 844)
       ..devicePixelRatio = 1;
@@ -162,20 +165,47 @@ void main() {
     await openProblem(tester);
 
     final description = find.widgetWithText(TextField, 'What went wrong?');
-    final pill = find.text('Problem');
-    final pillBottom = tester.getCenter(pill).dy + 43 / 2;
+    final pill = tester.getRect(find.byType(FeedbackTypePill));
     final first = tester.getRect(description);
     final screen = tester.getRect(find.byType(ScreenPickerField));
-    expect(first.top - pillBottom, moreOrLessEquals(28, epsilon: 0.5));
-    // The test font is wide enough to wrap the first hint onto two lines.
-    expect((first.left, first.width), (11.0, 368.0));
-    expect(screen.height, 47);
-    expect(screen.top - first.bottom, 4);
+    final step = tester.getRect(find.byType(ProblemStepField).first);
+    expect(first.top - pill.bottom, 24);
+    expect((first.left, first.width), (16.0, 358.0));
+    expect(screen.height, greaterThanOrEqualTo(48));
+    expect(screen.top - first.bottom, 12);
+    expect(step.top - screen.bottom, 12);
+    expect((step.left, step.width), (16.0, 358.0));
 
-    final box = tester.getRect(find.ancestor(of: find.text('OS'), matching: find.byType(Container)).first);
-    expect(tester.getTopLeft(find.text('OS')) - box.topLeft, const Offset(6, 3));
-    expect(tester.getTopLeft(find.text('iOS 18.1')) - box.topLeft, const Offset(9, 18));
-    expect(box.height, 47);
+    final context = tester.element(find.byType(ScreenPickerField));
+    final screenBox = tester.widget<Material>(find.descendant(of: find.byType(ScreenPickerField), matching: find.byType(Material)).first);
+    expect(screenBox.color, RefreshColors.field(context));
+    expect((screenBox.shape! as RoundedRectangleBorder).borderRadius, BorderRadius.circular(12));
+
+    // The device boxes: filled, radius 12, 8 apart, label 13, value 15 Medium.
+    final os = tester.getRect(find.ancestor(of: find.text('OS'), matching: find.byType(Container)).first);
+    final app = tester.getRect(find.ancestor(of: find.text('App'), matching: find.byType(Container)).first);
+    expect(app.left - os.right, 8);
+    expect(os.height, greaterThanOrEqualTo(48));
+    expect(tester.widget<Text>(find.text('OS')).style?.fontSize, 13);
+    final value = tester.widget<Text>(find.text('iOS 18.1')).style!;
+    expect((value.fontSize, value.fontWeight), (15, FontWeight.w500));
+  });
+
+  testWidgets('a step field shows the primary border only while focused, without moving its text', (tester) async {
+    await openProblem(tester);
+
+    final stepField = find.byType(ProblemStepField).first;
+    BoxDecoration box() => tester.widget<Container>(find.descendant(of: stepField, matching: find.byType(Container)).first).decoration! as BoxDecoration;
+    final text = find.descendant(of: stepField, matching: find.byType(EditableText));
+    final before = tester.getTopLeft(text);
+    expect((box().border! as Border).top.color, Colors.transparent);
+
+    await tester.tap(text);
+    await tester.pumpAndSettle();
+    final scheme = Theme.of(tester.element(stepField)).colorScheme;
+    expect((box().border! as Border).top.color, scheme.primary);
+    expect((box().border! as Border).top.width, 1.5);
+    expect(tester.getTopLeft(text), before);
   });
 
   testWidgets('a detail that cannot be read shows a dash', (tester) async {

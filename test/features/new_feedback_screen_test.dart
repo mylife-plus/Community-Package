@@ -9,6 +9,8 @@ import 'package:community_package/src/features/feedback_list/presentation/feedba
 import 'package:community_package/src/features/new_feedback/presentation/new_feedback_screen.dart';
 import 'package:community_package/src/features/privacy/presentation/privacy_notice_sheet.dart';
 import 'package:community_package/src/features/privacy/presentation/rules_sheet.dart';
+import 'package:community_package/src/core/widgets/community_menu.dart';
+import 'package:community_package/src/core/widgets/refresh_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,8 +34,8 @@ void main() {
   // skipOffstage: false also counts a screen hidden under another one.
   final formScreens = find.byType(NewFeedbackScreen, skipOffstage: false);
   final listScreens = find.byType(FeedbackListScreen, skipOffstage: false);
-  final submit = find.byTooltip('submit');
-  final cancel = find.byTooltip('cancel');
+  final submit = find.widgetWithText(RefreshButton, 'Submit');
+  final cancel = find.widgetWithText(RefreshButton, 'Cancel');
   final notice = find.byType(PrivacyNoticeSheet);
   final rules = find.byType(RulesSheet);
 
@@ -104,19 +106,19 @@ void main() {
 
     expect(formScreens, findsOneWidget);
     expect(listScreens, findsNothing);
-    expect(find.text('new Feedback'), findsOneWidget);
+    expect(find.text('New Feedback'), findsOneWidget);
     // The closed pill stays laid out under the list, hidden and untappable.
     expect(find.text('Choose Topic').hitTestable(), findsOneWidget);
     expect(find.text('Improvement'), findsOneWidget);
     expect(find.text('Problem'), findsOneWidget);
     expect(find.text('Idea'), findsOneWidget);
     expect(find.text('Your improvement idea...'), findsOneWidget);
-    expect(find.text('agree to Rules'), findsOneWidget);
+    expect(find.text('Agree to Rules'), findsOneWidget);
     expect(backend.requests, isEmpty);
   });
 
-  // Settings-1 and -2, at 390 px in dark mode.
-  testWidgets('the menu, pill, field, rules link and buttons match Figma', (tester) async {
+  // Settings-1 and -2 in Figma's order, on the refreshed grid; 390 px, dark.
+  testWidgets('the menu, pill, field, rules link and buttons use the refreshed look', (tester) async {
     tester.view
       ..physicalSize = const Size(390, 844)
       ..devicePixelRatio = 1;
@@ -124,36 +126,42 @@ void main() {
     await openFromSettings(tester, theme: ThemeData.dark());
 
     final menu = find.byType(FeedbackTypeMenu);
-    final menuShape = tester.widget<Material>(find.descendant(of: menu, matching: find.byType(Material)).first).shape!
-        as RoundedRectangleBorder;
-    expect(
-      menuShape.borderRadius,
-      const BorderRadius.vertical(top: Radius.circular(10), bottom: Radius.circular(9)),
-    );
-    expect(tester.getSize(find.ancestor(of: find.text('Idea'), matching: find.byType(Container)).first).height, 43);
+    expect(find.descendant(of: menu, matching: find.byType(CommunityMenuFrame)), findsOneWidget);
+    final ideaRow = find.ancestor(of: find.text('Idea'), matching: find.byType(CommunityMenuRow));
+    expect(tester.getSize(ideaRow).height, 48);
+    expect(find.descendant(of: menu, matching: find.byIcon(Icons.check_rounded)), findsNothing);
 
     await tapAndSettle(tester, find.text('Improvement'));
-    final titleCentre = tester.getCenter(find.text('new Feedback')).dy;
     final pill = tester.getRect(find.byType(FeedbackTypePill));
     final field = tester.getRect(find.byType(TextField));
-    expect(pill.top - titleCentre, 46.5);
-    expect(pill.height, 43);
-    expect(field.top - pill.bottom, 37);
-    expect((field.left, field.width), (11.0, 368.0));
+    expect(pill.top, 56 + 16);
+    expect(pill.height, 48);
+    expect(field.top - pill.bottom, 24);
+    expect((field.left, field.width), (16.0, 358.0));
+    final pillShape = tester.widget<Material>(find.descendant(of: find.byType(FeedbackTypePill), matching: find.byType(Material)).first).shape!
+        as RoundedRectangleBorder;
+    expect(pillShape.borderRadius, BorderRadius.circular(12));
 
-    final link = find.text('agree to Rules');
-    expect(tester.getTopLeft(link).dy - field.bottom, 33);
-    final linkStyle = tester.widget<TextButton>(find.ancestor(of: link, matching: find.byType(TextButton))).style!;
-    expect(linkStyle.textStyle!.resolve({})!.fontWeight, FontWeight.w700);
-    expect(linkStyle.foregroundColor!.resolve({}), const Color(0xFFFF0000));
+    // The open menu ticks the chosen topic; its first row sits on the pill.
+    await tapAndSettle(tester, find.text('Improvement'));
+    expect(find.descendant(of: menu, matching: find.byIcon(Icons.check_rounded)), findsOneWidget);
+    expect(tester.getCenter(find.descendant(of: menu, matching: find.text('Choose Topic'))).dy, pill.center.dy);
+    await tapAndSettle(tester, find.descendant(of: menu, matching: find.text('Improvement')));
 
+    final link = find.ancestor(of: find.text('Agree to Rules'), matching: find.byType(TextButton));
+    expect(tester.getRect(link).top - field.bottom, 8);
+    expect(tester.getSize(link).height, 48);
+    final linkStyle = tester.widget<TextButton>(link).style!;
+    expect(linkStyle.textStyle!.resolve({})!.fontWeight, FontWeight.w600);
+
+    // Cancel (outlined) left, Submit (filled, ✓) right, 48 high, 16 from the sides.
     final cancelBox = tester.getRect(cancel);
-    expect(tester.getRect(submit).left - cancelBox.right, 80);
-    expect(cancelBox.size, const Size(61, 59));
-    final button = tester.widget<DecoratedBox>(find.descendant(of: cancel, matching: find.byType(DecoratedBox)).first);
-    final decoration = button.decoration as BoxDecoration;
-    expect(decoration.borderRadius, BorderRadius.circular(11));
-    expect(decoration.boxShadow, [const BoxShadow(color: Color(0x40000000), offset: Offset(0, 4), blurRadius: 4)]);
+    final submitBox = tester.getRect(submit);
+    expect(tester.widget<RefreshButton>(cancel).kind, RefreshButtonKind.secondary);
+    expect(tester.widget<RefreshButton>(submit).kind, RefreshButtonKind.primary);
+    expect((cancelBox.height, submitBox.height), (48, 48));
+    expect((cancelBox.left, submitBox.right), (16, 390 - 16));
+    expect(submitBox.left - cancelBox.right, 12);
   });
 
   testWidgets('a topic closes the list and sets the prompt', (tester) async {
@@ -372,11 +380,11 @@ void main() {
     await openFromSettings(tester);
     await tapAndSettle(tester, find.text('Idea'));
 
-    await tapAndSettle(tester, find.text('agree to Rules'));
+    await tapAndSettle(tester, find.text('Agree to Rules'));
     expect(rules, findsOneWidget);
     await tapAndSettle(tester, find.text('Agree'));
 
-    expect(find.text('agree to Rules'), findsNothing);
+    expect(find.text('Agree to Rules'), findsNothing);
     await tapAndSettle(tester, find.text('Rules'));
     expect(rules, findsOneWidget);
     expect(find.text('Agree'), findsNothing);

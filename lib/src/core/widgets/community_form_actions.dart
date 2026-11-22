@@ -38,8 +38,8 @@ class CommunityFormActions extends StatelessWidget {
   /// part of the gap that the inset doesn't cover is added.
   static double snackBarClearance(BuildContext context) {
     final inset = MediaQuery.viewPaddingOf(context).bottom;
-    return CommunityTokens.actionButtonSize.height +
-        math.max(0.0, CommunityTokens.actionsBottomGap - inset);
+    final height = CommunityRefresh.of(context) ? RefreshTokens.minTarget : CommunityTokens.actionButtonSize.height;
+    return height + math.max(0.0, CommunityTokens.actionsBottomGap - inset);
   }
 
   final String cancelLabel;

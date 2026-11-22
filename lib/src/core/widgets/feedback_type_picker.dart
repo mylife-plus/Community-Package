@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../data/models/feedback_item.dart';
 import '../l10n/community_localizations.dart';
 import '../theme/community_tokens.dart';
+import '../theme/refresh_style.dart';
 import '../utils/formatters.dart';
+import 'community_menu.dart';
 import 'emoji_text.dart';
 import 'feedback_card.dart';
 
@@ -19,6 +21,13 @@ class FeedbackTypePill extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = CommunityLocalizations.of(context);
     final chosen = type;
+    if (CommunityRefresh.of(context)) {
+      return _RefreshedPill(
+        emoji: chosen == null ? null : feedbackTypeEmoji(chosen),
+        label: chosen == null ? l.chooseTopic : feedbackTypeLabel(l, chosen),
+        onTap: onTap,
+      );
+    }
     return _Frame(
       minWidth: CommunityTokens.topicPillMinWidth,
       child: _Row(
@@ -38,15 +47,20 @@ class FeedbackTypeMenu extends StatelessWidget {
     required this.types,
     required this.onSelected,
     required this.onClose,
+    this.selected,
   });
 
   final List<FeedbackType> types;
+
+  /// Ticked in the refreshed look.
+  final FeedbackType? selected;
   final ValueChanged<FeedbackType> onSelected;
   final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
     final l = CommunityLocalizations.of(context);
+    if (CommunityRefresh.of(context)) return _refreshed(context, l);
     final divider = Container(height: 1, color: Theme.of(context).colorScheme.primary);
     return _Frame(
       minWidth: CommunityTokens.topicMenuMinWidth,
@@ -66,6 +80,72 @@ class FeedbackTypeMenu extends StatelessWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+extension on FeedbackTypeMenu {
+  /// The refreshed menu: the raised menu box (radius 12, a faint edge, a
+  /// shadow), "Choose Topic" on top (tapping it closes the menu), then a
+  /// 48 px row per type with a tick on the chosen one.
+  Widget _refreshed(BuildContext context, CommunityLocalizations l) {
+    return CommunityMenuFrame(
+      children: [
+        CommunityMenuRow(
+          label: Text(l.chooseTopic, style: RefreshTokens.title(context)),
+          centered: true,
+          onTap: onClose,
+        ),
+        for (final type in types)
+          CommunityMenuRow(
+            emoji: feedbackTypeEmoji(type),
+            label: Text(feedbackTypeLabel(l, type)),
+            selected: type == selected,
+            onTap: () => onSelected(type),
+          ),
+      ],
+    );
+  }
+}
+
+/// The refreshed closed picker: on the menu's raised colour, radius 12, a
+/// faint edge, 48 high, the topic at the title size.
+class _RefreshedPill extends StatelessWidget {
+  const _RefreshedPill({this.emoji, required this.label, required this.onTap});
+
+  final String? emoji;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final emoji = this.emoji;
+    final radius = BorderRadius.circular(RefreshTokens.controlRadius);
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: CommunityTokens.topicPillMinWidth),
+      child: Material(
+        color: CommunityMenuFrame.background(context),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: radius, side: BorderSide(color: RefreshColors.faintBorder(context))),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: RefreshTokens.minTarget),
+            padding: const EdgeInsets.symmetric(horizontal: CommunityTokens.menuRowPadding, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (emoji != null) ...[EmojiText(emoji, size: 20), const SizedBox(width: 8)],
+                Flexible(
+                  child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: RefreshTokens.title(context)),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

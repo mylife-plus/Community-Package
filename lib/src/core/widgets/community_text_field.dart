@@ -65,6 +65,12 @@ class CommunityTextField extends StatelessWidget {
     required int? maxLength,
   }) {
     if (maxLength == null || currentLength < maxLength * counterFrom) return null;
+    if (CommunityRefresh.of(context)) {
+      return Text(
+        '$currentLength / $maxLength',
+        style: RefreshTokens.meta(context, on: Theme.of(context).scaffoldBackgroundColor),
+      );
+    }
     return Text(
       '$currentLength / $maxLength',
       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: CommunityColors.muted(context)),

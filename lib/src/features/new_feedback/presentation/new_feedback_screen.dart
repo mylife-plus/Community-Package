@@ -5,6 +5,7 @@ import '../../../core/errors/app_error.dart';
 import '../../../core/l10n/community_localizations.dart';
 import '../../../core/navigation/community_navigator.dart';
 import '../../../core/theme/community_tokens.dart';
+import '../../../core/theme/refresh_style.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/community_app_bar.dart';
 import '../../../core/widgets/community_form_actions.dart';
@@ -13,6 +14,7 @@ import '../../../core/widgets/community_text_field.dart';
 import '../../../core/widgets/controller_scope.dart';
 import '../../../core/widgets/emoji_text.dart';
 import '../../../core/widgets/feedback_type_picker.dart';
+import '../../../core/widgets/refresh_buttons.dart';
 import '../../../data/models/feedback_item.dart';
 import '../../privacy/presentation/post_gate.dart';
 import '../domain/screen_tree.dart';
@@ -30,7 +32,9 @@ class NewFeedbackScreen extends StatelessWidget {
   final PostGate? postGate;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => CommunityRefresh(child: Builder(builder: _build));
+
+  Widget _build(BuildContext context) {
     return ControllerScope<NewFeedbackController>(
       create:
           createController ??
@@ -54,14 +58,17 @@ class NewFeedbackScreen extends StatelessWidget {
   }
 }
 
-// Gaps between the form's parts, from the Figma export: the first field 37
-// under the pill, 28 on the Problem form. The rules link's 48 px tap area
-// adds 14 px above its text, so Figma's 33 px is 19.
-// The pill's top is 46.5 below the title's centre (Settings-1).
-const _pillTop = 24.5;
-const _pillToField = 37.0;
-const _pillToProblemField = 28.0;
-const _fieldToRules = 19.0;
+// Gaps between the form's parts, in Figma's order on the refreshed 8 pt
+// grid. The rules link's 48 px tap area gives it room of its own.
+const _pillTop = 16.0;
+const _pillToField = 24.0;
+const _pillToProblemField = 24.0;
+const _fieldToRules = 8.0;
+const _menuTopPadding = 8.0;
+const _problemFieldGap = 12.0;
+
+/// Cancel and Submit: 16 from the screen's sides, 8 above.
+const _actionsPadding = EdgeInsets.fromLTRB(RefreshTokens.screenPadding, 8, RefreshTokens.screenPadding, 0);
 
 class _Form extends StatelessWidget {
   const _Form({required this.controller, required this.gate});
@@ -83,8 +90,9 @@ class _Form extends StatelessWidget {
       child: Scaffold(
         appBar: CommunityAppBar(
           emoji: '✍️',
-          title: l.newFeedbackTitle,
+          title: sentenceCase(l.newFeedbackTitle),
           onBack: () => _leave(context),
+          refreshed: true,
         ),
         body: SafeArea(
           top: false,
@@ -96,9 +104,9 @@ class _Form extends StatelessWidget {
                   children: [
                     SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(
-                        CommunityTokens.formFieldInset,
+                        RefreshTokens.screenPadding,
                         _pillTop,
-                        CommunityTokens.formFieldInset,
+                        RefreshTokens.screenPadding,
                         24,
                       ),
                       child: Column(
@@ -146,12 +154,15 @@ class _Form extends StatelessWidget {
                         ),
                       ),
                       Positioned(
-                        top: _pillTop,
+                        // The menu's "Choose Topic" row lands where the pill is
+                        // (the menu box has 8 above its rows).
+                        top: _pillTop - _menuTopPadding,
                         left: 0,
                         right: 0,
                         child: Center(
                           child: FeedbackTypeMenu(
                             types: NewFeedbackController.types,
+                            selected: controller.type,
                             onSelected: controller.chooseType,
                             onClose: controller.closeMenu,
                           ),
@@ -161,11 +172,14 @@ class _Form extends StatelessWidget {
                   ],
                 ),
               ),
-              CommunityFormActions(
-                cancelLabel: l.cancel,
-                submitLabel: l.submit,
-                onCancel: submitting ? null : () => _leave(context),
-                onSubmit: controller.canSubmit ? () => _submit(context) : null,
+              Padding(
+                padding: _actionsPadding,
+                child: CommunityFormActions(
+                  cancelLabel: l.cancel,
+                  submitLabel: l.submit,
+                  onCancel: submitting ? null : () => _leave(context),
+                  onSubmit: controller.canSubmit ? () => _submit(context) : null,
+                ),
               ),
             ],
           ),
@@ -177,7 +191,7 @@ class _Form extends StatelessWidget {
   /// The optional description, screen, steps and the device details.
   List<Widget> _problemFields(BuildContext context, CommunityLocalizations l) {
     final submitting = controller.submitting;
-    const gap = SizedBox(height: CommunityTokens.problemFieldGap);
+    const gap = SizedBox(height: _problemFieldGap);
     final steps = controller.steps;
     return [
       if (NewFeedbackController.askProblemDescription) ...[
@@ -284,20 +298,26 @@ class _RulesLink extends StatelessWidget {
   final bool agreed;
   final VoidCallback onTap;
 
+  /// The refreshed link: 48 high with a ripple, 15 SemiBold; red (at
+  /// 4.5:1) until the user agreed, then in the secondary text colour.
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l = CommunityLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final background = Theme.of(context).scaffoldBackgroundColor;
+    final color = agreed
+        ? RefreshColors.meta(context, on: background)
+        : RefreshColors.readable(CommunityColors.of(context).cancel, scheme.onSurface, background, 4.5);
     return TextButton(
       onPressed: onTap,
       style: TextButton.styleFrom(
-        foregroundColor: agreed ? CommunityColors.muted(context) : CommunityColors.of(context).cancel,
-        textStyle: theme.textTheme.titleSmall?.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.padded,
+        foregroundColor: color,
+        textStyle: RefreshTokens.body(context, weight: FontWeight.w600),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        minimumSize: const Size(64, RefreshTokens.minTarget),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RefreshTokens.controlRadius)),
       ),
-      child: Text(agreed ? l.rulesLink : l.agreeToRules),
+      child: Text(sentenceCase(agreed ? l.rulesLink : l.agreeToRules)),
     );
   }
 }
