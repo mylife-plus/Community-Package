@@ -214,4 +214,33 @@ void main() {
       }
     }
   });
+
+  group('snackbar', () {
+    for (final MapEntry(key: name, value: theme) in hostThemes.entries) {
+      for (final code in _languages) {
+        testWidgets('$name, $code at 320 px: a long message wraps and reads at 4.5:1', (tester) async {
+          final context = await _pump(tester, theme: theme, locale: code, size: const Size(320, 568));
+          final l = CommunityLocalizations.of(context);
+          final message = '${l.offlineShowingSaved} ${l.deleteCommentKeepsReplies}';
+          showCommunitySnackBar(context, message);
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+
+          final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+          final text = tester.widget<Text>(find.text(message));
+          expect(RefreshColors.contrast(text.style!.color!, snackBar.backgroundColor!), greaterThanOrEqualTo(4.5));
+          final box = tester.getRect(find.descendant(of: find.byType(SnackBar), matching: find.byType(Material)).first);
+          expect(box.left, 16);
+          expect(320 - box.right, 16);
+        });
+      }
+    }
+
+    testWidgets('bottomClearance lifts it above buttons at the bottom', (tester) async {
+      final context = await _pump(tester);
+      showCommunitySnackBar(context, 'Saved', bottomClearance: 80);
+      await tester.pumpAndSettle();
+      expect(tester.widget<SnackBar>(find.byType(SnackBar)).margin, const EdgeInsets.fromLTRB(16, 0, 16, 92));
+    });
+  });
 }

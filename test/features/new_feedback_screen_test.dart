@@ -312,7 +312,7 @@ void main() {
     });
   }
 
-  testWidgets('the "Posted" message on the list keeps the normal place', (tester) async {
+  testWidgets('the "Posted" message on the list floats 16 from the sides, radius 12, no extra lift', (tester) async {
     await openFromSettings(tester, agreed: true);
     await fillForm(tester);
     backend.answer(feedbackJson(26), status: 201);
@@ -322,7 +322,15 @@ void main() {
     await tapAndSettle(tester, submit);
 
     expect(listScreens, findsOneWidget);
-    expect(tester.widget<SnackBar>(find.byType(SnackBar)).margin, isNull);
+    final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+    expect(snackBar.behavior, SnackBarBehavior.floating);
+    expect(snackBar.margin, const EdgeInsets.fromLTRB(16, 0, 16, 12));
+    expect(snackBar.shape, RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)));
+    final box = tester.getRect(find.descendant(of: find.byType(SnackBar), matching: find.byType(Material)).first);
+    final screen = tester.getRect(find.byType(Scaffold).last);
+    expect(box.left - screen.left, 16);
+    expect(screen.right - box.right, 16);
+    expect(tester.widget<Text>(find.text('Thanks! Posted as #26')).style?.fontSize, 15);
   });
 
   for (final brightness in Brightness.values) {

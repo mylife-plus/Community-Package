@@ -173,35 +173,41 @@ class _DropdownLayout extends SingleChildLayoutDelegate {
 /// Closes the sheet or dialog [context] is in, with [result].
 void closePopup<T>(BuildContext context, [T? result]) => Navigator.of(context).pop(result);
 
-/// A short message at the bottom of the screen. [bottomClearance] lifts it
-/// above buttons at the bottom of a screen's body: the Scaffold only clears
-/// its own bottom bar and floating action button.
+/// A short message at the bottom of the screen: floating, radius 12, 16
+/// from the sides. [bottomClearance] lifts it above buttons at the bottom
+/// of a screen's body: the Scaffold only clears its own bottom bar and
+/// floating action button.
 void showCommunitySnackBar(BuildContext context, String message, {double bottomClearance = 0}) {
   // Material's snackbar colours: the inverse surface stands out from the
   // screen behind it (https://m3.material.io/components/snackbar/specs).
   // Set here because a host theme may pick a background close to its cards
   // (Inventory's dark snackbar was hard to notice on the list).
   final colors = Theme.of(context).colorScheme;
-  final content = Text(message, style: TextStyle(color: colors.onInverseSurface));
-  final SnackBar snackBar;
-  if (bottomClearance > 0) {
-    // A margin needs floating behaviour. 15, 5, 15, 10 is Flutter's own
-    // default inset (SnackBarThemeData.insetPadding).
-    final inset =
-        SnackBarTheme.of(context).insetPadding ?? const EdgeInsets.fromLTRB(15, 5, 15, 10);
-    snackBar = SnackBar(
-      content: content,
-      backgroundColor: colors.inverseSurface,
-      behavior: SnackBarBehavior.floating,
-      margin: inset.copyWith(bottom: inset.bottom + bottomClearance),
-    );
-  } else {
-    snackBar = SnackBar(content: content, backgroundColor: colors.inverseSurface);
-  }
+  final content = Text(
+    message,
+    style: RefreshTokens.body(context, color: colors.onInverseSurface, weight: FontWeight.w500)?.copyWith(height: 1.3),
+  );
+  final snackBar = SnackBar(
+    content: content,
+    backgroundColor: colors.inverseSurface,
+    behavior: SnackBarBehavior.floating,
+    elevation: 2,
+    padding: const EdgeInsets.symmetric(horizontal: RefreshTokens.screenPadding, vertical: 14),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RefreshTokens.controlRadius)),
+    margin: EdgeInsets.fromLTRB(
+      RefreshTokens.screenPadding,
+      0,
+      RefreshTokens.screenPadding,
+      _snackBarBottom + bottomClearance,
+    ),
+  );
   ScaffoldMessenger.maybeOf(context)
     ?..hideCurrentSnackBar()
     ..showSnackBar(snackBar);
 }
+
+/// A floating snackbar's gap to whatever is below it.
+const _snackBarBottom = 12.0;
 
 /// Asks [title] with a [cancelLabel] (outlined, left) and a red
 /// [confirmLabel] (right), as on Edit comment. True only when the user
