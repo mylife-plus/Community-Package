@@ -80,7 +80,7 @@ void main() {
     for (final label in ['Newest', 'Oldest', 'Most hearts', 'Most comments']) {
       expect(find.descendant(of: sortMenu, matching: find.text(label)), findsOneWidget);
     }
-    expect(find.descendant(of: sortMenu, matching: find.byIcon(Icons.check)), findsOneWidget);
+    expect(find.descendant(of: sortMenu, matching: find.byIcon(Icons.check_rounded)), findsOneWidget);
 
     backend.answer(pageJson([1, 3, 2]));
     await tapAndSettle(tester, find.text('Most hearts'));
@@ -108,12 +108,12 @@ void main() {
     await tapAndSettle(tester, find.descendant(of: filterMenu, matching: find.text('done')));
 
     expect(filterMenu, findsOneWidget);
-    expect(find.descendant(of: filterMenu, matching: find.byIcon(Icons.check)), findsNWidgets(2));
+    expect(find.descendant(of: filterMenu, matching: find.byIcon(Icons.check_rounded)), findsNWidgets(2));
     expect(listQueries().last, {'type': 'idea', 'status': 'done', 'lang': 'en'});
 
     backend.answer(pageJson([3, 2, 1]));
     await tapAndSettle(tester, find.text('reset'));
-    expect(find.descendant(of: filterMenu, matching: find.byIcon(Icons.check)), findsNothing);
+    expect(find.descendant(of: filterMenu, matching: find.byIcon(Icons.check_rounded)), findsNothing);
 
     // A tap outside closes the menu.
     await tester.tapAt(const Offset(200, 500));

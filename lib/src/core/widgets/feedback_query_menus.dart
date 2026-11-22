@@ -85,7 +85,7 @@ class _FeedbackFilterMenuState extends State<FeedbackFilterMenu> {
             emoji: '💪',
             label: Text(
               feedbackStatusLabel(l, status),
-              style: TextStyle(color: colors.status(status)),
+              style: TextStyle(color: CommunityMenuFrame.readable(context, colors.status(status))),
             ),
             selected: _statuses.contains(status),
             onTap: () {
@@ -95,7 +95,7 @@ class _FeedbackFilterMenuState extends State<FeedbackFilterMenu> {
           ),
         if (_types.isNotEmpty || _statuses.isNotEmpty)
           CommunityMenuRow(
-            label: Text(l.resetFilter, style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+            label: Text(l.resetFilter, style: TextStyle(color: CommunityMenuFrame.readable(context, Theme.of(context).colorScheme.primary))),
             centered: true,
             onTap: () {
               setState(() {

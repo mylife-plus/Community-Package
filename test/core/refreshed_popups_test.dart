@@ -1,6 +1,11 @@
 import 'package:community_package/src/core/l10n/community_localizations.dart';
 import 'package:community_package/src/core/theme/refresh_style.dart';
+import 'package:community_package/src/core/widgets/community_menu.dart';
 import 'package:community_package/src/core/widgets/community_popups.dart';
+import 'package:community_package/src/core/widgets/feedback_query_menus.dart';
+import 'package:community_package/src/core/utils/formatters.dart';
+import 'package:community_package/src/data/models/feedback_item.dart';
+import 'package:community_package/src/data/models/feedback_query.dart';
 import 'package:community_package/src/core/widgets/refresh_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -104,9 +109,10 @@ void main() {
           final scheme = theme.colorScheme;
           expect(RefreshColors.contrast(scheme.onSurface, sheet), greaterThanOrEqualTo(4.5));
           final red = tester.widget<RefreshButton>(find.widgetWithText(RefreshButton, sentenceCase(l.delete)));
-          final redColor = DefaultTextStyle.of(
-            tester.element(find.descendant(of: find.byWidget(red), matching: find.text(sentenceCase(l.delete)))),
-          ).style.color!;
+          final redColor =
+              DefaultTextStyle.of(
+                tester.element(find.descendant(of: find.byWidget(red), matching: find.text(sentenceCase(l.delete)))),
+              ).style.color!;
           expect(
             RefreshColors.contrast(redColor, RefreshColors.errorTonal(dialogContext)),
             greaterThanOrEqualTo(4.5),
@@ -123,7 +129,12 @@ void main() {
 
     testWidgets('a label too long for half the width stacks both, Cancel first', (tester) async {
       final context = await _pump(tester, size: const Size(320, 568));
-      showCommunityConfirm(context, title: 'Leave?', confirmLabel: 'discard everything written so far', cancelLabel: 'keep');
+      showCommunityConfirm(
+        context,
+        title: 'Leave?',
+        confirmLabel: 'discard everything written so far',
+        cancelLabel: 'keep',
+      );
       await tester.pumpAndSettle();
 
       final keep = tester.getRect(find.widgetWithText(RefreshButton, 'Keep'));
@@ -147,5 +158,60 @@ void main() {
         expect(await result, expected);
       }
     });
+  });
+
+  group('sort and filter menus', () {
+    Future<void> openFilter(BuildContext context) => showFeedbackFilterMenu(
+      context,
+      types: {FeedbackType.problem},
+      statuses: {FeedbackStatus.planned},
+      onToggleType: (_) {},
+      onToggleStatus: (_) {},
+      onReset: () {},
+    );
+
+    testWidgets('48 px rows, radius 12, a faint edge and no primary dividers', (tester) async {
+      final context = await _pump(tester);
+      showFeedbackSortMenu(context, selected: FeedbackSort.values.first, onSelected: (_) {});
+      await tester.pumpAndSettle();
+
+      for (final row in tester.widgetList(find.byType(CommunityMenuRow))) {
+        expect(tester.getSize(find.byWidget(row)).height, 48);
+      }
+      final frame = tester.widget<Material>(
+        find.descendant(of: find.byType(CommunityMenuFrame), matching: find.byType(Material)).first,
+      );
+      final shape = frame.shape! as RoundedRectangleBorder;
+      expect(shape.borderRadius, BorderRadius.circular(12));
+      expect(shape.side.color, isNot(Theme.of(context).colorScheme.primary));
+      expect(frame.elevation, greaterThan(0));
+      expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+    });
+
+    for (final MapEntry(key: name, value: theme) in hostThemes.entries) {
+      for (final code in _languages) {
+        testWidgets('$name, $code at 320 px: the filter menu fits; titles and statuses read at 4.5:1', (tester) async {
+          final context = await _pump(tester, theme: theme, locale: code, size: const Size(320, 568));
+          openFilter(context);
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+
+          final menuContext = tester.element(find.byType(CommunityMenuFrame));
+          final background = CommunityMenuFrame.background(menuContext);
+          final l = CommunityLocalizations.of(context);
+          final header = tester.widget<Text>(find.text(l.filterType));
+          expect(RefreshColors.contrast(header.style!.color!, background), greaterThanOrEqualTo(4.5));
+          for (final status in FeedbackStatus.values) {
+            final label = find.text(feedbackStatusLabel(l, status));
+            final color =
+                DefaultTextStyle.of(tester.element(label)).style.merge(tester.widget<Text>(label).style).color!;
+            expect(RefreshColors.contrast(color, background), greaterThanOrEqualTo(4.5), reason: status.name);
+          }
+          final reset = find.text(l.resetFilter);
+          final resetColor = tester.widget<Text>(reset).style!.color!;
+          expect(RefreshColors.contrast(resetColor, background), greaterThanOrEqualTo(4.5));
+        });
+      }
+    }
   });
 }

@@ -1,43 +1,51 @@
 import 'package:flutter/material.dart';
 
 import '../theme/community_tokens.dart';
+import '../theme/refresh_style.dart';
 import 'emoji_text.dart';
 
-// The drop-down menus of the list toolbars (sort and filter). Not in Figma;
-// built like the New Feedback topic menu (frame 1:144): surface, primary
-// outline and dividers, 8 px corners, 42 px rows.
+// The drop-down menus (sort, filter and the pickers in sheets). Not in
+// Figma; in the refreshed look: a raised surface with radius 12 and a faint
+// edge, 48 px rows with a ripple, and group titles in the meta style.
 
-/// The outlined box, with a divider between rows. Scrolls when the screen
-/// is too short for it.
+/// The raised box of a menu. Scrolls when the screen is too short for it.
 class CommunityMenuFrame extends StatelessWidget {
   const CommunityMenuFrame({super.key, required this.children});
 
   final List<Widget> children;
 
+  /// Above and below the rows.
+  static const _verticalPadding = 8.0;
+
+  /// The menu's colour, for text that must read on it.
+  static Color background(BuildContext context) => RefreshColors.sheet(context);
+
+  /// [color] (a status colour, the primary for reset) raised to 4.5:1 on
+  /// the menu.
+  static Color readable(BuildContext context, Color color) =>
+      RefreshColors.readable(color, Theme.of(context).colorScheme.onSurface, background(context), 4.5);
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final divider = Container(height: 1, color: scheme.primary);
     return ConstrainedBox(
       constraints: const BoxConstraints(minWidth: CommunityTokens.topicMenuMinWidth),
       child: Material(
-        color: scheme.surface,
+        color: background(context),
+        surfaceTintColor: Colors.transparent,
+        elevation: 3,
+        shadowColor: Colors.black.withValues(alpha: 0.4),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(CommunityTokens.topicRadius),
-          side: BorderSide(color: scheme.primary),
+          borderRadius: BorderRadius.circular(RefreshTokens.controlRadius),
+          side: BorderSide(color: RefreshColors.faintBorder(context)),
         ),
         clipBehavior: Clip.antiAlias,
         child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: _verticalPadding),
           child: IntrinsicWidth(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var i = 0; i < children.length; i++) ...[
-                  if (i > 0) divider,
-                  children[i],
-                ],
-              ],
+              children: children,
             ),
           ),
         ),
@@ -52,19 +60,19 @@ class CommunityMenuHeader extends StatelessWidget {
 
   final String label;
 
+  static const _height = 40.0;
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Container(
-      height: CommunityTokens.menuHeaderHeight,
+      height: _height,
       padding: const EdgeInsets.symmetric(horizontal: CommunityTokens.menuRowPadding),
-      alignment: Alignment.centerLeft,
-      child: Text(
-        label,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: CommunityColors.muted(context),
+      alignment: Alignment.bottomLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(
+          label,
+          style: RefreshTokens.meta(context, on: CommunityMenuFrame.background(context), weight: FontWeight.w600),
         ),
       ),
     );
@@ -91,27 +99,25 @@ class CommunityMenuRow extends StatelessWidget {
   final bool centered;
   final VoidCallback onTap;
 
+  static const _emojiSize = 18.0;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final emoji = this.emoji;
-    final style = theme.textTheme.titleMedium?.copyWith(
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
-      color: theme.colorScheme.onSurface,
-    );
+    final style = RefreshTokens.body(context, weight: FontWeight.w500)?.copyWith(height: 1.2);
     return Semantics(
       selected: centered ? null : selected,
       button: true,
       child: InkWell(
         onTap: onTap,
         child: Container(
-          height: CommunityTokens.topicRowHeight,
+          constraints: const BoxConstraints(minHeight: RefreshTokens.minTarget),
           padding: const EdgeInsets.symmetric(horizontal: CommunityTokens.menuRowPadding),
           child: Row(
             mainAxisAlignment: centered ? MainAxisAlignment.center : MainAxisAlignment.start,
             children: [
-              if (emoji != null) ...[EmojiText(emoji, size: 16), const SizedBox(width: 6)],
+              if (emoji != null) ...[EmojiText(emoji, size: _emojiSize), const SizedBox(width: 12)],
               // The only flexible child, so the label gets all the room left.
               Flexible(
                 fit: centered ? FlexFit.loose : FlexFit.tight,
@@ -123,12 +129,12 @@ class CommunityMenuRow extends StatelessWidget {
                 ),
               ),
               if (!centered) ...[
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 // Space kept when not ticked, so the menu does not change width.
                 SizedBox(
                   width: CommunityTokens.menuTickSize,
                   child: selected
-                      ? Icon(Icons.check, size: CommunityTokens.menuTickSize, color: theme.colorScheme.primary)
+                      ? Icon(Icons.check_rounded, size: CommunityTokens.menuTickSize, color: theme.colorScheme.primary)
                       : null,
                 ),
               ],

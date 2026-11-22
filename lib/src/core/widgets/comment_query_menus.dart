@@ -74,7 +74,7 @@ class _CommentFilterMenuState extends State<CommentFilterMenu> {
           ),
         if (_filters.isNotEmpty)
           CommunityMenuRow(
-            label: Text(l.resetFilter, style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+            label: Text(l.resetFilter, style: TextStyle(color: CommunityMenuFrame.readable(context, Theme.of(context).colorScheme.primary))),
             centered: true,
             onTap: () {
               setState(() => _filters = {});
