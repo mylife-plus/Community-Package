@@ -134,7 +134,7 @@ class CommentThread extends StatelessWidget {
                                     ),
                                     textStyle: RefreshTokens.body(context, weight: FontWeight.w600),
                                   ),
-                                  icon: const Icon(Icons.reply_rounded, size: 20),
+                                  icon: const Icon(Icons.subdirectory_arrow_right_rounded, size: 20),
                                   label: Text(l.reply),
                                 ),
                               ),

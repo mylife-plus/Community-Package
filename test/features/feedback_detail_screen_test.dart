@@ -537,6 +537,14 @@ void main() {
     expect(find.byType(EditCommentSheet), findsOneWidget);
   });
 
+  testWidgets('the Reply button has a line-style arrow, not the solid one', (tester) async {
+    await open(tester);
+    await tapAndSettle(tester, showReplies);
+
+    expect(find.descendant(of: replyPlus, matching: find.byIcon(Icons.subdirectory_arrow_right_rounded)), findsOneWidget);
+    expect(find.byIcon(Icons.reply_rounded), findsNothing);
+  });
+
   // Ages and labels of different lengths must not move the button.
   testWidgets('every comment edit button ends 4 from its card\'s right edge', (tester) async {
     await open(
