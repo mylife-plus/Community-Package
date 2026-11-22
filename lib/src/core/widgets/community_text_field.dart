@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/community_tokens.dart';
+import '../theme/refresh_style.dart';
 
 /// The text field of the forms: one line at first, growing with the text.
 class CommunityTextField extends StatelessWidget {
@@ -37,6 +38,7 @@ class CommunityTextField extends StatelessWidget {
   /// The typed text.
   static TextStyle? textStyle(BuildContext context) {
     final theme = Theme.of(context);
+    if (CommunityRefresh.of(context)) return RefreshTokens.body(context);
     return theme.textTheme.bodyLarge?.copyWith(
       fontSize: 20,
       fontWeight: FontWeight.w400,
@@ -44,11 +46,16 @@ class CommunityTextField extends StatelessWidget {
     );
   }
 
-  static TextStyle? hintStyle(BuildContext context) => Theme.of(context).textTheme.bodyLarge?.copyWith(
-    fontSize: 20,
-    fontWeight: FontWeight.w400,
-    color: CommunityColors.placeholder(context),
-  );
+  static TextStyle? hintStyle(BuildContext context) {
+    if (CommunityRefresh.of(context)) {
+      return RefreshTokens.body(context, color: RefreshColors.meta(context, on: RefreshColors.field(context)));
+    }
+    return Theme.of(context).textTheme.bodyLarge?.copyWith(
+      fontSize: 20,
+      fontWeight: FontWeight.w400,
+      color: CommunityColors.placeholder(context),
+    );
+  }
 
   /// The count, shown only close to the limit.
   static Widget? counter(
@@ -61,6 +68,58 @@ class CommunityTextField extends StatelessWidget {
     return Text(
       '$currentLength / $maxLength',
       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: CommunityColors.muted(context)),
+    );
+  }
+
+  /// The refreshed field: filled, no border until focused, then the
+  /// primary colour at 1.5. Every part is set, so a host's
+  /// InputDecorationTheme can't add a second box.
+  static InputDecoration refreshedDecoration(
+    BuildContext context, {
+    required String hint,
+    String? label,
+    Widget? leading,
+    String? errorText,
+    String? suffixText,
+    EdgeInsets padding = RefreshTokens.fieldPadding,
+    Widget? suffixIcon,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final fill = RefreshColors.field(context);
+    OutlineInputBorder border(Color color, [double width = RefreshTokens.focusBorderWidth]) => OutlineInputBorder(
+      borderRadius: BorderRadius.circular(RefreshTokens.controlRadius),
+      borderSide: color == Colors.transparent ? BorderSide.none : BorderSide(color: color, width: width),
+    );
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: hintStyle(context),
+      labelText: label,
+      floatingLabelBehavior: FloatingLabelBehavior.auto,
+      labelStyle: hintStyle(context),
+      floatingLabelStyle: RefreshTokens.meta(context, on: fill),
+      errorText: errorText,
+      suffixText: suffixText,
+      suffixStyle: textStyle(context),
+      suffixIcon: suffixIcon,
+      suffixIconConstraints: const BoxConstraints(
+        minWidth: RefreshTokens.minTarget,
+        minHeight: RefreshTokens.minTarget,
+      ),
+      errorMaxLines: 3,
+      filled: true,
+      fillColor: fill,
+      isDense: true,
+      contentPadding: leading == null ? padding : padding.copyWith(left: 0),
+      prefixIcon:
+          leading == null ? null : Padding(padding: EdgeInsets.only(left: padding.left, right: 8), child: leading),
+      prefixIconConstraints: const BoxConstraints(),
+      constraints: const BoxConstraints(minHeight: RefreshTokens.minTarget),
+      border: border(Colors.transparent),
+      enabledBorder: border(Colors.transparent),
+      disabledBorder: border(Colors.transparent),
+      focusedBorder: border(scheme.primary),
+      errorBorder: border(scheme.error, 1),
+      focusedErrorBorder: border(scheme.error),
     );
   }
 
@@ -85,22 +144,26 @@ class CommunityTextField extends StatelessWidget {
       textCapitalization: TextCapitalization.sentences,
       style: textStyle(context),
       buildCounter: counter,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: hintStyle(context),
-        filled: true,
-        fillColor: theme.colorScheme.surface,
-        isDense: true,
-        contentPadding: leading == null ? padding : padding.copyWith(left: 0),
-        prefixIcon: leading == null
-            ? null
-            : Padding(padding: EdgeInsets.only(left: padding.left, right: 6), child: leading),
-        prefixIconConstraints: const BoxConstraints(),
-        constraints: const BoxConstraints(minHeight: CommunityTokens.fieldMinHeight),
-        enabledBorder: border(borderColor ?? CommunityColors.fieldBorder(context)),
-        disabledBorder: border(borderColor ?? CommunityColors.fieldBorder(context)),
-        focusedBorder: border(theme.colorScheme.primary),
-      ),
+      decoration:
+          CommunityRefresh.of(context)
+              ? refreshedDecoration(context, hint: hint, leading: leading)
+              : InputDecoration(
+                hintText: hint,
+                hintStyle: hintStyle(context),
+                filled: true,
+                fillColor: theme.colorScheme.surface,
+                isDense: true,
+                contentPadding: leading == null ? padding : padding.copyWith(left: 0),
+                prefixIcon:
+                    leading == null
+                        ? null
+                        : Padding(padding: EdgeInsets.only(left: padding.left, right: 6), child: leading),
+                prefixIconConstraints: const BoxConstraints(),
+                constraints: const BoxConstraints(minHeight: CommunityTokens.fieldMinHeight),
+                enabledBorder: border(borderColor ?? CommunityColors.fieldBorder(context)),
+                disabledBorder: border(borderColor ?? CommunityColors.fieldBorder(context)),
+                focusedBorder: border(theme.colorScheme.primary),
+              ),
     );
   }
 }

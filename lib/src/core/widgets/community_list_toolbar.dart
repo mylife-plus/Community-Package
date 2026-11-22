@@ -5,6 +5,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../l10n/community_localizations.dart';
 import '../theme/community_icons.dart';
 import '../theme/community_tokens.dart';
+import '../theme/refresh_style.dart';
+import 'community_text_field.dart';
+import 'refresh_buttons.dart';
 
 /// The row under a list's header (Figma frames 1:426 and Settings-6): sort,
 /// filter and search on the left, + on the right. Used by All Feedback and
@@ -64,6 +67,7 @@ class CommunityListToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (CommunityRefresh.of(context)) return _refreshed(context);
     return Container(
       height: CommunityTokens.toolbarHeight,
       padding: CommunityTokens.toolbarPadding,
@@ -123,6 +127,92 @@ class CommunityListToolbar extends StatelessWidget {
             onPressed: onAdd,
           ),
       ],
+    );
+  }
+}
+
+extension on CommunityListToolbar {
+  /// The refreshed toolbar: rounded Material icons in 48 px buttons; an
+  /// active sort or filter (and the open +) gets a tonal background.
+  Widget _refreshed(BuildContext context) {
+    final l = CommunityLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final idle = RefreshColors.meta(context, on: Theme.of(context).scaffoldBackgroundColor);
+    final onAdd = this.onAdd;
+    Widget button({
+      required IconData icon,
+      required String? tooltip,
+      required bool active,
+      required VoidCallback onPressed,
+    }) => RefreshIconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      tonal: active,
+      selected: active,
+      color: active ? scheme.primary : idle,
+      icon: Icon(icon),
+    );
+    if (searchOpen) {
+      return SizedBox(
+        height: RefreshTokens.minTarget,
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: searchController,
+                autofocus: true,
+                textInputAction: TextInputAction.search,
+                onChanged: onSearchChanged,
+                onSubmitted: (_) => onSearchSubmitted(),
+                inputFormatters: [LengthLimitingTextInputFormatter(maxSearchLength)],
+                style: RefreshTokens.body(context),
+                decoration: CommunityTextField.refreshedDecoration(
+                  context,
+                  hint: searchHint,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  leading: Icon(Icons.search_rounded, size: 20, color: idle),
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            RefreshIconButton(
+              tooltip: l.closeSearch,
+              onPressed: onCloseSearch,
+              color: idle,
+              icon: const Icon(Icons.close_rounded),
+            ),
+          ],
+        ),
+      );
+    }
+    return SizedBox(
+      height: RefreshTokens.minTarget,
+      child: Row(
+        children: [
+          Builder(
+            builder: (buttonContext) => button(
+              icon: Icons.sort_rounded,
+              tooltip: l.sortTooltip,
+              active: sortActive,
+              onPressed: () => onSort(buttonContext),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Builder(
+            builder: (buttonContext) => button(
+              icon: Icons.filter_list_rounded,
+              tooltip: l.filterTooltip,
+              active: filterActive,
+              onPressed: () => onFilter(buttonContext),
+            ),
+          ),
+          const SizedBox(width: 4),
+          button(icon: Icons.search_rounded, tooltip: l.searchTooltip, active: false, onPressed: onOpenSearch),
+          const Spacer(),
+          if (onAdd != null)
+            button(icon: Icons.add_rounded, tooltip: addTooltip, active: addActive, onPressed: onAdd),
+        ],
+      ),
     );
   }
 }

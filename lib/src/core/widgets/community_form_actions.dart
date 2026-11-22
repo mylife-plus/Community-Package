@@ -5,6 +5,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/community_icons.dart';
 import '../theme/community_tokens.dart';
+import '../theme/refresh_style.dart';
+import 'refresh_buttons.dart';
 
 /// The ✗ (cancel) and ✓ (submit) buttons at the bottom of a form, with an
 /// optional red 🗑 (delete) between them (Settings-12).
@@ -51,6 +53,7 @@ class CommunityFormActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (CommunityRefresh.of(context)) return _refreshed(context);
     final colors = CommunityColors.of(context);
     final onDelete = this.onDelete;
     return Row(
@@ -76,6 +79,44 @@ class CommunityFormActions extends StatelessWidget {
             child: CustomPaint(size: const Size(30, 27), painter: _CheckPainter(colors.submit)),
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// The gap between the refreshed buttons, across and down.
+const _gridGap = 12.0;
+
+extension on CommunityFormActions {
+  /// The refreshed look: Cancel (outlined) and Save (filled, with a check)
+  /// side by side; Delete on its own row below, full width, in the error
+  /// colour, away from Save.
+  Widget _refreshed(BuildContext context) {
+    final onDelete = this.onDelete;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: RefreshButton(label: cancelLabel, onPressed: onCancel, kind: RefreshButtonKind.secondary),
+            ),
+            const SizedBox(width: _gridGap),
+            Expanded(
+              child: RefreshButton(label: submitLabel, onPressed: onSubmit, icon: Icons.check_rounded),
+            ),
+          ],
+        ),
+        if (onDelete != null) ...[
+          const SizedBox(height: 16),
+          RefreshButton(
+            label: deleteLabel ?? '',
+            onPressed: onDelete,
+            kind: RefreshButtonKind.destructive,
+            icon: Icons.delete_outline_rounded,
+          ),
+        ],
       ],
     );
   }

@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/community_tokens.dart';
+import '../theme/refresh_style.dart';
 import 'community_button.dart';
 
 // The only file that opens raw sheets, dialogs and snackbars. Everything uses
@@ -15,7 +16,51 @@ import 'community_button.dart';
 /// Column with an Expanded child fills that height. Dragging the sheet down
 /// closes it with null. [barrierColor] dims the screen behind it; null
 /// keeps Flutter's default.
-Future<T?> showCommunitySheet<T>(BuildContext context, {required WidgetBuilder builder, Color? barrierColor}) {
+Future<T?> showCommunitySheet<T>(
+  BuildContext context, {
+  required WidgetBuilder builder,
+  Color? barrierColor,
+  bool refreshed = false,
+}) {
+  if (refreshed) {
+    // The refreshed sheet: surfaceContainerHigh, 24 at the top, a drag
+    // handle, and the refreshed look for the widgets inside it (a route
+    // doesn't inherit it from the screen).
+    return showModalBottomSheet<T>(
+      context: context,
+      barrierColor: barrierColor,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: RefreshColors.sheet(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(RefreshTokens.sheetRadius)),
+      ),
+      builder: (context) => CommunityRefresh(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Drawn here rather than with showDragHandle, so its colour
+            // doesn't depend on the host's onSurfaceVariant.
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: Container(
+                  width: 32,
+                  height: 4,
+                  decoration: ShapeDecoration(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.28),
+                    shape: const StadiumBorder(),
+                  ),
+                ),
+              ),
+            ),
+            Flexible(child: builder(context)),
+          ],
+        ),
+      ),
+    );
+  }
   return showModalBottomSheet<T>(
     context: context,
     barrierColor: barrierColor,

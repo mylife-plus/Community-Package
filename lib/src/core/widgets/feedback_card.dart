@@ -4,6 +4,7 @@ import '../../data/models/feedback_item.dart';
 import '../l10n/community_localizations.dart';
 import '../navigation/community_screens.dart';
 import '../theme/community_tokens.dart';
+import '../theme/refresh_style.dart';
 import '../utils/formatters.dart';
 import 'emoji_text.dart';
 import 'inner_shadow.dart';
@@ -61,6 +62,7 @@ class FeedbackCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (CommunityRefresh.of(context)) return _refreshed(context);
     final l = CommunityLocalizations.of(context);
     final theme = Theme.of(context);
     final text = theme.textTheme;
@@ -138,6 +140,100 @@ class FeedbackCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// The refreshed card: surfaceContainerLow, radius 16, a faint edge,
+  /// 16 inside. The top row is 48 high, the same as on cards with an edit
+  /// button.
+  Widget _refreshed(BuildContext context) {
+    final l = CommunityLocalizations.of(context);
+    final card = RefreshColors.card(context);
+    final body = RefreshTokens.body(context);
+    final meta = RefreshTokens.meta(context, on: card);
+    return Material(
+      color: card,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: RefreshColors.faintBorder(context)),
+        borderRadius: BorderRadius.circular(RefreshTokens.cardRadius),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(RefreshTokens.cardPadding, 0, 4, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: RefreshTokens.minTarget,
+                child: Row(
+                  children: [
+                    EmojiText(feedbackTypeEmoji(item.type), size: 20),
+                    const SizedBox(width: 8),
+                    Text('#${item.number}', style: meta?.copyWith(fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    Text(formatAge(l, item.createdAt, now: now), style: meta),
+                    const SizedBox(width: RefreshTokens.cardPadding - 4),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: RefreshTokens.cardPadding - 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_hasProblemDetails(item)) _ProblemDetails(item: item, style: body) else Text(item.text, style: body),
+                    const SizedBox(height: 4),
+                    LayoutBuilder(builder: (context, constraints) => _refreshedBottomRow(context, constraints)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _refreshedBottomRow(BuildContext context, BoxConstraints constraints) {
+    final l = CommunityLocalizations.of(context);
+    final card = RefreshColors.card(context);
+    final scheme = Theme.of(context).colorScheme;
+    final costCents = item.costCents;
+    return Row(
+      children: [
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: item.status == null ? null : _Status(status: item.status!),
+          ),
+        ),
+        if (costCents != null) ...[
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: constraints.maxWidth * _costMaxShare),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: '💰', style: emojiStyle(15)),
+                  TextSpan(text: ' ${formatUsd(l, costCents)}'),
+                ],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: RefreshTokens.meta(
+                context,
+                color: RefreshColors.readable(CommunityColors.of(context).cost, scheme.onSurface, card, 4.5),
+                weight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+        _Count(emoji: '💬', count: item.commentCount, semanticsLabel: l.commentCount(item.commentCount)),
+        const SizedBox(width: 8),
+        _ReactionButton(item: item, onTap: onReact),
+      ],
     );
   }
 
@@ -313,11 +409,22 @@ class _Status extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 14,
-              fontWeight: FontWeight.w300,
-              color: color,
-            ),
+            style: CommunityRefresh.of(context)
+                ? RefreshTokens.meta(
+                    context,
+                    color: RefreshColors.readable(
+                      color,
+                      Theme.of(context).colorScheme.onSurface,
+                      RefreshColors.card(context),
+                      4.5,
+                    ),
+                    weight: FontWeight.w600,
+                  )
+                : Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w300,
+                    color: color,
+                  ),
           ),
         ),
       ],
@@ -335,21 +442,24 @@ class _Count extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final refreshed = CommunityRefresh.of(context);
     return Semantics(
       label: semanticsLabel,
       excludeSemantics: true,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          EmojiText(emoji, size: 20),
+          EmojiText(emoji, size: refreshed ? 16 : 20),
           const SizedBox(width: 4),
           Text(
             '$count',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              fontSize: 16,
-              fontWeight: FontWeight.w300,
-              color: theme.colorScheme.onSurface,
-            ),
+            style: refreshed
+                ? RefreshTokens.meta(context, color: theme.colorScheme.onSurface, weight: FontWeight.w600)
+                : theme.textTheme.bodyLarge?.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w300,
+                    color: theme.colorScheme.onSurface,
+                  ),
           ),
         ],
       ),
@@ -396,38 +506,84 @@ class _ReactionButton extends StatelessWidget {
       toggled: onTap == null ? null : item.reacted,
       onTap: onTap,
       excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Padding(
-          padding: tapPadding,
-          child: AnimatedContainer(
-            duration: _borderAnimation,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              border: Border.all(color: border, strokeAlign: BorderSide.strokeAlignOutside),
-              borderRadius: BorderRadius.circular(CommunityTokens.cardRadius),
-            ),
-            child: InnerShadow(
-              radius: CommunityTokens.cardRadius,
-              child: Container(
-                constraints: BoxConstraints(
-                  minWidth: CommunityTokens.reactionChipSize.width,
-                  minHeight: CommunityTokens.reactionChipSize.height,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                alignment: Alignment.center,
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: '❤️', style: emojiStyle(16)),
-                      TextSpan(text: ' ${item.reactionCount}'),
-                    ],
+      child: CommunityRefresh.of(context)
+          ? _refreshedPill(context, border)
+          : GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
+              child: Padding(
+                padding: tapPadding,
+                child: AnimatedContainer(
+                  duration: _borderAnimation,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    border: Border.all(color: border, strokeAlign: BorderSide.strokeAlignOutside),
+                    borderRadius: BorderRadius.circular(CommunityTokens.cardRadius),
                   ),
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w300,
-                    color: theme.colorScheme.onSurface,
+                  child: InnerShadow(
+                    radius: CommunityTokens.cardRadius,
+                    child: Container(
+                      constraints: BoxConstraints(
+                        minWidth: CommunityTokens.reactionChipSize.width,
+                        minHeight: CommunityTokens.reactionChipSize.height,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      alignment: Alignment.center,
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(text: '❤️', style: emojiStyle(16)),
+                            TextSpan(text: ' ${item.reactionCount}'),
+                          ],
+                        ),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w300,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+
+  /// The refreshed heart: a 40 high tonal pill with a 48 tap area; when
+  /// hearted, a border in the heart colour fades in.
+  Widget _refreshedPill(BuildContext context, Color border) {
+    final scheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: AnimatedContainer(
+          duration: _borderAnimation,
+          height: 40,
+          decoration: ShapeDecoration(
+            color: RefreshColors.tonal(context),
+            shape: StadiumBorder(side: BorderSide(color: border, width: 1.5)),
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            shape: const StadiumBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Center(
+                  widthFactor: 1,
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: '❤️', style: emojiStyle(15)),
+                        TextSpan(text: ' ${item.reactionCount}'),
+                      ],
+                    ),
+                    style: RefreshTokens.meta(context, color: scheme.onSurface, weight: FontWeight.w600),
                   ),
                 ),
               ),
