@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../theme/community_tokens.dart';
+import '../theme/refresh_style.dart';
 import 'emoji_text.dart';
+import 'refresh_buttons.dart';
 
 /// A thin bar under the app bar while saved data is shown without a
 /// connection, with a button to try again. Collapses when [visible] is
@@ -20,15 +21,19 @@ class CommunityOfflineBanner extends StatelessWidget {
   final String actionLabel;
   final VoidCallback onAction;
 
-  static const _minHeight = 40.0;
+  static const _minHeight = RefreshTokens.minTarget;
 
   /// The most of the bar's width the button may take.
   static const _actionMaxShare = 0.4;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final scheme = Theme.of(context).colorScheme;
+    // The field layer: visible on every host, also where the scheme leaves
+    // surfaceContainerHighest at the screen colour.
+    final background = RefreshColors.field(context);
+    final textColor = scheme.onSurface;
+    final actionColor = RefreshColors.readable(scheme.primary, scheme.onSurface, background, 4.5);
     return AnimatedSize(
       duration: const Duration(milliseconds: 150),
       alignment: Alignment.topCenter,
@@ -39,8 +44,8 @@ class CommunityOfflineBanner extends StatelessWidget {
               child: Container(
                 width: double.infinity,
                 constraints: const BoxConstraints(minHeight: _minHeight),
-                color: scheme.surfaceContainerHighest,
-                padding: const EdgeInsets.only(left: CommunityTokens.formPadding, right: 4),
+                color: background,
+                padding: const EdgeInsets.only(left: RefreshTokens.screenPadding, right: 4),
                 // The text wraps beside the button; a long button label
                 // (or a large text size) wraps too instead of squeezing the
                 // text.
@@ -49,7 +54,7 @@ class CommunityOfflineBanner extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           child: Text.rich(
                             TextSpan(
                               children: [
@@ -57,10 +62,8 @@ class CommunityOfflineBanner extends StatelessWidget {
                                 TextSpan(text: message),
                               ],
                             ),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontSize: 14,
-                              color: scheme.onSurfaceVariant,
-                            ),
+                            style: RefreshTokens.meta(context, color: textColor, weight: FontWeight.w500)
+                                ?.copyWith(fontSize: 14, height: 1.3),
                           ),
                         ),
                       ),
@@ -68,7 +71,16 @@ class CommunityOfflineBanner extends StatelessWidget {
                         constraints: BoxConstraints(maxWidth: constraints.maxWidth * _actionMaxShare),
                         child: TextButton(
                           onPressed: onAction,
-                          child: Text(actionLabel, textAlign: TextAlign.center),
+                          style: TextButton.styleFrom(
+                            foregroundColor: actionColor,
+                            minimumSize: const Size(RefreshTokens.minTarget, RefreshTokens.minTarget),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(RefreshTokens.controlRadius),
+                            ),
+                            textStyle: RefreshTokens.meta(context, weight: FontWeight.w600)?.copyWith(fontSize: 14),
+                          ),
+                          child: Text(sentenceCase(actionLabel), textAlign: TextAlign.center),
                         ),
                       ),
                     ],

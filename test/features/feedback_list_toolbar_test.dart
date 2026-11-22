@@ -173,7 +173,7 @@ void main() {
 
     expect(find.text('Nothing found'), findsOneWidget);
     backend.answer(pageJson([3, 2, 1]));
-    await tapAndSettle(tester, find.text('clear'));
+    await tapAndSettle(tester, find.text('Clear'));
 
     expect(find.byType(TextField), findsNothing);
     expect(find.byType(FeedbackCard), findsNWidgets(3));
