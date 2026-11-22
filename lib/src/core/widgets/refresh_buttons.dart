@@ -90,7 +90,9 @@ class RefreshButton extends StatelessWidget {
         textStyle: textStyle,
       ),
       RefreshButtonKind.destructive => TextButton.styleFrom(
-        foregroundColor: scheme.error,
+        // The error colour, darkened (light) or lightened (dark) just
+        // enough to read at 4.5:1 on its own tonal background.
+        foregroundColor: RefreshColors.readable(scheme.error, scheme.onSurface, RefreshColors.errorTonal(context), 4.5),
         backgroundColor: RefreshColors.errorTonal(context),
         minimumSize: minimumSize,
         padding: padding,

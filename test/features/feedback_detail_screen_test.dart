@@ -491,7 +491,10 @@ void main() {
     expect(tester.getSize(find.ancestor(of: find.text('Save'), matching: find.byType(ConstrainedBox)).first).height, 48);
     final deleteText = tester.widget<Text>(find.text('Delete'));
     final deleteColor = DefaultTextStyle.of(tester.element(find.text('Delete'))).style.color ?? deleteText.style?.color;
-    expect(deleteColor, Theme.of(sheetContext).colorScheme.error);
+    // The error colour, raised to 4.5:1 on its tonal background.
+    final scheme = Theme.of(sheetContext).colorScheme;
+    expect(deleteColor, RefreshColors.readable(scheme.error, scheme.onSurface, RefreshColors.errorTonal(sheetContext), 4.5));
+    expect(RefreshColors.contrast(deleteColor!, RefreshColors.errorTonal(sheetContext)), greaterThanOrEqualTo(4.5));
   });
 
   testWidgets('Edit Comment: Delete sits on its own row under Save, 48 high', (tester) async {
