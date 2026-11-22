@@ -7,6 +7,8 @@ import 'package:community_package/src/core/widgets/refresh_buttons.dart';
 import 'package:community_package/src/data/repositories/identity_repository.dart';
 import 'package:community_package/src/features/new_feedback/presentation/new_feedback_controller.dart';
 import 'package:community_package/src/features/new_feedback/presentation/new_feedback_screen.dart';
+import 'package:community_package/src/features/new_feedback/presentation/problem_fields.dart';
+import 'package:community_package/src/features/new_feedback/presentation/screen_picker_sheet.dart';
 import 'package:community_package/src/features/privacy/presentation/post_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,9 +55,35 @@ void main() {
   double contrastOn(WidgetTester tester, Finder text, Color background) =>
       RefreshColors.contrast(textColor(tester, text), background);
 
+  testWidgets('screen picker: a refreshed sheet, rows of 48, the chosen one ticked on a tonal row', (tester) async {
+    await pumpLocalized(tester, screen());
+    await tester.pumpAndSettle();
+    await tapAndSettle(tester, find.text('Problem'));
+    await tapAndSettle(tester, find.byType(ScreenPickerField));
+
+    final sheet = find.byType(ScreenPickerSheet);
+    expect(find.byType(CommunityRefresh), findsWidgets);
+    expect(tester.widget<Text>(find.descendant(of: sheet, matching: find.text('Select a screen'))).style?.fontSize, 17);
+    final row = find.ancestor(of: find.text('Sell Items'), matching: find.byType(InkWell)).first;
+    expect(tester.getSize(row).height, greaterThanOrEqualTo(48));
+    // Each level indented further.
+    expect(
+      tester.getTopLeft(find.text('Sell Items')).dx - tester.getTopLeft(find.text('Inventory')).dx,
+      greaterThan(0),
+    );
+
+    await tapAndSettle(tester, find.text('Sell Items'));
+    await tapAndSettle(tester, find.byType(ScreenPickerField));
+    expect(find.descendant(of: sheet, matching: find.byIcon(Icons.check_rounded)), findsOneWidget);
+    final chosen = tester.widget<Material>(
+      find.ancestor(of: find.descendant(of: sheet, matching: find.text('Sell Items')), matching: find.byType(Material)).first,
+    );
+    expect(chosen.color, RefreshColors.tonal(tester.element(sheet), on: RefreshColors.card(tester.element(sheet))));
+  });
+
   for (final MapEntry(key: name, value: theme) in hostThemes.entries) {
     for (final code in communityLanguages) {
-      testWidgets('$name, $code at 320 px: topics, text step and Problem form fit; text reads at 4.5:1', (
+      testWidgets('$name, $code at 320 px: topics, text step, Problem form and picker fit; text reads at 4.5:1', (
         tester,
       ) async {
         await pumpLocalized(tester, screen(), theme: theme, locale: code, size: const Size(320, 568));
@@ -86,6 +114,12 @@ void main() {
         expect(contrastOn(tester, find.text(l.deviceOs), field), greaterThanOrEqualTo(4.5));
         expect(contrastOn(tester, find.text(FakeDeviceDetailsSource.sample.osVersion!), field), greaterThanOrEqualTo(4.5));
 
+        // The screen picker.
+        await tapAndSettle(tester, find.byType(ScreenPickerField));
+        expect(tester.takeException(), isNull);
+        final sheet = find.byType(ScreenPickerSheet);
+        final card = RefreshColors.card(tester.element(sheet));
+        expect(contrastOn(tester, find.descendant(of: sheet, matching: find.text('Settings')), card), greaterThanOrEqualTo(4.5));
       });
     }
   }

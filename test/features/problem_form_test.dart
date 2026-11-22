@@ -235,7 +235,7 @@ void main() {
     ];
     expect(names, [
       '📲',
-      'select a screen',
+      'Select a screen',
       'Inventory',
       'Sell Items',
       'Add Items',
@@ -262,7 +262,7 @@ void main() {
 
     await tapAndSettle(tester, find.byType(ScreenPickerField));
     final selectedRow = find.ancestor(
-      of: find.descendant(of: picker, matching: find.byIcon(Icons.check)),
+      of: find.descendant(of: picker, matching: find.byIcon(Icons.check_rounded)),
       matching: find.byType(Row),
     );
     expect(find.descendant(of: selectedRow.first, matching: find.text('Add Items')), findsOneWidget);
@@ -277,7 +277,7 @@ void main() {
     await pickScreen(tester, 'Settings');
 
     await tapAndSettle(tester, find.byType(ScreenPickerField));
-    await tester.drag(find.text('select a screen').last, const Offset(0, 600));
+    await tester.drag(find.text('Select a screen').last, const Offset(0, 600));
     await tester.pumpAndSettle();
 
     expect(picker, findsNothing);

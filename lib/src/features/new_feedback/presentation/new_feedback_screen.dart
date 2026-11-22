@@ -231,6 +231,7 @@ class _Form extends StatelessWidget {
     FocusScope.of(context).unfocus();
     final choice = await showCommunitySheet<ScreenChoice>(
       context,
+      refreshed: true,
       builder: (_) => ScreenPickerSheet(screens: controller.screens, selected: controller.screen),
     );
     if (choice != null) controller.chooseScreen(choice);
