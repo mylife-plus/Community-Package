@@ -4,6 +4,7 @@ import 'package:community_package/community_package.dart';
 import 'package:community_package/src/core/di/community_dependencies.dart';
 import 'package:community_package/src/features/community_home/presentation/community_home_screen.dart';
 import 'package:community_package/src/features/feedback_list/presentation/feedback_list_screen.dart';
+import 'package:community_package/src/core/theme/refresh_style.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -162,14 +163,15 @@ void main() {
     });
 
     // The test theme is Material 3's, like Inventory's: 1.5 for bodyLarge.
-    testWidgets("every text uses Figma's line height, whatever the host's", (tester) async {
+    // The refreshed body text has its own 1.4.
+    testWidgets("every text uses the package's line height, whatever the host's", (tester) async {
       await openList(tester);
 
       final texts = find.descendant(of: find.byType(Text), matching: find.byType(RichText));
       expect(texts, findsWidgets);
       for (final text in tester.widgetList<RichText>(texts)) {
         final style = text.text.style;
-        expect(style?.height, 1.25, reason: text.text.toPlainText());
+        expect(style?.height, anyOf(1.25, RefreshTokens.bodyLineHeight), reason: text.text.toPlainText());
         expect(style?.leadingDistribution, TextLeadingDistribution.even, reason: text.text.toPlainText());
       }
     });

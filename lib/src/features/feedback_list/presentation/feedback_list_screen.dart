@@ -5,7 +5,7 @@ import '../../../core/errors/app_error.dart';
 import '../../../core/l10n/community_localizations.dart';
 import '../../../core/navigation/community_navigator.dart';
 import '../../../core/state/loading_state.dart';
-import '../../../core/theme/community_tokens.dart';
+import '../../../core/theme/refresh_style.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/community_app_bar.dart';
 import '../../../core/widgets/community_message.dart';
@@ -16,6 +16,7 @@ import '../../../core/widgets/feedback_card.dart';
 import '../../../core/widgets/feedback_card_skeleton.dart';
 import '../../../core/widgets/community_list_toolbar.dart';
 import '../../../core/widgets/feedback_query_menus.dart';
+import '../../../core/widgets/refresh_buttons.dart';
 import '../../../data/models/feedback_item.dart';
 import '../../../data/models/feedback_query.dart';
 import '../../privacy/presentation/post_gate.dart';
@@ -41,56 +42,63 @@ class FeedbackListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = CommunityLocalizations.of(context);
-    return Scaffold(
-      appBar: CommunityAppBar(emoji: '✍️', title: l.feedbackTitle),
-      body: ControllerScope<FeedbackListController>(
-        create:
-            createController ??
-            () => FeedbackListController(CommunityDependencies.feedbackRepository),
-        builder: (controller) => Column(
-          children: [
-            CommunityOfflineBanner(
-              visible: controller.showOfflineBar,
-              message: l.offlineShowingSaved,
-              actionLabel: l.retry,
-              onAction: () => _retry(context, controller),
-            ),
-            const SizedBox(height: CommunityTokens.listToolbarTop),
-            CommunityListToolbar(
-              sortActive: controller.query.sort != FeedbackSort.newest,
-              filterActive: controller.query.hasFilter,
-              onSort: (anchor) => showFeedbackSortMenu(
-                anchor,
-                selected: controller.query.sort,
-                onSelected: controller.setSort,
+    return CommunityRefresh(
+      child: Scaffold(
+        appBar: CommunityAppBar(emoji: '✍️', title: l.feedbackTitle, refreshed: true),
+        body: ControllerScope<FeedbackListController>(
+          create:
+              createController ??
+              () => FeedbackListController(CommunityDependencies.feedbackRepository),
+          builder: (controller) => Column(
+            children: [
+              CommunityOfflineBanner(
+                visible: controller.showOfflineBar,
+                message: l.offlineShowingSaved,
+                actionLabel: l.retry,
+                onAction: () => _retry(context, controller),
               ),
-              onFilter: (anchor) => showFeedbackFilterMenu(
-                anchor,
-                types: controller.query.types,
-                statuses: controller.query.statuses,
-                onToggleType: controller.toggleType,
-                onToggleStatus: controller.toggleStatus,
-                onReset: controller.resetFilter,
+              const SizedBox(height: _toolbarTop),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: RefreshTokens.screenPadding),
+                child: CommunityListToolbar(
+                  sortActive: controller.query.sort != FeedbackSort.newest,
+                  filterActive: controller.query.hasFilter,
+                  onSort: (anchor) => showFeedbackSortMenu(
+                    anchor,
+                    selected: controller.query.sort,
+                    onSelected: controller.setSort,
+                  ),
+                  onFilter: (anchor) => showFeedbackFilterMenu(
+                    anchor,
+                    types: controller.query.types,
+                    statuses: controller.query.statuses,
+                    onToggleType: controller.toggleType,
+                    onToggleStatus: controller.toggleStatus,
+                    onReset: controller.resetFilter,
+                  ),
+                  searchOpen: controller.searchOpen,
+                  searchController: controller.searchController,
+                  searchHint: l.searchHint,
+                  maxSearchLength: FeedbackListController.maxSearchLength,
+                  onOpenSearch: controller.openSearch,
+                  onCloseSearch: controller.closeSearch,
+                  onSearchChanged: controller.onSearchChanged,
+                  onSearchSubmitted: controller.searchNow,
+                  onAdd: () => CommunityNavigator.openNewFeedback(context),
+                  addTooltip: l.newFeedbackTitle,
+                ),
               ),
-              searchOpen: controller.searchOpen,
-              searchController: controller.searchController,
-              searchHint: l.searchHint,
-              maxSearchLength: FeedbackListController.maxSearchLength,
-              onOpenSearch: controller.openSearch,
-              onCloseSearch: controller.closeSearch,
-              onSearchChanged: controller.onSearchChanged,
-              onSearchSubmitted: controller.searchNow,
-              onAdd: () => CommunityNavigator.openNewFeedback(context),
-              addTooltip: l.newFeedbackTitle,
-            ),
-            Expanded(
-              child: _Body(controller: controller, onReact: (item) => _react(context, controller, item)),
-            ),
-          ],
+              Expanded(
+                child: _Body(controller: controller, onReact: (item) => _react(context, controller, item)),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  static const _toolbarTop = 8.0;
 
   /// The offline bar's button: reloads the list, like pull-to-refresh.
   Future<void> _retry(BuildContext context, FeedbackListController controller) async {
@@ -145,7 +153,7 @@ class _Body extends StatelessWidget {
           padding: _listPadding,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: 4,
-          separatorBuilder: (_, _) => const SizedBox(height: CommunityTokens.cardGap),
+          separatorBuilder: (_, _) => const SizedBox(height: RefreshTokens.cardGap),
           itemBuilder: (_, _) => const FeedbackCardSkeleton(),
         );
       case LoadingState.error:
@@ -197,10 +205,10 @@ class _Body extends StatelessWidget {
 }
 
 const _listPadding = EdgeInsets.fromLTRB(
-  CommunityTokens.screenPadding,
-  CommunityTokens.listTop,
-  CommunityTokens.screenPadding,
-  CommunityTokens.cardGap * 3,
+  RefreshTokens.screenPadding,
+  8,
+  RefreshTokens.screenPadding,
+  RefreshTokens.screenPadding * 2,
 );
 
 class _List extends StatelessWidget {
@@ -228,7 +236,7 @@ class _List extends StatelessWidget {
           padding: _listPadding,
           physics: const AlwaysScrollableScrollPhysics(),
           itemCount: items.length + (showFooter ? 1 : 0),
-          separatorBuilder: (_, _) => const SizedBox(height: CommunityTokens.cardGap),
+          separatorBuilder: (_, _) => const SizedBox(height: RefreshTokens.cardGap),
           itemBuilder: (context, index) {
             if (index < items.length) {
               final item = items[index];
@@ -260,14 +268,14 @@ class _LoadMoreError extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         children: [
+          // The refreshed look: secondary text at 4.5:1, an outlined Retry.
           Text(
             l.loadMoreFailed,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: CommunityColors.muted(context),
-            ),
+            style: RefreshTokens.meta(context, on: Theme.of(context).scaffoldBackgroundColor),
           ),
-          TextButton(onPressed: controller.loadMore, child: Text(l.retry)),
+          const SizedBox(height: 8),
+          RefreshButton(label: l.retry, onPressed: controller.loadMore, kind: RefreshButtonKind.secondary),
         ],
       ),
     );

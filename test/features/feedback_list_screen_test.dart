@@ -4,7 +4,6 @@ import 'package:community_package/src/core/widgets/feedback_card_skeleton.dart';
 import 'package:community_package/src/features/feedback_list/presentation/feedback_list_controller.dart';
 import 'package:community_package/src/features/feedback_list/presentation/feedback_list_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -50,22 +49,33 @@ void main() {
 
   // Settings-15, measured from the title's centre: the toolbar icons 59.5
   // and the first card 84.5 below it; the back arrow's box at x8.
-  testWidgets('header, toolbar and first card sit where Figma has them', (tester) async {
+  // Design refresh: Figma's order, on the 8 pt grid.
+  testWidgets('header, toolbar and cards sit on the refreshed grid', (tester) async {
     tester.view
       ..physicalSize = const Size(390, 844)
       ..devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    backend.answer(pageJson([1]));
+    backend.answer(pageJson([2, 1]));
 
     await tester.pumpWidget(app(communityTheme(ThemeData.dark())));
     await tester.pumpAndSettle();
 
-    final titleCentre = tester.getCenter(find.text('Feedback')).dy;
-    expect(titleCentre, 22);
-    expect(tester.getTopLeft(find.descendant(of: find.byTooltip('Back'), matching: find.byType(SvgPicture))).dx, 8);
-    expect(tester.getSize(find.byTooltip('Back')), const Size(44, 44));
-    expect(tester.getCenter(find.byTooltip('Sort')).dy - titleCentre, 59.5);
-    expect(tester.getTopLeft(find.byType(FeedbackCard)).dy - titleCentre, 84.5);
+    expect(tester.getSize(find.byType(AppBar)).height, 56);
+    expect(tester.getCenter(find.text('Feedback')).dy, 28);
+    final back = find.ancestor(of: find.byIcon(Icons.arrow_back_rounded), matching: find.byType(InkWell)).first;
+    // 48 wide; the header gives it its full 56 height to tap.
+    expect(tester.getSize(back).width, 48);
+    expect(tester.getSize(back).height, greaterThanOrEqualTo(48));
+    // The toolbar 8 under the header, its buttons 48 and in line with the cards.
+    final sort = tester.getRect(find.ancestor(of: find.byIcon(Icons.sort_rounded), matching: find.byType(InkWell)).first);
+    expect(sort.top, 56 + 8);
+    expect(sort.size, const Size(48, 48));
+    expect(sort.left, 16);
+    final cards = find.byType(FeedbackCard);
+    final first = tester.getRect(cards.first);
+    expect(first.top, sort.bottom + 8);
+    expect((first.left, first.right), (16, 390 - 16));
+    expect(tester.getTopLeft(cards.at(1)).dy - first.bottom, 12);
   });
 
   testWidgets('shows the error with a working retry', (tester) async {

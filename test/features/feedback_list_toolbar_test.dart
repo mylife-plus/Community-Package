@@ -5,8 +5,8 @@ import 'package:community_package/src/features/feedback_list/presentation/feedba
 import 'package:community_package/src/features/feedback_list/presentation/feedback_list_screen.dart';
 import 'package:community_package/src/features/privacy/presentation/post_gate.dart';
 import 'package:community_package/src/features/privacy/presentation/privacy_notice_sheet.dart';
+import 'package:community_package/src/core/widgets/refresh_buttons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -89,9 +89,11 @@ void main() {
     expect(listQueries().last['sort'], 'reactions');
     final cards = tester.widgetList<FeedbackCard>(find.byType(FeedbackCard));
     expect([for (final c in cards) c.item.number], [1, 3, 2]);
-    // The sort icon turns the primary colour while the list is not newest first.
-    final icon = tester.widget<SvgPicture>(find.descendant(of: sortButton, matching: find.byType(SvgPicture)));
-    expect(icon.colorFilter, ColorFilter.mode(ThemeData.dark().colorScheme.primary, BlendMode.srcIn));
+    // The sort icon turns the primary colour, on a tonal background, while
+    // the list is not newest first.
+    final button = tester.widget<RefreshIconButton>(find.ancestor(of: sortButton, matching: find.byType(RefreshIconButton)));
+    expect(button.color, ThemeData.dark().colorScheme.primary);
+    expect(button.tonal, isTrue);
   });
 
   testWidgets('filter: each tick applies at once, the menu stays open, reset clears', (tester) async {
@@ -219,19 +221,19 @@ void main() {
     expect(find.text('❤️ 0'), findsOneWidget);
   });
 
-  testWidgets('the heart is easy to hit: taps beside the box count too', (tester) async {
+  testWidgets('the heart is easy to hit: taps just above and below the pill count too', (tester) async {
     await open(tester, items: [2]);
     final box = tester.getRect(find.ancestor(of: heart(), matching: find.byType(AnimatedContainer)));
-    expect(box.height, 26);
+    // The refreshed pill: 40 high in a 48 tap area.
+    expect(box.height, 40);
 
-    // Above the box and left of it, in the gap to the comment count.
     backend.answer(feedbackJson(2, reactionCount: 1, reacted: true));
-    await tester.tapAt(Offset(box.left - 6, box.top - 5));
+    await tester.tapAt(Offset(box.center.dx, box.top - 3));
     await tester.pumpAndSettle();
     expect(backend.requests.last.method, 'PUT');
 
     backend.answer(feedbackJson(2));
-    await tester.tapAt(Offset(box.center.dx, box.bottom + 4));
+    await tester.tapAt(Offset(box.center.dx, box.bottom + 3));
     await tester.pumpAndSettle();
     expect(backend.requests.last.method, 'DELETE');
   });
