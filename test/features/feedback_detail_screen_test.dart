@@ -142,6 +142,83 @@ void main() {
       }
     });
 
+    // Asad, 22 Nov: the heart's number sat about 2 pt below the comment count.
+    for (final (name, costCents, status) in [
+      ('status and cost', 5000, 'in_progress'),
+      ('no status, no cost', null, null),
+    ]) {
+      testWidgets('card bottom row shares one text baseline ($name)', (tester) async {
+        await open(tester, item: feedbackJson(3, status: status, commentCount: 4, reactionCount: 7, costCents: costCents));
+
+        final card = find.byType(FeedbackCard);
+        double baseline(bool Function(String) match) {
+          final box = tester.renderObject<RenderBox>(
+            find.descendant(of: card, matching: find.byWidgetPredicate((w) => w is RichText && match(w.text.toPlainText()))).first,
+          );
+          return box.localToGlobal(Offset(0, box.getDryBaseline(box.constraints, TextBaseline.alphabetic)!)).dy;
+        }
+
+        final reference = baseline((t) => t == '4');
+        expect(baseline((t) => t.startsWith('❤️')), closeTo(reference, 0.5));
+        if (status != null) expect(baseline((t) => t == 'in progress'), closeTo(reference, 0.5));
+        if (costCents != null) expect(baseline((t) => t.startsWith('💰')), closeTo(reference, 0.5));
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    // Asad, 22 Nov: with a cost, the counts and heart drifted left toward
+    // the status. Status left, heart pill at the right edge, always.
+    for (final (name, costCents, status) in [
+      ('status and cost', 70000, 'planned'),
+      ('cost only', 70000, null),
+      ('status only', null, 'planned'),
+      ('neither', null, null),
+    ]) {
+      testWidgets('card: status left, heart at the right edge ($name)', (tester) async {
+        await open(tester, item: feedbackJson(3, status: status, commentCount: 1, reactionCount: 10, costCents: costCents));
+
+        final cardRect = tester.getRect(find.byType(FeedbackCard));
+        final heart = find.descendant(
+          of: find.byType(FeedbackCard),
+          matching: find.byWidgetPredicate((w) => w is AnimatedContainer),
+        );
+        // Card padding 4 on the right, content padding 12: 16 in.
+        expect(cardRect.right - tester.getRect(heart).right, closeTo(16, 0.5));
+        if (status != null) {
+          expect(tester.getRect(find.descendant(of: find.byType(FeedbackCard), matching: find.text('planned'))).left - cardRect.left, lessThan(60));
+        }
+      });
+    }
+
+    testWidgets('card: 💬, ❤️, 💰 and 💪 are 20 with 16 counts', (tester) async {
+      await open(tester, item: feedbackJson(3, status: 'in_progress', commentCount: 4, costCents: 5000));
+
+      final card = find.byType(FeedbackCard);
+      for (final emoji in ['💬', '💪']) {
+        final text = tester.widget<Text>(find.descendant(of: card, matching: find.text(emoji)));
+        expect(text.style?.fontSize, 20, reason: emoji);
+      }
+      expect(tester.widget<Text>(find.descendant(of: card, matching: find.text('4'))).style?.fontSize, 16);
+      expect(tester.widget<Text>(find.descendant(of: card, matching: find.text('in progress'))).style?.fontSize, 16);
+      final heart = tester.widget<RichText>(
+        find.descendant(of: card, matching: find.byWidgetPredicate((w) => w is RichText && w.text.toPlainText().startsWith('❤️'))),
+      );
+      // Text.rich wraps the spans in one with the text style.
+      double? sizeOf(String text) {
+        double? size;
+        heart.text.visitChildren((span) {
+          if (span is TextSpan && span.text != null && span.text!.contains(text)) {
+            size = span.style?.fontSize;
+            return false;
+          }
+          return true;
+        });
+        return size;
+      }
+      expect(heart.text.style?.fontSize, 16);
+      expect(sizeOf('❤️'), 20);
+    });
+
     testWidgets('shows the type while there is no status', (tester) async {
       await open(tester, item: feedbackJson(3, type: 'problem'));
 
@@ -559,6 +636,20 @@ void main() {
 
     expect(find.text('detail 2'), findsOneWidget);
   });
+
+  for (final (name, theme) in [('light', ThemeData.light()), ('dark', ThemeData.dark())]) {
+    testWidgets('a full card bottom row fits a 320 px phone in $name mode', (tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await open(
+        tester,
+        theme: theme,
+        item: feedbackJson(3, status: 'in_progress', commentCount: 1234, costCents: 123456789),
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   for (final (name, theme) in [('light', ThemeData.light()), ('dark', ThemeData.dark())]) {
     testWidgets('lays out without overflow on a small phone in $name mode', (tester) async {

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../data/models/feedback_item.dart';
@@ -201,7 +203,11 @@ class FeedbackCard extends StatelessWidget {
     final card = RefreshColors.card(context);
     final scheme = Theme.of(context).colorScheme;
     final costCents = item.costCents;
+    // Every part (status, cost, 💬 count, ❤️ pill) sits on one text
+    // baseline; centring them one by one left the heart's number lower.
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
       children: [
         Expanded(
           child: Align(
@@ -210,12 +216,16 @@ class FeedbackCard extends StatelessWidget {
           ),
         ),
         if (costCents != null) ...[
+          // Not flexible: a Flexible next to the status's Expanded splits
+          // the free space with it, and the counts drifted off the right
+          // edge. Instead the cost's room is capped so the 💬 count and the
+          // ❤️ pill always fit after it; past that it ends in "…".
           ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: constraints.maxWidth * _costMaxShare),
+            constraints: BoxConstraints(maxWidth: _refreshedCostMaxWidth(context, constraints.maxWidth)),
             child: Text.rich(
               TextSpan(
                 children: [
-                  TextSpan(text: '💰', style: emojiStyle(15)),
+                  TextSpan(text: '💰', style: emojiStyle(RefreshTokens.countEmojiSize)),
                   TextSpan(text: ' ${formatUsd(l, costCents)}'),
                 ],
               ),
@@ -225,16 +235,55 @@ class FeedbackCard extends StatelessWidget {
                 context,
                 color: RefreshColors.readable(CommunityColors.of(context).cost, scheme.onSurface, card, 4.5),
                 weight: FontWeight.w600,
-              ),
+              )?.copyWith(fontSize: RefreshTokens.countTextSize),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: _refreshedCostGap),
         ],
         _Count(emoji: '💬', count: item.commentCount, semanticsLabel: l.commentCount(item.commentCount)),
-        const SizedBox(width: 8),
+        const SizedBox(width: _refreshedHeartGap),
         _ReactionButton(item: item, onTap: onReact),
       ],
     );
+  }
+
+  static const _refreshedCostGap = 12.0;
+  static const _refreshedHeartGap = 8.0;
+
+  /// The cost's share of the row (as on the old card), but never more than
+  /// what is left after the 💬 count and the ❤️ pill at the user's text size.
+  double _refreshedCostMaxWidth(BuildContext context, double rowWidth) {
+    final textScaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    double width(InlineSpan span) {
+      final painter = TextPainter(text: span, textDirection: direction, textScaler: textScaler, maxLines: 1)
+        ..layout();
+      final w = painter.width;
+      painter.dispose();
+      return w;
+    }
+
+    final countStyle = RefreshTokens.meta(context, weight: FontWeight.w600)?.copyWith(
+      fontSize: RefreshTokens.countTextSize,
+    );
+    final emoji = emojiStyle(RefreshTokens.countEmojiSize);
+    final count = width(TextSpan(text: '💬', style: emoji)) +
+        _Count.refreshedGap +
+        width(TextSpan(text: '${item.commentCount}', style: countStyle));
+    final heart = _ReactionButton.refreshedPillExtra +
+        width(
+          TextSpan(
+            style: countStyle,
+            children: [
+              TextSpan(text: '❤️', style: emoji),
+              TextSpan(text: ' ${item.reactionCount}'),
+            ],
+          ),
+        );
+    // A little slack for rounding between the painter and the layout.
+    const slack = 2.0;
+    final left = rowWidth - count - heart - _refreshedCostGap - _refreshedHeartGap - slack;
+    return math.max(0, math.min(rowWidth * _costMaxShare, left));
   }
 
   Widget _bottomRow(BuildContext context, BoxConstraints constraints) {
@@ -397,12 +446,32 @@ class _Status extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = feedbackStatusLabel(CommunityLocalizations.of(context), status);
     final color = CommunityColors.of(context).status(status);
+    // On a narrow card with a long cost, many comments and the new-status
+    // dot, not even 💪 fits: the status gives way instead of overflowing.
+    return LayoutBuilder(
+      builder: (context, box) => box.maxWidth < _emojiSize(context) + _gap
+          ? const SizedBox.shrink()
+          : _row(context, label, color),
+    );
+  }
+
+  /// Settings-15: the label starts 22 after 💪's start.
+  static const _gap = 6.0;
+
+  /// 💪: 16, or the count size in the refreshed look. With the gap before
+  /// the label, the least width the status needs.
+  static double _emojiSize(BuildContext context) =>
+      CommunityRefresh.of(context) ? RefreshTokens.countEmojiSize : 16;
+
+  Widget _row(BuildContext context, String label, Color color) {
+    final refreshed = CommunityRefresh.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: refreshed ? CrossAxisAlignment.baseline : CrossAxisAlignment.center,
+      textBaseline: refreshed ? TextBaseline.alphabetic : null,
       children: [
-        const EmojiText('💪', size: 16),
-        // Settings-15: the label starts 22 after 💪's start.
-        const SizedBox(width: 6),
+        EmojiText('💪', size: _emojiSize(context)),
+        const SizedBox(width: _gap),
         // Shrinks on narrow phones instead of pushing into the counts.
         Flexible(
           child: Text(
@@ -419,7 +488,7 @@ class _Status extends StatelessWidget {
                       4.5,
                     ),
                     weight: FontWeight.w600,
-                  )
+                  )?.copyWith(fontSize: RefreshTokens.countTextSize)
                 : Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 14,
                     fontWeight: FontWeight.w300,
@@ -435,6 +504,9 @@ class _Status extends StatelessWidget {
 class _Count extends StatelessWidget {
   const _Count({required this.emoji, required this.count, required this.semanticsLabel});
 
+  /// Between the emoji and the number in the refreshed look.
+  static const refreshedGap = 6.0;
+
   final String emoji;
   final int count;
   final String semanticsLabel;
@@ -448,13 +520,16 @@ class _Count extends StatelessWidget {
       excludeSemantics: true,
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: refreshed ? CrossAxisAlignment.baseline : CrossAxisAlignment.center,
+        textBaseline: refreshed ? TextBaseline.alphabetic : null,
         children: [
-          EmojiText(emoji, size: refreshed ? 16 : 20),
-          const SizedBox(width: 4),
+          EmojiText(emoji, size: refreshed ? RefreshTokens.countEmojiSize : 20),
+          SizedBox(width: refreshed ? refreshedGap : 4),
           Text(
             '$count',
             style: refreshed
                 ? RefreshTokens.meta(context, color: theme.colorScheme.onSurface, weight: FontWeight.w600)
+                      ?.copyWith(fontSize: RefreshTokens.countTextSize)
                 : theme.textTheme.bodyLarge?.copyWith(
                     fontSize: 16,
                     fontWeight: FontWeight.w300,
@@ -550,6 +625,13 @@ class _ReactionButton extends StatelessWidget {
     );
   }
 
+  static const _refreshedPillPadding = 14.0;
+  static const _refreshedBorderWidth = 1.5;
+
+  /// The pill's width beyond its text: the padding and the border, which
+  /// a ShapeDecoration adds as padding (ShapeBorder.dimensions).
+  static const refreshedPillExtra = (_refreshedPillPadding + _refreshedBorderWidth) * 2;
+
   /// The refreshed heart: a 40 high tonal pill with a 48 tap area; when
   /// hearted, a border in the heart colour fades in.
   Widget _refreshedPill(BuildContext context, Color border) {
@@ -564,7 +646,7 @@ class _ReactionButton extends StatelessWidget {
           height: 40,
           decoration: ShapeDecoration(
             color: RefreshColors.tonal(context),
-            shape: StadiumBorder(side: BorderSide(color: border, width: 1.5)),
+            shape: StadiumBorder(side: BorderSide(color: border, width: _refreshedBorderWidth)),
           ),
           child: Material(
             type: MaterialType.transparency,
@@ -573,17 +655,18 @@ class _ReactionButton extends StatelessWidget {
             child: InkWell(
               onTap: onTap,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.symmetric(horizontal: _refreshedPillPadding),
                 child: Center(
                   widthFactor: 1,
                   child: Text.rich(
                     TextSpan(
                       children: [
-                        TextSpan(text: '❤️', style: emojiStyle(15)),
+                        TextSpan(text: '❤️', style: emojiStyle(RefreshTokens.countEmojiSize)),
                         TextSpan(text: ' ${item.reactionCount}'),
                       ],
                     ),
-                    style: RefreshTokens.meta(context, color: scheme.onSurface, weight: FontWeight.w600),
+                    style: RefreshTokens.meta(context, color: scheme.onSurface, weight: FontWeight.w600)
+                        ?.copyWith(fontSize: RefreshTokens.countTextSize),
                   ),
                 ),
               ),
