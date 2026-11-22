@@ -129,7 +129,11 @@ class RefreshIconButton extends StatelessWidget {
     this.tonal = false,
     this.color,
     this.selected,
+    this.iconSize = RefreshTokens.iconSize,
   });
+
+  /// The icon's size inside the 48 px button.
+  final double iconSize;
 
   final String? tooltip;
   final VoidCallback? onPressed;
@@ -152,7 +156,7 @@ class RefreshIconButton extends StatelessWidget {
       tooltip: tooltip,
       onPressed: onPressed,
       isSelected: selected,
-      iconSize: RefreshTokens.iconSize,
+      iconSize: iconSize,
       style: IconButton.styleFrom(
         foregroundColor: foreground,
         backgroundColor: tonal ? RefreshColors.tonal(context, on: Theme.of(context).scaffoldBackgroundColor) : null,

@@ -128,6 +128,20 @@ void main() {
       expect(tester.getRect(threads.at(1)).top - thread.bottom, 12);
     });
 
+    // Johannes read filter_list as a second sort icon: filter is a funnel.
+    testWidgets('toolbar: a funnel for filter, every icon 26 in a 48 button', (tester) async {
+      await open(tester);
+
+      expect(find.descendant(of: find.byTooltip('Filter'), matching: find.byIcon(Icons.filter_alt_rounded)), findsOneWidget);
+      expect(find.byIcon(Icons.filter_list_rounded), findsNothing);
+      expect(find.descendant(of: find.byTooltip('Sort'), matching: find.byIcon(Icons.sort_rounded)), findsOneWidget);
+      for (final tooltip in ['Sort', 'Filter', 'Search', 'Write a comment']) {
+        final button = find.byTooltip(tooltip);
+        expect(tester.getSize(button), const Size(48, 48), reason: tooltip);
+        expect(tester.getSize(find.descendant(of: button, matching: find.byType(Icon))), const Size(26, 26), reason: tooltip);
+      }
+    });
+
     testWidgets('shows the type while there is no status', (tester) async {
       await open(tester, item: feedbackJson(3, type: 'problem'));
 

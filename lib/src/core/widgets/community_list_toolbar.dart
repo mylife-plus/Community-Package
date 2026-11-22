@@ -150,6 +150,7 @@ extension on CommunityListToolbar {
       tonal: active,
       selected: active,
       color: active ? scheme.primary : idle,
+      iconSize: RefreshTokens.toolbarIconSize,
       icon: Icon(icon),
     );
     if (searchOpen) {
@@ -179,6 +180,7 @@ extension on CommunityListToolbar {
               tooltip: l.closeSearch,
               onPressed: onCloseSearch,
               color: idle,
+              iconSize: RefreshTokens.toolbarIconSize,
               icon: const Icon(Icons.close_rounded),
             ),
           ],
@@ -200,7 +202,7 @@ extension on CommunityListToolbar {
           const SizedBox(width: 4),
           Builder(
             builder: (buttonContext) => button(
-              icon: Icons.filter_list_rounded,
+              icon: Icons.filter_alt_rounded,
               tooltip: l.filterTooltip,
               active: filterActive,
               onPressed: () => onFilter(buttonContext),

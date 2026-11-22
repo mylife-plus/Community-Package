@@ -31,6 +31,14 @@ abstract final class RefreshTokens {
   static const fieldPadding = EdgeInsets.symmetric(horizontal: 16, vertical: 14);
   static const iconSize = 22.0;
 
+  /// Toolbar icons (sort, filter, search, +, close): larger than the
+  /// header's, so they read at a glance; still inside 48 targets.
+  static const toolbarIconSize = 26.0;
+
+  /// 💬 and ❤️ on the card, and the counts beside them.
+  static const countEmojiSize = 20.0;
+  static const countTextSize = 16.0;
+
   static const expandDuration = Duration(milliseconds: 220);
   static const expandCurve = Curves.easeInOutCubic;
 
