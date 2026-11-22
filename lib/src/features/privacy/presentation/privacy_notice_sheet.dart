@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/l10n/community_localizations.dart';
 import '../../../core/theme/community_tokens.dart';
-import '../../../core/widgets/community_button.dart';
+import '../../../core/theme/refresh_style.dart';
 import '../../../core/widgets/community_popups.dart';
+import '../../../core/widgets/refresh_buttons.dart';
 
 /// The GDPR privacy notice, full height.
 ///
@@ -29,14 +30,7 @@ class PrivacyNoticeSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = CommunityLocalizations.of(context);
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
-    final body = theme.textTheme.bodyLarge?.copyWith(
-      fontSize: 16,
-      fontWeight: FontWeight.w300,
-      height: CommunityTokens.readingLineHeight,
-      color: onSurface,
-    );
+    final body = RefreshTokens.body(context)?.copyWith(height: CommunityTokens.readingLineHeight);
     final bold = body?.copyWith(fontWeight: FontWeight.w700);
     final anonId = this.anonId;
 
@@ -44,20 +38,16 @@ class PrivacyNoticeSheet extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(19, 24, 19, 16),
+          padding: const EdgeInsets.fromLTRB(_side, 4, _side, 16),
           child: Text(
             l.privacyNotice,
             textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: onSurface,
-            ),
+            style: RefreshTokens.title(context)?.copyWith(height: CommunityTokens.lineHeight),
           ),
         ),
         Expanded(
           child: _ScrollHint(
-            padding: const EdgeInsets.fromLTRB(19, 0, 19, 16),
+            padding: const EdgeInsets.fromLTRB(_side, 0, _side, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -78,47 +68,43 @@ class PrivacyNoticeSheet extends StatelessWidget {
                   _gap,
                   SelectableText(
                     l.yourId(anonId),
-                    style: body?.copyWith(fontSize: 14, color: onSurface.withValues(alpha: 0.6)),
+                    style: RefreshTokens.meta(context, on: RefreshColors.sheet(context)),
                   ),
                 ],
               ],
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(19, 8, 19, 32),
-          child: anonId == null
-              // Settings-18: 79 apart (x50 and x234), closer on narrow
-              // phones. Wraps onto two lines when long labels or a large
-              // text size don't fit side by side.
-              ? LayoutBuilder(
-                  builder: (context, box) => Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: (box.maxWidth - 2 * CommunityTokens.buttonSize.width).clamp(_minButtonGap, _buttonGap),
-                    runSpacing: 12,
-                    children: [
-                      CommunityButton(
-                        label: l.decline,
-                        destructive: true,
-                        onPressed: () => closePopup(context, false),
-                      ),
-                      CommunityButton(label: l.agree, onPressed: () => closePopup(context, true)),
-                    ],
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(_side, 16, _side, _side),
+            // Decline (red) and Agree (filled) on a two-column grid, as on
+            // Settings-18 (decline left); stacked when a label doesn't fit.
+            child: anonId == null
+                ? RefreshButtonPair(
+                    start: RefreshButton(
+                      label: l.decline,
+                      kind: RefreshButtonKind.destructive,
+                      onPressed: () => closePopup(context, false),
+                    ),
+                    end: RefreshButton(label: l.agree, onPressed: () => closePopup(context, true)),
+                  )
+                : RefreshButton(
+                    label: l.close,
+                    kind: RefreshButtonKind.secondary,
+                    onPressed: () => closePopup(context),
                   ),
-                )
-              : Center(
-                  child: CommunityButton(label: l.close, onPressed: () => closePopup(context)),
-                ),
+          ),
         ),
       ],
     );
   }
 
-  static const _gap = SizedBox(height: 19);
+  /// The sheet's padding at the sides and the bottom.
+  static const _side = RefreshTokens.sheetPadding;
 
-  /// Between decline and agree: Figma's 79, at least 12 on narrow phones.
-  static const _buttonGap = 79.0;
-  static const _minButtonGap = 12.0;
+  static const _gap = SizedBox(height: 16);
 
   static Widget _headed(String title, String text, TextStyle? bold, TextStyle? body) {
     return Text.rich(
@@ -191,7 +177,7 @@ class _ScrollHintState extends State<_ScrollHint> {
             key: PrivacyNoticeSheet.moreBelowKey,
             opacity: moreBelow ? 1 : 0,
             duration: const Duration(milliseconds: 150),
-            child: Divider(height: 1, thickness: 1, color: CommunityColors.border(context)),
+            child: Divider(height: 1, thickness: 1, color: RefreshColors.faintBorder(context)),
           ),
         ),
       ],
@@ -231,7 +217,8 @@ class _PolicySentence extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = CommunityLocalizations.of(context);
-    final primary = Theme.of(context).colorScheme.primary;
+    final scheme = Theme.of(context).colorScheme;
+    final primary = RefreshColors.readable(scheme.primary, scheme.onSurface, RefreshColors.sheet(context), 4.5);
     return Text.rich(
       TextSpan(
         style: style,
@@ -244,7 +231,7 @@ class _PolicySentence extends StatelessWidget {
               link: true,
               child: InkWell(
                 onTap: onOpen,
-                borderRadius: BorderRadius.circular(CommunityTokens.buttonRadius),
+                borderRadius: BorderRadius.circular(RefreshTokens.controlRadius),
                 child: Text(l.privacyPolicyLink, style: linkStyle?.copyWith(color: primary)),
               ),
             ),

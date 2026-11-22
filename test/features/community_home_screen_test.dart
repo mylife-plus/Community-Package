@@ -53,10 +53,10 @@ void main() {
 
     await tapText(tester, 'Privacy Notice');
     expect(notice, findsOneWidget);
-    expect(find.text('agree'), findsOneWidget);
-    expect(find.text('decline'), findsOneWidget);
+    expect(find.text('Agree'), findsOneWidget);
+    expect(find.text('Decline'), findsOneWidget);
 
-    await tapText(tester, 'decline');
+    await tapText(tester, 'Decline');
 
     expect(notice, findsNothing);
     expect(source.creates, 0);
@@ -67,17 +67,17 @@ void main() {
     await tester.pumpWidget(app());
 
     await tapText(tester, 'Privacy Notice');
-    await tapText(tester, 'agree');
+    await tapText(tester, 'Agree');
     expect(await identity.requestAnonId(), FakeAnonIdSource.createdId);
 
     await tapText(tester, 'Privacy Notice');
 
     expect(find.text('Your ID: ${FakeAnonIdSource.createdId}'), findsOneWidget);
-    expect(find.text('close'), findsOneWidget);
-    expect(find.text('agree'), findsNothing);
-    expect(find.text('decline'), findsNothing);
+    expect(find.text('Close'), findsOneWidget);
+    expect(find.text('Agree'), findsNothing);
+    expect(find.text('Decline'), findsNothing);
 
-    await tapText(tester, 'close');
+    await tapText(tester, 'Close');
     expect(notice, findsNothing);
   });
 

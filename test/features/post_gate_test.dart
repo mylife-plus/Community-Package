@@ -2,6 +2,7 @@ import 'package:community_package/src/data/repositories/identity_repository.dart
 import 'package:community_package/src/features/privacy/presentation/post_gate.dart';
 import 'package:community_package/src/features/privacy/presentation/privacy_notice_sheet.dart';
 import 'package:community_package/src/features/privacy/presentation/rules_sheet.dart';
+import 'package:community_package/src/core/widgets/refresh_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -70,7 +71,7 @@ void main() {
 
     await tapText(tester, 'Post');
     expect(notice, findsOneWidget);
-    await tapText(tester, 'decline');
+    await tapText(tester, 'Decline');
 
     expect(notice, findsNothing);
     expect(rules, findsNothing);
@@ -82,7 +83,7 @@ void main() {
   testWidgets('declined users are asked again on the next try', (tester) async {
     await tester.pumpWidget(app());
     await tapText(tester, 'Post');
-    await tapText(tester, 'decline');
+    await tapText(tester, 'Decline');
 
     await tapText(tester, 'Post');
 
@@ -93,7 +94,7 @@ void main() {
     await tester.pumpWidget(app());
 
     await tapText(tester, 'Post');
-    await tapText(tester, 'agree');
+    await tapText(tester, 'Agree');
     expect(await identity.requestAnonId(), FakeAnonIdSource.createdId);
     expect(rules, findsOneWidget);
     expect(find.text('Do Not'), findsOneWidget);
@@ -102,7 +103,7 @@ void main() {
     expect(find.text('Use harassment or hate speech'), findsOneWidget);
     expect(posts, 0);
 
-    await tapText(tester, 'agree');
+    await tapText(tester, 'Agree');
 
     expect(rules, findsNothing);
     expect(posts, 1);
@@ -112,8 +113,8 @@ void main() {
   testWidgets('once agreed to both, posting asks nothing', (tester) async {
     await tester.pumpWidget(app());
     await tapText(tester, 'Post');
-    await tapText(tester, 'agree');
-    await tapText(tester, 'agree');
+    await tapText(tester, 'Agree');
+    await tapText(tester, 'Agree');
 
     await tapText(tester, 'Post');
 
@@ -126,7 +127,7 @@ void main() {
   testWidgets('closing the rules without agreeing stops the post', (tester) async {
     await tester.pumpWidget(app());
     await tapText(tester, 'Post');
-    await tapText(tester, 'agree');
+    await tapText(tester, 'Agree');
     expect(rules, findsOneWidget);
 
     // Tap the dimmed area above the sheet.
@@ -158,7 +159,7 @@ void main() {
     await tapText(tester, 'Rules');
     expect(notice, findsNothing);
     expect(rules, findsOneWidget);
-    await tapText(tester, 'agree');
+    await tapText(tester, 'Agree');
 
     expect(rules, findsNothing);
     expect((await identity.load()).rulesAgreed, isTrue);
@@ -171,8 +172,8 @@ void main() {
 
     await tapText(tester, 'Rules');
     expect(rules, findsOneWidget);
-    expect(find.text('agree'), findsNothing);
-    await tapText(tester, 'close');
+    expect(find.text('Agree'), findsNothing);
+    await tapText(tester, 'Close');
 
     expect(rules, findsNothing);
   });
@@ -181,7 +182,7 @@ void main() {
     await tester.pumpWidget(app());
 
     await tapText(tester, 'Heart');
-    await tapText(tester, 'agree');
+    await tapText(tester, 'Agree');
 
     expect(rules, findsNothing);
     expect(hearts, 1);
@@ -196,7 +197,7 @@ void main() {
     await tester.pumpWidget(app());
 
     await tapText(tester, 'Heart');
-    await tapText(tester, 'decline');
+    await tapText(tester, 'Decline');
 
     expect(hearts, 0);
     expect(source.creates, 0);
@@ -207,7 +208,7 @@ void main() {
     await tester.pumpWidget(app());
 
     await tapText(tester, 'Post');
-    await tapText(tester, 'agree');
+    await tapText(tester, 'Agree');
 
     expect(find.text('Could not save on this device. Please try again.'), findsOneWidget);
     expect(rules, findsNothing);
@@ -279,25 +280,32 @@ void main() {
 
       await tapText(tester, 'Post');
       expect(tester.takeException(), isNull);
-      await tapText(tester, 'agree');
+      await tapText(tester, 'Agree');
 
       expect(tester.takeException(), isNull);
       expect(rules, findsOneWidget);
     });
   }
 
-  // Settings-18: decline and agree 79 apart, centred.
-  testWidgets('the privacy buttons sit 79 apart in the middle', (tester) async {
-    // Wide enough for the test font's labels side by side.
+  // Settings-18's order (decline left, agree right) on the refreshed
+  // two-column grid.
+  testWidgets('Decline (red) left, Agree (filled) right, 48 high, 12 apart, 24 from the sides', (tester) async {
     tester.view
       ..physicalSize = const Size(600, 844)
       ..devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(const MaterialApp(home: Scaffold(body: PrivacyNoticeSheet())));
 
-    final decline = tester.getRect(find.widgetWithText(FilledButton, 'decline'));
-    final agree = tester.getRect(find.widgetWithText(FilledButton, 'agree'));
-    expect(agree.left - decline.right, 79);
-    expect(decline.left, moreOrLessEquals(600 - agree.right, epsilon: 0.5));
+    final declineButton = find.widgetWithText(RefreshButton, 'Decline');
+    final agreeButton = find.widgetWithText(RefreshButton, 'Agree');
+    final decline = tester.getRect(declineButton);
+    final agree = tester.getRect(agreeButton);
+    expect(tester.widget<RefreshButton>(declineButton).kind, RefreshButtonKind.destructive);
+    expect(tester.widget<RefreshButton>(agreeButton).kind, RefreshButtonKind.primary);
+    expect((decline.height, agree.height), (48, 48));
+    expect(agree.left - decline.right, 12);
+    expect(decline.width, agree.width);
+    expect(decline.left, 24);
+    expect(600 - agree.right, 24);
   });
 }

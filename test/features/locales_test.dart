@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:community_package/community_package.dart';
 import 'package:community_package/src/core/di/community_dependencies.dart';
+import 'package:community_package/src/core/widgets/refresh_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -117,9 +118,9 @@ void main() {
         expectNoOverflow(tester, 'Community App');
 
         await tapAndSettle(tester, find.text(l.privacyNotice));
-        expect(find.text(l.decline), findsOneWidget);
+        expect(find.text(sentenceCase(l.decline)), findsOneWidget);
         expectNoOverflow(tester, 'privacy notice');
-        await tapAndSettle(tester, find.text(l.decline));
+        await tapAndSettle(tester, find.text(sentenceCase(l.decline)));
 
         backend.answerAt('GET', '/v1/feedback', _list());
         await tapAndSettle(tester, find.text(l.allFeedback));

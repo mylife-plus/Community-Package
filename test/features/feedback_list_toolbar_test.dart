@@ -195,14 +195,14 @@ void main() {
 
     await tapAndSettle(tester, heart());
     expect(find.byType(PrivacyNoticeSheet), findsOneWidget);
-    await tapAndSettle(tester, find.text('decline'));
+    await tapAndSettle(tester, find.text('Decline'));
 
     expect(backend.requests.where((r) => r.method == 'PUT'), isEmpty);
     expect(find.text('❤️ 0'), findsOneWidget);
 
     await tapAndSettle(tester, heart());
     backend.answer(feedbackJson(2, reactionCount: 1, reacted: true));
-    await tapAndSettle(tester, find.text('agree'));
+    await tapAndSettle(tester, find.text('Agree'));
 
     expect(ids.creates, 1);
     expect(backend.requests.last.method, 'PUT');

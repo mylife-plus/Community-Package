@@ -201,9 +201,9 @@ void main() {
 
     await tapAndSettle(tester, submit);
     expect(notice, findsOneWidget);
-    await tapAndSettle(tester, find.text('agree'));
+    await tapAndSettle(tester, find.text('Agree'));
     expect(rules, findsOneWidget);
-    await tapAndSettle(tester, find.text('agree'));
+    await tapAndSettle(tester, find.text('Agree'));
 
     final post = backend.requests.first;
     expect(post.method, 'POST');
@@ -361,7 +361,7 @@ void main() {
     await fillForm(tester);
 
     await tapAndSettle(tester, submit);
-    await tapAndSettle(tester, find.text('decline'));
+    await tapAndSettle(tester, find.text('Decline'));
 
     expect(backend.requests, isEmpty);
     expect(formScreens, findsOneWidget);
@@ -374,13 +374,13 @@ void main() {
 
     await tapAndSettle(tester, find.text('agree to Rules'));
     expect(rules, findsOneWidget);
-    await tapAndSettle(tester, find.text('agree'));
+    await tapAndSettle(tester, find.text('Agree'));
 
     expect(find.text('agree to Rules'), findsNothing);
     await tapAndSettle(tester, find.text('Rules'));
     expect(rules, findsOneWidget);
-    expect(find.text('agree'), findsNothing);
-    await tapAndSettle(tester, find.text('close'));
+    expect(find.text('Agree'), findsNothing);
+    await tapAndSettle(tester, find.text('Close'));
     expect(rules, findsNothing);
   });
 

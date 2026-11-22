@@ -51,11 +51,11 @@ class PostGate {
       await _askRules(context);
       return;
     }
-    await showCommunitySheet<void>(context, builder: (_) => const RulesSheet(agreed: true));
+    await showCommunitySheet<void>(context, refreshed: true, builder: (_) => const RulesSheet(agreed: true));
   }
 
   Future<bool> _askRules(BuildContext context) async {
-    final agreed = await showCommunitySheet<bool>(context, builder: (_) => const RulesSheet());
+    final agreed = await showCommunitySheet<bool>(context, refreshed: true, builder: (_) => const RulesSheet());
     if (agreed != true || !context.mounted) return false;
     try {
       await identity.agreeToRules();
@@ -77,6 +77,7 @@ class PostGate {
     }
     await showCommunitySheet<void>(
       context,
+      refreshed: true,
       builder: (_) => PrivacyNoticeSheet(anonId: anonId, onOpenPrivacyPolicy: _policyOpener(context)),
     );
   }
@@ -84,6 +85,7 @@ class PostGate {
   Future<bool> _askPrivacy(BuildContext context) async {
     final agreed = await showCommunitySheet<bool>(
       context,
+      refreshed: true,
       builder: (_) => PrivacyNoticeSheet(onOpenPrivacyPolicy: _policyOpener(context)),
     );
     return agreed == true;
