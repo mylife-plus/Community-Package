@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/l10n/community_localizations.dart';
-import '../../../core/theme/community_icons.dart';
-import '../../../core/theme/community_tokens.dart';
+import '../../../core/theme/refresh_style.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../core/widgets/emoji_text.dart';
-import '../../../core/widgets/inner_shadow.dart';
+import '../../../core/widgets/refresh_buttons.dart';
 import '../../../data/models/feedback_comment.dart';
 import 'comment_field.dart';
 
-/// A top-level comment with its replies, in one box (Settings-6): age and
-/// text, then a "💬 2" chip that opens and closes the replies, and at the
-/// end of the open thread a reply field. The user's own comments have a ✏️
-/// that opens Edit Comment.
+/// A top-level comment with its replies, in one card (Settings-6 layout,
+/// refreshed look): age and text, then a tonal "2 replies" chip that opens
+/// and closes the replies with an animation, and at the end of the open
+/// thread a "Reply" button that turns into a focused reply field
+/// ([replying]). Left empty, the field turns back into the button
+/// (Johannes, 11 Nov). The user's own comments have an edit button that
+/// opens Edit Comment.
 class CommentThread extends StatelessWidget {
   const CommentThread({
     super.key,
@@ -59,255 +59,221 @@ class CommentThread extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final l = CommunityLocalizations.of(context);
+    final card = RefreshColors.card(context);
     final divider = Divider(
       height: 1,
       thickness: 1,
-      indent: CommunityTokens.commentDividerIndent,
-      endIndent: CommunityTokens.commentDividerEndIndent,
-      color: CommunityColors.commentDivider(context),
+      indent: RefreshTokens.cardPadding,
+      endIndent: RefreshTokens.cardPadding,
+      color: RefreshColors.faintBorder(context),
     );
-    final l = CommunityLocalizations.of(context);
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border.all(color: CommunityColors.border(context)),
-        borderRadius: BorderRadius.circular(CommunityTokens.cardRadius),
+    return Material(
+      color: card,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: RefreshColors.faintBorder(context)),
+        borderRadius: BorderRadius.circular(RefreshTokens.cardRadius),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _CommentBody(comment: thread, onEdit: onEdit, now: now),
           Padding(
-            padding: CommunityTokens.commentPadding.copyWith(bottom: 0),
-            child: _CommentBody(comment: thread, onEdit: onEdit, now: now, topLevel: true),
-          ),
-          // Settings-6: the chip sits 2 further out than the text and 6 under
-          // it. The space around it takes taps too, so the chip is easier to
-          // hit than its 26 px height.
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _RepliesChip(
-              count: thread.replies.length,
-              open: open,
-              onTap: onToggle,
-              tapPadding: EdgeInsets.only(
-                left: CommunityTokens.repliesChipInset,
-                top: CommunityTokens.commentGap,
-                right: CommunityTokens.repliesChipInset,
-                bottom: open ? CommunityTokens.repliesChipToDivider : CommunityTokens.commentPadding.bottom,
-              ),
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _RepliesChip(count: thread.replies.length, open: open, onTap: onToggle),
             ),
           ),
-          if (open) ...[
-            for (final reply in thread.replies) ...[
-              divider,
-              Padding(
-                padding: CommunityTokens.commentPadding,
-                child: _CommentBody(comment: reply, onEdit: onEdit, now: now, topLevel: false),
-              ),
-            ],
-            divider,
-            if (replying)
-              Padding(
-                padding: CommunityTokens.commentPadding,
-                child: Focus(
-                  canRequestFocus: false,
-                  skipTraversal: true,
-                  onFocusChange: (focused) {
-                    if (!focused) onLeaveReply();
-                  },
-                  child: CommentField(
-                    controller: replyController,
-                    sending: sendingReply,
-                    onSend: onSendReply,
-                    maxLength: maxLength,
-                    autofocus: true,
+          AnimatedSize(
+            duration: RefreshTokens.expandDuration,
+            curve: RefreshTokens.expandCurve,
+            alignment: Alignment.topCenter,
+            child: !open
+                ? const SizedBox(width: double.infinity)
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final reply in thread.replies) ...[
+                        divider,
+                        _CommentBody(comment: reply, onEdit: onEdit, now: now),
+                      ],
+                      divider,
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                        child: replying
+                            ? Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: Focus(
+                                  canRequestFocus: false,
+                                  skipTraversal: true,
+                                  onFocusChange: (focused) {
+                                    if (!focused) onLeaveReply();
+                                  },
+                                  child: CommentField(
+                                    controller: replyController,
+                                    sending: sendingReply,
+                                    onSend: onSendReply,
+                                    maxLength: maxLength,
+                                    autofocus: true,
+                                  ),
+                                ),
+                              )
+                            : Align(
+                                alignment: Alignment.centerLeft,
+                                child: TextButton.icon(
+                                  onPressed: onReply,
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Theme.of(context).colorScheme.primary,
+                                    minimumSize: const Size(64, RefreshTokens.minTarget),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(RefreshTokens.controlRadius),
+                                    ),
+                                    textStyle: RefreshTokens.body(context, weight: FontWeight.w600),
+                                  ),
+                                  icon: const Icon(Icons.reply_rounded, size: 20),
+                                  label: Text(l.reply),
+                                ),
+                              ),
+                      ),
+                    ],
                   ),
-                ),
-              )
-            else
-              SizedBox(
-                height: CommunityTokens.replyAddRowHeight,
-                child: Center(
-                  child: IconButton(
-                    tooltip: l.reply,
-                    onPressed: onReply,
-                    icon: SvgPicture.asset(
-                      CommunityIcons.add,
-                      package: CommunityIcons.package,
-                      width: CommunityTokens.toolbarIconSize,
-                      height: CommunityTokens.toolbarIconSize,
-                      colorFilter: ColorFilter.mode(CommunityColors.commentAdd(context), BlendMode.srcIn),
-                    ),
-                  ),
-                ),
-              ),
-          ],
+          ),
         ],
       ),
     );
   }
 }
 
-/// Age (with "· edited"), the ✏️ for the user's own comment, and the text,
-/// or "Comment deleted" in its place.
+/// Age (with "· edited"), the edit button for the user's own comment, and
+/// the text, or "Comment deleted" in its place.
 class _CommentBody extends StatelessWidget {
-  const _CommentBody({required this.comment, required this.onEdit, required this.now, required this.topLevel});
+  const _CommentBody({required this.comment, required this.onEdit, required this.now});
 
   final FeedbackComment comment;
   final ValueChanged<FeedbackComment> onEdit;
   final DateTime? now;
 
-  /// Top-level text is a step bolder than replies, as in Settings-6.
-  final bool topLevel;
-
-  /// The ✏️'s place in the row, as in Figma, and its tap area: 8 wider,
-  /// reaching over the end of the age.
-  static const _editButtonSize = Size(40, 32);
-  static const _editTapWidth = 48.0;
-
   @override
   Widget build(BuildContext context) {
     final l = CommunityLocalizations.of(context);
-    final theme = Theme.of(context);
-    final muted = CommunityColors.muted(context);
+    final scheme = Theme.of(context).colorScheme;
+    final card = RefreshColors.card(context);
     final age = formatAge(l, comment.createdAt, now: now);
+    final editable = comment.isMine;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: _editButtonSize.height,
-          child: Stack(
-            // The row fills the 32 px, as it did on its own.
-            fit: StackFit.expand,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      comment.edited ? '$age · ${l.edited}' : age,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w300,
-                        color: muted,
-                      ),
-                    ),
-                  ),
-                  if (comment.isMine) SizedBox(width: _editButtonSize.width),
-                ],
-              ),
-              if (comment.isMine)
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  width: _editTapWidth,
-                  height: _editButtonSize.height,
-                  child: IconButton(
-                    tooltip: l.editComment,
-                    onPressed: () => onEdit(comment),
-                    // The ✏️ stays centred on its Figma place.
-                    padding: EdgeInsets.only(left: _editTapWidth - _editButtonSize.width),
-                    constraints: BoxConstraints.tight(Size(_editTapWidth, _editButtonSize.height)),
-                    icon: const EmojiText('✏️', size: 16),
+    // The meta row is 48 high, so the edit button gets its full tap area
+    // in the card's corner; the text keeps the card's 16 inset.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(RefreshTokens.cardPadding, 0, 4, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: RefreshTokens.minTarget,
+            child: Row(
+              children: [
+                // Expanded, so the edit button always ends at the card's
+                // edge.
+                Expanded(
+                  child: Text(
+                    comment.edited ? '$age · ${l.edited}' : age,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: RefreshTokens.meta(context, on: card),
                   ),
                 ),
-            ],
-          ),
-        ),
-        if (comment.deleted)
-          Text(
-            l.commentDeleted,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              fontSize: 16,
-              fontWeight: FontWeight.w300,
-              fontStyle: FontStyle.italic,
-              color: muted,
-            ),
-          )
-        else
-          Text(
-            comment.text,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              fontSize: 16,
-              fontWeight: topLevel ? FontWeight.w500 : FontWeight.w300,
-              color: theme.colorScheme.onSurface,
+                if (editable)
+                  RefreshIconButton(
+                    tooltip: l.editComment,
+                    onPressed: () => onEdit(comment),
+                    color: RefreshColors.meta(context, on: card),
+                    icon: const Icon(Icons.edit_rounded, size: 20),
+                  ),
+              ],
             ),
           ),
-      ],
+          Padding(
+            padding: const EdgeInsets.only(right: RefreshTokens.cardPadding - 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (comment.deleted)
+                  Text(
+                    l.commentDeleted,
+                    style: RefreshTokens.body(
+                      context,
+                      color: RefreshColors.meta(context, on: card),
+                    )?.copyWith(fontStyle: FontStyle.italic),
+                  )
+                else
+                  Text(comment.text, style: RefreshTokens.body(context, color: scheme.onSurface)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// "💬 2 ▼": opens the replies (▼) or closes them (▲). Without replies it
-/// shows only 💬 and opens the reply field. Like the heart chip, it has
-/// Figma's inner shadow and no border.
+/// A tonal pill: "2 replies" with a chevron that turns as the replies open
+/// and close. Without replies it reads "Reply" and opens the reply field.
+/// The pill is 40 high; the 4 above and below take taps too (48).
 class _RepliesChip extends StatelessWidget {
-  const _RepliesChip({required this.count, required this.open, required this.onTap, required this.tapPadding});
+  const _RepliesChip({required this.count, required this.open, required this.onTap});
 
   final int count;
   final bool open;
   final VoidCallback onTap;
 
-  /// Space around the chip that takes taps as well.
-  final EdgeInsets tapPadding;
-
-  /// Settings-6: a ▼ about 12 × 8.5 in Figma's icon grey.
-  static const _arrowSize = Size(12, 8.5);
+  static const _height = 40.0;
 
   @override
   Widget build(BuildContext context) {
     final l = CommunityLocalizations.of(context);
-    final theme = Theme.of(context);
-    final label = open ? l.hideReplies : (count == 0 ? l.reply : l.showReplies(count));
+    final scheme = Theme.of(context).colorScheme;
+    final background = RefreshColors.tonal(context);
+    final semantics = open ? l.hideReplies : (count == 0 ? l.reply : l.showReplies(count));
     return Semantics(
       button: true,
       expanded: open,
-      label: label,
+      label: semantics,
       excludeSemantics: true,
-      // A tap on the chip goes to its InkWell (the ripple); a tap in the
-      // space around it to the GestureDetector.
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Padding(
-          padding: tapPadding,
+          padding: const EdgeInsets.symmetric(vertical: (RefreshTokens.minTarget - _height) / 2),
           child: Material(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(CommunityTokens.cardRadius),
+            color: background,
+            shape: const StadiumBorder(),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: onTap,
-              child: InnerShadow(
-                radius: CommunityTokens.cardRadius,
-                child: Container(
-                  constraints: BoxConstraints(
-                    minWidth: CommunityTokens.repliesChipSize.width,
-                    minHeight: CommunityTokens.repliesChipSize.height,
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: SizedBox(
+                height: _height,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 14, right: count == 0 ? 14 : 8),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const EmojiText('💬', size: 16),
+                      Text(
+                        count == 0 ? l.reply : l.replyCount(count),
+                        style: RefreshTokens.meta(context, color: scheme.onSurface, weight: FontWeight.w600),
+                      ),
                       if (count > 0) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          '$count',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w300,
-                            color: theme.colorScheme.onSurface,
-                          ),
+                        const SizedBox(width: 2),
+                        AnimatedRotation(
+                          turns: open ? 0.5 : 0,
+                          duration: RefreshTokens.expandDuration,
+                          curve: RefreshTokens.expandCurve,
+                          child: Icon(Icons.expand_more_rounded, size: 20, color: scheme.onSurface),
                         ),
                       ],
-                      const SizedBox(width: 6),
-                      CustomPaint(
-                        size: _arrowSize,
-                        painter: _ArrowPainter(up: open, color: CommunityColors.icon(context)),
-                      ),
                     ],
                   ),
                 ),
@@ -318,28 +284,4 @@ class _RepliesChip extends StatelessWidget {
       ),
     );
   }
-}
-
-class _ArrowPainter extends CustomPainter {
-  const _ArrowPainter({required this.up, required this.color});
-
-  final bool up;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = up
-        ? (Path()
-            ..moveTo(0, size.height)
-            ..lineTo(size.width / 2, 0)
-            ..lineTo(size.width, size.height))
-        : (Path()
-            ..moveTo(0, 0)
-            ..lineTo(size.width / 2, size.height)
-            ..lineTo(size.width, 0));
-    canvas.drawPath(path..close(), Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(_ArrowPainter old) => old.up != up || old.color != color;
 }

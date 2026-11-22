@@ -5,6 +5,7 @@ import '../../../core/errors/app_error.dart';
 import '../../../core/l10n/community_localizations.dart';
 import '../../../core/state/loading_state.dart';
 import '../../../core/theme/community_tokens.dart';
+import '../../../core/theme/refresh_style.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/comment_query_menus.dart';
 import '../../../core/widgets/community_app_bar.dart';
@@ -63,26 +64,30 @@ class FeedbackDetailScreen extends StatelessWidget {
             feedback: CommunityDependencies.feedbackRepository,
             comments: CommunityDependencies.commentRepository,
           ),
-      builder: (controller) => Scaffold(
-        appBar: _appBar(context, controller.item),
-        body: Column(
-          children: [
-            CommunityOfflineBanner(
-              visible: controller.showOfflineBar,
-              message: CommunityLocalizations.of(context).offlineShowingSaved,
-              actionLabel: CommunityLocalizations.of(context).retry,
-              onAction: () => _retry(context, controller),
-            ),
-            Expanded(
-              child: _Body(
-                controller: controller,
-                onReact: () => _react(context, controller),
-                onSendComment: () => _sendComment(context, controller),
-                onSendReply: (thread) => _sendReply(context, controller, thread),
-                onEdit: (comment) => _edit(context, controller, comment),
+      // Design refresh proof of concept: this screen and its Edit Comment
+      // sheet use the refreshed look.
+      builder: (controller) => CommunityRefresh(
+        child: Scaffold(
+          appBar: _appBar(context, controller.item),
+          body: Column(
+            children: [
+              CommunityOfflineBanner(
+                visible: controller.showOfflineBar,
+                message: CommunityLocalizations.of(context).offlineShowingSaved,
+                actionLabel: CommunityLocalizations.of(context).retry,
+                onAction: () => _retry(context, controller),
               ),
-            ),
-          ],
+              Expanded(
+                child: _Body(
+                  controller: controller,
+                  onReact: () => _react(context, controller),
+                  onSendComment: () => _sendComment(context, controller),
+                  onSendReply: (thread) => _sendReply(context, controller, thread),
+                  onEdit: (comment) => _edit(context, controller, comment),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -94,27 +99,26 @@ class FeedbackDetailScreen extends StatelessWidget {
     if (error != null && context.mounted) _showError(context, error);
   }
 
-  /// Settings-6, -7: the header's emoji is 20, like the card's.
-  static const _headerEmojiSize = 20.0;
-
   PreferredSizeWidget _appBar(BuildContext context, FeedbackItem? item) {
     final l = CommunityLocalizations.of(context);
-    if (item == null) return CommunityAppBar(emoji: '✍️', title: l.feedbackTitle);
+    if (item == null) return CommunityAppBar(emoji: '✍️', title: l.feedbackTitle, refreshed: true);
     final status = item.status;
     if (status != null) {
+      final colors = CommunityColors.of(context);
       return CommunityAppBar(
         emoji: '💪',
-        emojiSize: _headerEmojiSize,
         title: feedbackStatusLabel(l, status),
-        titleWeight: FontWeight.w500,
-        titleColor: CommunityColors.of(context).status(status),
+        // The status colour, at 4.5:1 or more on the screen background.
+        titleColor: RefreshColors.readable(
+          colors.status(status),
+          Theme.of(context).colorScheme.onSurface,
+          Theme.of(context).appBarTheme.backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
+          4.5,
+        ),
+        refreshed: true,
       );
     }
-    return CommunityAppBar(
-      emoji: feedbackTypeEmoji(item.type),
-      emojiSize: _headerEmojiSize,
-      title: feedbackTypeLabel(l, item.type),
-    );
+    return CommunityAppBar(emoji: feedbackTypeEmoji(item.type), title: feedbackTypeLabel(l, item.type), refreshed: true);
   }
 
   /// A heart needs the privacy notice once, not the rules.
@@ -145,7 +149,7 @@ class FeedbackDetailScreen extends StatelessWidget {
   Future<void> _edit(BuildContext context, FeedbackDetailController controller, FeedbackComment comment) async {
     final result = await showCommunitySheet<EditCommentResult>(
       context,
-      barrierColor: CommunityTokens.sheetScrim,
+      refreshed: true,
       builder: (_) => EditCommentSheet(comment: comment, maxLength: FeedbackDetailController.maxCommentLength),
     );
     if (result == null || !context.mounted) return;
@@ -216,7 +220,7 @@ class _Body extends StatelessWidget {
         padding: _padding,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: 3,
-        separatorBuilder: (_, _) => const SizedBox(height: CommunityTokens.cardGap),
+        separatorBuilder: (_, _) => const SizedBox(height: RefreshTokens.cardGap),
         itemBuilder: (_, _) => const FeedbackCardSkeleton(),
       );
     }
@@ -245,7 +249,6 @@ class _Body extends StatelessWidget {
         onAdd: controller.toggleNewComment,
         addTooltip: l.writeComment,
         addActive: controller.newCommentOpen,
-        addColor: CommunityColors.commentAdd(context),
       ),
       if (controller.newCommentOpen && !controller.searchOpen)
         CommentField(
@@ -274,15 +277,8 @@ class _Body extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           itemCount: children.length,
-          // Settings-6: the comments start 66 under the card (the toolbar
-          // is 46); threads keep the list's gap.
-          separatorBuilder: (_, index) => SizedBox(
-            height: switch (index) {
-              0 => CommunityTokens.detailCardToToolbar,
-              1 => CommunityTokens.detailToolbarToComments,
-              _ => CommunityTokens.cardGap,
-            },
-          ),
+          // 8 around the 48 px toolbar, 12 between the comment cards.
+          separatorBuilder: (_, index) => SizedBox(height: index <= 1 ? 8 : RefreshTokens.cardGap),
           itemBuilder: (_, index) => children[index],
         ),
       ),
@@ -362,12 +358,11 @@ class _Body extends StatelessWidget {
   }
 }
 
-// Settings-6: the card's top is 27 below the title's centre.
 const _padding = EdgeInsets.fromLTRB(
-  CommunityTokens.screenPadding,
-  5,
-  CommunityTokens.screenPadding,
-  CommunityTokens.cardGap * 3,
+  RefreshTokens.screenPadding,
+  8,
+  RefreshTokens.screenPadding,
+  RefreshTokens.screenPadding * 2,
 );
 
 class _LoadMoreError extends StatelessWidget {
@@ -383,7 +378,7 @@ class _LoadMoreError extends StatelessWidget {
         Text(
           l.loadMoreCommentsFailed,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: CommunityColors.muted(context)),
+          style: RefreshTokens.meta(context, on: Theme.of(context).scaffoldBackgroundColor),
         ),
         TextButton(onPressed: onRetry, child: Text(l.retry)),
       ],

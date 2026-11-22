@@ -120,7 +120,7 @@ class CommunityLocalizationsDe extends CommunityLocalizations {
         filterAdmin: 'Admin',
         searchCommentsHint: 'Kommentare suchen',
         feedbackNotFound: 'Dieses Feedback gibt es nicht mehr.',
-        newCommentHint: 'neuer Kommentar...',
+        newCommentHint: 'Neuer Kommentar…',
         writeComment: 'Kommentar schreiben',
         sendComment: 'Senden',
         noCommentsTitle: 'Noch keine Kommentare',
@@ -128,6 +128,7 @@ class CommunityLocalizationsDe extends CommunityLocalizations {
         commentDeleted: 'Kommentar gelöscht',
         edited: 'bearbeitet',
         showReplies: _showReplies,
+        replyCount: _replyCount,
         hideReplies: 'Antworten ausblenden',
         reply: 'Antworten',
         editComment: 'Kommentar bearbeiten',
@@ -159,5 +160,6 @@ class CommunityLocalizationsDe extends CommunityLocalizations {
   static String _postedAs(int n) => 'Danke! Gepostet als #$n';
   static String _errorTooLong(int max) => 'Zu lang. Bitte kürze den Text auf höchstens $max Zeichen.';
   static String _appVersionShort(String version) => 'App $version';
+  static String _replyCount(int n) => n == 1 ? '1 Antwort' : '$n Antworten';
   static String _showReplies(int n) => n == 1 ? '1 Antwort anzeigen' : '$n Antworten anzeigen';
 }

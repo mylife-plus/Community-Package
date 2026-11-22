@@ -174,7 +174,7 @@ void main() {
         expect(find.text(l.commentDeleted), findsOneWidget);
         expectNoOverflow(tester, 'Feedback Detail');
         await tapAndSettle(tester, _semantics(l.showReplies(1)).first);
-        await tapAndSettle(tester, find.byTooltip(l.reply));
+        await tapAndSettle(tester, find.widgetWithText(TextButton, l.reply));
         await tapAndSettle(tester, find.byTooltip(l.writeComment));
         expectNoOverflow(tester, 'replies and comment field');
         await tapAndSettle(tester, find.byTooltip(l.editComment).first);

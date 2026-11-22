@@ -4,7 +4,7 @@ import 'package:community_package/src/core/navigation/community_navigator.dart';
 import 'package:community_package/src/core/widgets/comment_query_menus.dart';
 import 'package:community_package/src/core/widgets/feedback_card.dart';
 import 'package:community_package/src/data/repositories/identity_repository.dart';
-import 'package:community_package/src/core/widgets/inner_shadow.dart';
+import 'package:community_package/src/core/theme/refresh_style.dart';
 import 'package:community_package/src/features/feedback_detail/presentation/comment_thread.dart';
 import 'package:community_package/src/features/feedback_detail/presentation/edit_comment_sheet.dart';
 import 'package:community_package/src/features/feedback_detail/presentation/feedback_detail_controller.dart';
@@ -14,7 +14,6 @@ import 'package:community_package/src/features/feedback_list/presentation/feedba
 import 'package:community_package/src/features/privacy/presentation/post_gate.dart';
 import 'package:community_package/src/features/privacy/presentation/rules_sheet.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -37,7 +36,7 @@ void main() {
   final sendButton = find.byTooltip('Send');
   final showReplies = _semantics('Show 2 replies');
   final hideReplies = _semantics('Hide replies');
-  final replyPlus = find.byTooltip('Reply');
+  final replyPlus = find.widgetWithText(TextButton, 'Reply');
 
   /// A thread (#2, the user's, with two replies, one of them the user's)
   /// and a plain comment (#1).
@@ -85,6 +84,8 @@ void main() {
 
   Future<void> tapAndSettle(WidgetTester tester, Finder finder) async {
     await tester.ensureVisible(finder);
+    // Lay out at the new scroll offset before tapping.
+    await tester.pump();
     await tester.tap(finder);
     await tester.pumpAndSettle();
   }
@@ -103,23 +104,28 @@ void main() {
       expect(find.descendant(of: find.byType(AppBar), matching: find.text('in progress')), findsOneWidget);
     });
 
-    // specs.md §2: the status is 18 Medium after a 20 px 💪.
-    testWidgets('the status title is Medium with a 20 px emoji', (tester) async {
+    // Design refresh: titles 17 SemiBold, after a 20 px 💪.
+    testWidgets('the status title is 17 SemiBold with a 20 px emoji', (tester) async {
       await open(tester);
 
       final title = tester.widget<Text>(find.descendant(of: find.byType(AppBar), matching: find.text('in progress')));
-      expect(title.style?.fontWeight, FontWeight.w500);
+      expect((title.style?.fontSize, title.style?.fontWeight), (17.0, FontWeight.w600));
       expect(tester.widget<Text>(find.descendant(of: find.byType(AppBar), matching: find.text('💪'))).style?.fontSize, 20);
     });
 
-    // Settings-6: the comments start 66 under the card.
-    testWidgets('card, toolbar and comments are spaced like Figma', (tester) async {
+    // Design refresh: 8 around the 48 px toolbar, 12 between comments,
+    // 16 from the screen's edges.
+    testWidgets('card, toolbar and comments sit on the 8 pt grid', (tester) async {
       await open(tester);
 
       final card = tester.getRect(find.byType(FeedbackCard));
-      final thread = tester.getRect(find.byType(CommentThread).first);
-      expect(thread.top - card.bottom, 66);
+      final threads = find.byType(CommentThread);
+      final thread = tester.getRect(threads.first);
+      expect(card.left, 16);
+      expect(thread.top - card.bottom, 64);
       expect(tester.getCenter(find.byTooltip('Sort')).dy - card.bottom, 32);
+      expect(tester.getSize(find.byTooltip('Sort')), const Size(48, 48));
+      expect(tester.getRect(threads.at(1)).top - thread.bottom, 12);
     });
 
     testWidgets('shows the type while there is no status', (tester) async {
@@ -149,7 +155,7 @@ void main() {
     expect(find.text('Thanks!'), findsOneWidget);
     expect(hideReplies, findsOneWidget);
     expect(replyPlus, findsOneWidget);
-    expect(find.widgetWithText(TextField, 'new Comment...'), findsNothing);
+    expect(find.widgetWithText(TextField, 'New comment…'), findsNothing);
 
     await tapAndSettle(tester, hideReplies);
     expect(find.text('Working on it'), findsNothing);
@@ -162,7 +168,7 @@ void main() {
     await tapAndSettle(tester, showReplies);
 
     await tapAndSettle(tester, replyPlus);
-    final field = find.widgetWithText(TextField, 'new Comment...');
+    final field = find.widgetWithText(TextField, 'New comment…');
     expect(field, findsOneWidget);
     expect(replyPlus, findsNothing);
     expect(tester.widget<EditableText>(find.descendant(of: field, matching: find.byType(EditableText))).focusNode.hasFocus, isTrue);
@@ -179,12 +185,12 @@ void main() {
     await open(tester);
     await tapAndSettle(tester, showReplies);
     await tapAndSettle(tester, replyPlus);
-    expect(find.widgetWithText(TextField, 'new Comment...'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'New comment…'), findsOneWidget);
 
     await tester.tapAt(tester.getCenter(find.byType(AppBar)));
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(TextField, 'new Comment...'), findsNothing);
+    expect(find.widgetWithText(TextField, 'New comment…'), findsNothing);
     expect(replyPlus, findsOneWidget);
   });
 
@@ -193,7 +199,7 @@ void main() {
     await tapAndSettle(tester, showReplies);
     await tapAndSettle(tester, replyPlus);
 
-    await tester.enterText(find.widgetWithText(TextField, 'new Comment...'), 'Half a thought');
+    await tester.enterText(find.widgetWithText(TextField, 'New comment…'), 'Half a thought');
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
 
@@ -206,25 +212,41 @@ void main() {
 
     await tapAndSettle(tester, _semantics('Reply'));
 
-    expect(find.widgetWithText(TextField, 'new Comment...'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'New comment…'), findsOneWidget);
   });
 
-  testWidgets('comment chips and dividers look like Figma', (tester) async {
+  testWidgets('comment cards, the replies chip and dividers use the refreshed look', (tester) async {
     await open(tester, theme: ThemeData(colorScheme: const ColorScheme.dark(surface: Color(0xFF000000))));
-    await tapAndSettle(tester, showReplies);
 
-    final thread = tester.getRect(find.byType(CommentThread).first);
-    final chip = tester.getRect(find.descendant(of: find.byType(CommentThread).first, matching: find.byType(InnerShadow)));
-    expect(chip.left - thread.left, 10);
-    expect(chip.height, 26);
-    expect(chip.width, greaterThanOrEqualTo(65));
+    final threadFinder = find.byType(CommentThread).first;
+    final context = tester.element(threadFinder);
+    final material = tester.widget<Material>(find.descendant(of: threadFinder, matching: find.byType(Material)).first);
+    expect(material.color, RefreshColors.card(context));
+    expect(material.color, isNot(const Color(0xFF000000)));
+    final shape = material.shape! as RoundedRectangleBorder;
+    expect(shape.borderRadius, BorderRadius.circular(16));
+    expect(find.descendant(of: showReplies, matching: find.text('2 replies')), findsOneWidget);
+
+    await tapAndSettle(tester, showReplies);
     final divider = tester.widgetList<Divider>(find.byType(Divider)).first;
-    expect((divider.indent, divider.endIndent, divider.color?.toARGB32()), (11.0, 15.0, 0xFF5C5C5C));
-    final firstDivider = tester.getRect(find.byType(Divider).first);
-    expect(firstDivider.top - chip.bottom, 4);
-    expect(tester.getSize(find.ancestor(of: replyPlus, matching: find.byType(SizedBox)).first).height, 56);
+    expect((divider.indent, divider.endIndent), (16.0, 16.0));
+    expect(tester.getSize(replyPlus).height, 48);
     final reply = tester.widget<Text>(find.text('Working on it'));
-    expect(reply.style?.fontWeight, FontWeight.w300);
+    expect((reply.style?.fontSize, reply.style?.height), (15.0, 1.4));
+  });
+
+  testWidgets('the replies open and close with an animation', (tester) async {
+    await open(tester);
+
+    final closedHeight = tester.getSize(find.byType(CommentThread).first).height;
+    await tester.tap(showReplies);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final midHeight = tester.getSize(find.byType(CommentThread).first).height;
+    await tester.pumpAndSettle();
+    final openHeight = tester.getSize(find.byType(CommentThread).first).height;
+    expect(midHeight, greaterThan(closedHeight));
+    expect(midHeight, lessThan(openHeight));
   });
 
   testWidgets('only the user\'s own comments have ✏️; edited ones say so', (tester) async {
@@ -250,13 +272,13 @@ void main() {
 
   testWidgets('+ opens the new comment field; sending posts it on top and updates the count', (tester) async {
     await open(tester);
-    expect(find.widgetWithText(TextField, 'new Comment...'), findsNothing);
+    expect(find.widgetWithText(TextField, 'New comment…'), findsNothing);
 
     await tapAndSettle(tester, addButton);
-    expect(find.widgetWithText(TextField, 'new Comment...'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'New comment…'), findsOneWidget);
     expect(sendButton, findsNothing);
 
-    await tester.enterText(find.widgetWithText(TextField, 'new Comment...'), '  Great idea  ');
+    await tester.enterText(find.widgetWithText(TextField, 'New comment…'), '  Great idea  ');
     await tester.pump();
     backend.answerAt('POST', _comments, {
       'comment': commentJson(9, text: 'Great idea', isMine: true, day: 5),
@@ -271,13 +293,13 @@ void main() {
       lessThan(tester.getTopLeft(find.text('Any update?')).dy),
     );
     expect(find.descendant(of: find.byType(FeedbackCard), matching: find.text('5')), findsOneWidget);
-    expect(find.widgetWithText(TextField, 'new Comment...'), findsNothing);
+    expect(find.widgetWithText(TextField, 'New comment…'), findsNothing);
   });
 
   testWidgets('the first comment asks for the rules; declining sends nothing', (tester) async {
     await open(tester, rulesAgreed: false);
     await tapAndSettle(tester, addButton);
-    await tester.enterText(find.widgetWithText(TextField, 'new Comment...'), 'Hello');
+    await tester.enterText(find.widgetWithText(TextField, 'New comment…'), 'Hello');
     await tester.pump();
 
     await tapAndSettle(tester, sendButton);
@@ -293,7 +315,7 @@ void main() {
     await tapAndSettle(tester, showReplies);
     await tapAndSettle(tester, replyPlus);
 
-    await tester.enterText(find.widgetWithText(TextField, 'new Comment...'), 'Me as well');
+    await tester.enterText(find.widgetWithText(TextField, 'New comment…'), 'Me as well');
     await tester.pump();
     backend.answerAt('POST', _comments, {
       'comment': commentJson(10, parentId: 2, text: 'Me as well', isMine: true, day: 5),
@@ -315,7 +337,7 @@ void main() {
 
     await tapAndSettle(tester, editButton);
     expect(find.byType(EditCommentSheet), findsOneWidget);
-    expect(find.text('edit Comment'), findsOneWidget);
+    expect(find.text('Edit comment'), findsOneWidget);
     await tester.enterText(
       find.descendant(of: find.byType(EditCommentSheet), matching: find.byType(TextField)),
       'Any news?',
@@ -326,7 +348,7 @@ void main() {
         commentJson(6, parentId: 2, text: 'Thanks!', isMine: true, edited: true, day: 4),
       ]),
     });
-    await tapAndSettle(tester, find.byTooltip('save'));
+    await tapAndSettle(tester, find.text('Save'));
 
     expect(lastBody('PATCH'), {'text': 'Any news?'});
     expect(find.byType(EditCommentSheet), findsNothing);
@@ -334,72 +356,114 @@ void main() {
     expect(find.textContaining('· edited'), findsOneWidget);
   });
 
-  // Settings-12: 70% scrim, a #404040 field border, a 43×42 🗑 with the
-  // outline trash.
-  testWidgets('Edit Comment looks like Figma', (tester) async {
+  // Design refresh: a sheet on the sheet layer with a 24 top radius, a
+  // filled field without a border until focused, Save filled with a check.
+  testWidgets('Edit Comment uses the refreshed sheet, field and buttons', (tester) async {
     await open(tester, theme: ThemeData(colorScheme: const ColorScheme.dark(surface: Color(0xFF000000))));
     await tapAndSettle(tester, editButton);
 
-    final barrier = tester.widgetList<ModalBarrier>(find.byType(ModalBarrier)).last;
-    expect(barrier.color, const Color(0xB3000000));
+    final sheetContext = tester.element(find.byType(EditCommentSheet));
+    final sheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
+    expect(sheet.backgroundColor, RefreshColors.sheet(sheetContext));
+    expect((sheet.shape! as RoundedRectangleBorder).borderRadius, const BorderRadius.vertical(top: Radius.circular(24)));
     final field = tester.widget<TextField>(find.descendant(of: find.byType(EditCommentSheet), matching: find.byType(TextField)));
-    expect((field.decoration!.enabledBorder! as OutlineInputBorder).borderSide.color.toARGB32(), 0xFF404040);
-    final delete = find.byTooltip('delete');
-    expect(tester.getSize(find.descendant(of: delete, matching: find.byType(InkWell))), const Size(43, 42));
-    expect(find.descendant(of: delete, matching: find.byType(SvgPicture)), findsOneWidget);
+    final decoration = field.decoration!;
+    expect(decoration.filled, isTrue);
+    expect(decoration.fillColor, isNot(sheet.backgroundColor));
+    expect((decoration.enabledBorder! as OutlineInputBorder).borderSide, BorderSide.none);
+    final focused = (decoration.focusedBorder! as OutlineInputBorder).borderSide;
+    expect((focused.color, focused.width), (Theme.of(sheetContext).colorScheme.primary, 1.5));
+    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+    expect(tester.getSize(find.ancestor(of: find.text('Save'), matching: find.byType(ConstrainedBox)).first).height, 48);
+    final deleteText = tester.widget<Text>(find.text('Delete'));
+    final deleteColor = DefaultTextStyle.of(tester.element(find.text('Delete'))).style.color ?? deleteText.style?.color;
+    expect(deleteColor, Theme.of(sheetContext).colorScheme.error);
   });
 
-  testWidgets('Edit Comment: the 🗑 takes taps in 44 × 44 and the buttons stay in place', (tester) async {
+  testWidgets('Edit Comment: Delete sits on its own row under Save, 48 high', (tester) async {
     await open(tester);
     await tapAndSettle(tester, editButton);
 
-    Finder inSheet(Finder f) => find.descendant(of: find.byType(EditCommentSheet), matching: f);
-    final delete = inSheet(find.byTooltip('delete'));
-    expect(tester.getSize(delete), const Size(44, 44));
-    final box = tester.getRect(find.descendant(of: delete, matching: find.byType(InkWell)));
-    expect(box.left - tester.getRect(inSheet(find.byTooltip('cancel'))).right, 30);
-    expect(tester.getRect(inSheet(find.byTooltip('save'))).left - box.right, 30);
+    final save = tester.getRect(find.text('Save'));
+    final cancel = tester.getRect(find.text('Cancel'));
+    final delete = tester.getRect(find.text('Delete'));
+    expect(cancel.center.dy, save.center.dy);
+    expect(cancel.left, lessThan(save.left));
+    expect(delete.top, greaterThan(save.bottom + 16));
+    final deleteButton = find.ancestor(of: find.text('Delete'), matching: find.byType(InkWell)).first;
+    expect(tester.getSize(deleteButton).height, 48);
 
-    // Just above the red box still counts.
-    await tester.tapAt(Offset(box.center.dx, box.top - 0.5));
-    await tester.pumpAndSettle();
+    await tapAndSettle(tester, find.text('Delete'));
     expect(find.text('Delete this comment? Its replies stay.'), findsOneWidget);
   });
 
-  testWidgets('a comment ✏️ takes taps 48 wide and stays in its Figma place', (tester) async {
+  // The destructive buttons share the two-column grid of Cancel and Save.
+  testWidgets('Edit Comment: Delete alone is full width, under Cancel and Save', (tester) async {
+    await open(tester);
+    await tapAndSettle(tester, editButton);
+
+    Rect rect(String label) => tester.getRect(find.ancestor(of: find.text(label), matching: find.byType(InkWell)).first);
+    expect(rect('Delete').left, rect('Cancel').left);
+    expect(rect('Delete').right, rect('Save').right);
+    expect(rect('Save').left - rect('Cancel').right, 12);
+  });
+
+  testWidgets('a comment edit button is a 48 px rounded icon', (tester) async {
     await open(tester);
 
     final button = editButton.first;
-    final rect = tester.getRect(button);
-    expect(rect.size, const Size(48, 32));
-    // The ✏️ is centred on the 40 px place at the row's end, as before.
-    expect(tester.getCenter(find.descendant(of: button, matching: find.text('✏️'))).dx, rect.right - 20);
+    expect(tester.getSize(button), const Size(48, 48));
+    expect(find.descendant(of: button, matching: find.byIcon(Icons.edit_rounded)), findsOneWidget);
+    expect(find.text('✏️'), findsNothing);
 
-    await tester.tapAt(Offset(rect.left + 3, rect.center.dy));
-    await tester.pumpAndSettle();
+    await tapAndSettle(tester, button);
     expect(find.byType(EditCommentSheet), findsOneWidget);
   });
 
-  testWidgets('the replies chip takes taps in the space around it', (tester) async {
+  // Ages and labels of different lengths must not move the button.
+  testWidgets('every comment edit button ends 4 from its card\'s right edge', (tester) async {
+    await open(
+      tester,
+      comments: [
+        commentJson(
+          2,
+          text: 'Any update?',
+          isMine: true,
+          isAdmin: true,
+          day: 2,
+          replies: [commentJson(6, parentId: 2, text: 'Thanks!', isMine: true, edited: true, day: 4)],
+        ),
+      ],
+    );
+    await tapAndSettle(tester, _semantics('Show 1 reply'));
+
+    final card = tester.getRect(find.byType(CommentThread).first);
+    expect(editButton, findsNWidgets(2));
+    for (final element in editButton.evaluate()) {
+      final rect = tester.getRect(find.byElementPredicate((e) => e == element));
+      expect(card.right - rect.right, closeTo(4, 0.5));
+    }
+  });
+
+  testWidgets('the replies chip is a 40 px pill that takes taps 48 high', (tester) async {
     await open(tester);
 
-    final chip = tester.getRect(find.descendant(of: showReplies, matching: find.byType(InnerShadow)));
-    expect(tester.getSize(showReplies).height, 42);
-    expect(chip.size.height, 26);
+    final pill = tester.getRect(find.descendant(of: showReplies, matching: find.byType(InkWell)));
+    expect(pill.height, 40);
+    expect(tester.getSize(showReplies).height, 48);
 
-    // 4 px above the chip, in the gap under the text.
-    await tester.tapAt(Offset(chip.center.dx, chip.top - 4));
+    // 3 px above the pill still counts.
+    await tester.tapAt(Offset(pill.center.dx, pill.top - 3));
     await tester.pumpAndSettle();
     expect(hideReplies, findsOneWidget);
-    // Open, the divider is 4 under the chip.
-    expect(tester.getSize(hideReplies).height, 36);
+    expect(find.descendant(of: hideReplies, matching: find.text('2 replies')), findsOneWidget);
   });
 
   testWidgets('Edit Comment: 🗑 asks first, then leaves a placeholder above the replies', (tester) async {
     await open(tester);
     await tapAndSettle(tester, editButton);
 
-    await tapAndSettle(tester, find.byTooltip('delete'));
+    await tapAndSettle(tester, find.text('Delete'));
     expect(find.text('Delete this comment? Its replies stay.'), findsOneWidget);
     await tapAndSettle(tester, find.text('keep'));
     expect(find.byType(EditCommentSheet), findsOneWidget);
@@ -408,7 +472,7 @@ void main() {
     backend.answerAt('DELETE', '/v1/comments/2', {
       'feedback': feedbackJson(3, status: 'in_progress', commentCount: 3),
     });
-    await tapAndSettle(tester, find.byTooltip('delete'));
+    await tapAndSettle(tester, find.text('Delete'));
     await tapAndSettle(tester, find.text('delete'));
 
     expect(find.byType(EditCommentSheet), findsNothing);
@@ -492,8 +556,11 @@ void main() {
 
       await tapAndSettle(tester, showReplies);
       await tapAndSettle(tester, replyPlus);
+      // Back to the top: the list builds the toolbar lazily.
+      await tester.fling(find.byType(Scrollable).first, const Offset(0, 2000), 3000);
+      await tester.pumpAndSettle();
       await tapAndSettle(tester, addButton);
-      await tester.enterText(find.widgetWithText(TextField, 'new Comment...').first, 'A long comment ' * 10);
+      await tester.enterText(find.widgetWithText(TextField, 'New comment…').first, 'A long comment ' * 10);
       await tester.pump();
       expect(tester.takeException(), isNull);
 

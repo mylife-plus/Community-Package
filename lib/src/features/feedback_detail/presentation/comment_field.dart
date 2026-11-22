@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/l10n/community_localizations.dart';
 import '../../../core/theme/community_tokens.dart';
+import '../../../core/theme/refresh_style.dart';
 import '../../../core/widgets/community_text_field.dart';
 
 /// A "new Comment..." field (Settings-6): the large one under the toolbar,
@@ -35,6 +36,7 @@ class CommentField extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = CommunityLocalizations.of(context);
     final theme = Theme.of(context);
+    final refreshed = CommunityRefresh.of(context);
     final fontSize = large ? 20.0 : 16.0;
     OutlineInputBorder border(Color color) => OutlineInputBorder(
       borderRadius: BorderRadius.circular(CommunityTokens.fieldRadius),
@@ -60,15 +62,45 @@ class CommentField extends StatelessWidget {
           keyboardType: TextInputType.multiline,
           textCapitalization: TextCapitalization.sentences,
           buildCounter: CommunityTextField.counter,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontSize: fontSize,
-            fontWeight: FontWeight.w400,
-            color: theme.colorScheme.onSurface,
-          ),
+          style: refreshed
+              ? RefreshTokens.body(context)
+              : theme.textTheme.bodyLarge?.copyWith(
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w400,
+                  color: theme.colorScheme.onSurface,
+                ),
+          decoration: refreshed
+              ? CommunityTextField.refreshedDecoration(
+                  context,
+                  hint: l.newCommentHint,
+                  // The send button sits in the 48 px row: less padding on the right.
+                  padding: RefreshTokens.fieldPadding.copyWith(right: hasText && !sending ? 0 : null),
+                  suffixIcon: hasText && !sending
+                      ? IconButton(
+                          tooltip: l.sendComment,
+                          onPressed: onSend,
+                          icon: Icon(Icons.send_rounded, size: RefreshTokens.iconSize, color: theme.colorScheme.primary),
+                        )
+                      : null,
+                )
+              : _decoration(context, l, theme, fontSize, hasText, border),
+        );
+      },
+    );
+  }
+
+  InputDecoration _decoration(
+    BuildContext context,
+    CommunityLocalizations l,
+    ThemeData theme,
+    double fontSize,
+    bool hasText,
+    OutlineInputBorder Function(Color) border,
+  ) =>
           // Every part of the decoration is set, so a host's
           // InputDecorationTheme cannot add a second box (as Inventory's
           // did inside the Problem steps, S4).
-          decoration: InputDecoration(
+          InputDecoration(
             hintText: l.newCommentHint,
             hintStyle: theme.textTheme.bodyLarge?.copyWith(
               fontSize: fontSize,
@@ -96,9 +128,5 @@ class CommentField extends StatelessWidget {
             enabledBorder: border(CommunityColors.fieldBorder(context)),
             disabledBorder: border(CommunityColors.fieldBorder(context)),
             focusedBorder: border(theme.colorScheme.primary),
-          ),
-        );
-      },
-    );
-  }
+          );
 }

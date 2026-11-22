@@ -119,6 +119,7 @@ class CommunityLocalizations {
     required this.commentDeleted,
     required this.edited,
     required this.showReplies,
+    required this.replyCount,
     required this.hideReplies,
     required this.reply,
     required this.editComment,
@@ -342,6 +343,9 @@ class CommunityLocalizations {
 
   /// For screen readers, on the replies chip.
   final String Function(int count) showReplies;
+
+  /// The replies chip: "1 reply", "2 replies".
+  final String Function(int count) replyCount;
   final String hideReplies;
 
   /// For screen readers, on the chip of a comment without replies.

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/l10n/community_localizations.dart';
-import '../../../core/theme/community_tokens.dart';
+import '../../../core/theme/refresh_style.dart';
 import '../../../core/widgets/community_form_actions.dart';
 import '../../../core/widgets/community_popups.dart';
 import '../../../core/widgets/community_text_field.dart';
@@ -25,8 +25,9 @@ class DeleteCommentEdit extends EditCommentResult {
   const DeleteCommentEdit();
 }
 
-/// "edit Comment" (Settings-12): the comment's text in a field, then ✗,
-/// a red 🗑 and ✓. 🗑 asks before deleting, saying whether replies stay.
+/// "Edit comment" (Settings-12, refreshed look): the comment's text in a
+/// filled field, then Cancel and Save, and Delete on its own row below,
+/// away from Save. Delete asks first, saying whether replies stay.
 class EditCommentSheet extends StatefulWidget {
   const EditCommentSheet({super.key, required this.comment, required this.maxLength});
 
@@ -65,8 +66,12 @@ class _EditCommentSheetState extends State<EditCommentSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // Refreshed look even when opened without showCommunitySheet's flag.
+    return CommunityRefresh(child: Builder(builder: _build));
+  }
+
+  Widget _build(BuildContext context) {
     final l = CommunityLocalizations.of(context);
-    final theme = Theme.of(context);
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     return Padding(
       // Above the keyboard while typing.
@@ -74,26 +79,19 @@ class _EditCommentSheetState extends State<EditCommentSheet> {
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
+          // The drag handle above already leaves room at the top.
           padding: const EdgeInsets.fromLTRB(
-            CommunityTokens.screenPadding,
-            28,
-            CommunityTokens.screenPadding,
-            CommunityTokens.actionsBottomGap,
+            RefreshTokens.sheetPadding,
+            0,
+            RefreshTokens.sheetPadding,
+            RefreshTokens.sheetPadding,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                l.editCommentTitle,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 28),
+              Text(l.editCommentTitle, textAlign: TextAlign.center, style: RefreshTokens.title(context)),
+              const SizedBox(height: RefreshTokens.sheetPadding),
               ValueListenableBuilder<TextEditingValue>(
                 valueListenable: _controller,
                 builder: (context, value, _) => Column(
@@ -103,9 +101,8 @@ class _EditCommentSheetState extends State<EditCommentSheet> {
                       controller: _controller,
                       hint: l.newCommentHint,
                       maxLength: widget.maxLength,
-                      borderColor: CommunityColors.commentFieldBorder(context),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: RefreshTokens.sheetPadding),
                     CommunityFormActions(
                       cancelLabel: l.cancel,
                       submitLabel: l.save,
