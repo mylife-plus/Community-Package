@@ -190,6 +190,29 @@ void main() {
       });
     }
 
+    // Johannes, 22 Nov: the cost sits next to the status, not next to the
+    // comment count.
+    for (final (name, status) in [('with a status', 'planned'), ('without a status', null)]) {
+      testWidgets('card: the cost follows the status on the left ($name)', (tester) async {
+        await open(tester, item: feedbackJson(3, status: status, commentCount: 1, reactionCount: 10, costCents: 70000));
+
+        final card = find.byType(FeedbackCard);
+        final cardRect = tester.getRect(card);
+        final cost = tester.getRect(
+          find.descendant(of: card, matching: find.byWidgetPredicate((w) => w is RichText && w.text.toPlainText().startsWith('💰'))),
+        );
+        final comments = tester.getRect(find.descendant(of: card, matching: find.text('💬')));
+        if (status != null) {
+          final statusRight = tester.getRect(find.descendant(of: card, matching: find.text('planned'))).right;
+          expect(cost.left - statusRight, closeTo(12, 0.5));
+        } else {
+          expect(cost.left - cardRect.left, lessThan(30));
+        }
+        // A clear gap to the counts, which stay at the right.
+        expect(comments.left - cost.right, greaterThan(40));
+      });
+    }
+
     testWidgets('card: 💬, ❤️, 💰 and 💪 are 20 with 16 counts', (tester) async {
       await open(tester, item: feedbackJson(3, status: 'in_progress', commentCount: 4, costCents: 5000));
 

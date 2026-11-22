@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../data/models/feedback_item.dart';
@@ -187,7 +185,7 @@ class FeedbackCard extends StatelessWidget {
                   children: [
                     if (_hasProblemDetails(item)) _ProblemDetails(item: item, style: body) else Text(item.text, style: body),
                     const SizedBox(height: 4),
-                    LayoutBuilder(builder: (context, constraints) => _refreshedBottomRow(context, constraints)),
+                    _refreshedBottomRow(context),
                   ],
                 ),
               ),
@@ -198,48 +196,51 @@ class FeedbackCard extends StatelessWidget {
     );
   }
 
-  Widget _refreshedBottomRow(BuildContext context, BoxConstraints constraints) {
+  Widget _refreshedBottomRow(BuildContext context) {
     final l = CommunityLocalizations.of(context);
     final card = RefreshColors.card(context);
     final scheme = Theme.of(context).colorScheme;
     final costCents = item.costCents;
+    final status = item.status;
     // Every part (status, cost, 💬 count, ❤️ pill) sits on one text
     // baseline; centring them one by one left the heart's number lower.
     return Row(
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
+        // Status and cost together on the left (Johannes, 22 Nov); the
+        // counts stay at the right edge. Both shrink with "…" when the row
+        // is short, so the counts always fit.
         Expanded(
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: item.status == null ? null : _Status(status: item.status!),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              if (status != null) Flexible(child: _Status(status: status)),
+              if (costCents != null) ...[
+                if (status != null) const SizedBox(width: _refreshedCostGap),
+                Flexible(
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: '💰', style: emojiStyle(RefreshTokens.countEmojiSize)),
+                        TextSpan(text: ' ${formatUsd(l, costCents)}'),
+                      ],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: RefreshTokens.meta(
+                      context,
+                      color: RefreshColors.readable(CommunityColors.of(context).cost, scheme.onSurface, card, 4.5),
+                      weight: FontWeight.w600,
+                    )?.copyWith(fontSize: RefreshTokens.countTextSize),
+                  ),
+                ),
+              ],
+              const SizedBox(width: _refreshedCostGap),
+            ],
           ),
         ),
-        if (costCents != null) ...[
-          // Not flexible: a Flexible next to the status's Expanded splits
-          // the free space with it, and the counts drifted off the right
-          // edge. Instead the cost's room is capped so the 💬 count and the
-          // ❤️ pill always fit after it; past that it ends in "…".
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: _refreshedCostMaxWidth(context, constraints.maxWidth)),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(text: '💰', style: emojiStyle(RefreshTokens.countEmojiSize)),
-                  TextSpan(text: ' ${formatUsd(l, costCents)}'),
-                ],
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: RefreshTokens.meta(
-                context,
-                color: RefreshColors.readable(CommunityColors.of(context).cost, scheme.onSurface, card, 4.5),
-                weight: FontWeight.w600,
-              )?.copyWith(fontSize: RefreshTokens.countTextSize),
-            ),
-          ),
-          const SizedBox(width: _refreshedCostGap),
-        ],
         _Count(emoji: '💬', count: item.commentCount, semanticsLabel: l.commentCount(item.commentCount)),
         const SizedBox(width: _refreshedHeartGap),
         _ReactionButton(item: item, onTap: onReact),
@@ -249,42 +250,6 @@ class FeedbackCard extends StatelessWidget {
 
   static const _refreshedCostGap = 12.0;
   static const _refreshedHeartGap = 8.0;
-
-  /// The cost's share of the row (as on the old card), but never more than
-  /// what is left after the 💬 count and the ❤️ pill at the user's text size.
-  double _refreshedCostMaxWidth(BuildContext context, double rowWidth) {
-    final textScaler = MediaQuery.textScalerOf(context);
-    final direction = Directionality.of(context);
-    double width(InlineSpan span) {
-      final painter = TextPainter(text: span, textDirection: direction, textScaler: textScaler, maxLines: 1)
-        ..layout();
-      final w = painter.width;
-      painter.dispose();
-      return w;
-    }
-
-    final countStyle = RefreshTokens.meta(context, weight: FontWeight.w600)?.copyWith(
-      fontSize: RefreshTokens.countTextSize,
-    );
-    final emoji = emojiStyle(RefreshTokens.countEmojiSize);
-    final count = width(TextSpan(text: '💬', style: emoji)) +
-        _Count.refreshedGap +
-        width(TextSpan(text: '${item.commentCount}', style: countStyle));
-    final heart = _ReactionButton.refreshedPillExtra +
-        width(
-          TextSpan(
-            style: countStyle,
-            children: [
-              TextSpan(text: '❤️', style: emoji),
-              TextSpan(text: ' ${item.reactionCount}'),
-            ],
-          ),
-        );
-    // A little slack for rounding between the painter and the layout.
-    const slack = 2.0;
-    final left = rowWidth - count - heart - _refreshedCostGap - _refreshedHeartGap - slack;
-    return math.max(0, math.min(rowWidth * _costMaxShare, left));
-  }
 
   Widget _bottomRow(BuildContext context, BoxConstraints constraints) {
     final l = CommunityLocalizations.of(context);
@@ -627,10 +592,6 @@ class _ReactionButton extends StatelessWidget {
 
   static const _refreshedPillPadding = 14.0;
   static const _refreshedBorderWidth = 1.5;
-
-  /// The pill's width beyond its text: the padding and the border, which
-  /// a ShapeDecoration adds as padding (ShapeBorder.dimensions).
-  static const refreshedPillExtra = (_refreshedPillPadding + _refreshedBorderWidth) * 2;
 
   /// The refreshed heart: a 40 high tonal pill with a 48 tap area; when
   /// hearted, a border in the heart colour fades in.
