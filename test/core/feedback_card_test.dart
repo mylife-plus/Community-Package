@@ -55,24 +55,16 @@ void main() {
     expect(spans.firstWhere((s) => s.text == 'Add an item').style?.color, isNull);
   });
 
-  testWidgets('the optional description reads a step down from the steps', (tester) async {
-    await pumpCard(tester, _problem());
+  testWidgets('the optional description comes first, in the main text colour and Medium', (tester) async {
+    final theme = ThemeData.dark();
+    await pumpCard(tester, _problem(), theme: theme);
 
     final description = tester.widget<Text>(find.text('Nothing happens')).style!;
-    final steps = tester.widget<RichText>(richText('1. Tap plus').first).text.style!;
-    final improvement = feedbackJson(5, type: 'improvement');
-    await pumpCard(tester, improvement);
-    final body = tester.widget<Text>(find.text(improvement['text'] as String)).style!;
-
-    expect(steps, body);
-    expect(description.fontSize, lessThan(steps.fontSize!));
-    expect(description.fontWeight!.value, lessThan(steps.fontWeight!.value));
-    expect(description.color!.a, lessThan(steps.color!.a));
-    await pumpCard(tester, _problem());
-    expect(
-      tester.getTopLeft(richText('1. Tap plus').first).dy - tester.getBottomLeft(find.text('Nothing happens')).dy,
-      6,
-    );
+    expect(description.color, theme.colorScheme.onSurface);
+    expect(description.fontWeight, FontWeight.w500);
+    final path = richText('Inventory → Sell Item → Add Item').first;
+    expect(tester.getTopLeft(path).dy - tester.getBottomLeft(find.text('Nothing happens')).dy, 6);
+    expect(tester.getTopLeft(richText('1. Tap plus').first).dy, greaterThan(tester.getBottomLeft(path).dy));
   });
 
   testWidgets('a Problem without a description shows path and steps', (tester) async {

@@ -313,12 +313,11 @@ class FeedbackCard extends StatelessWidget {
 bool _hasProblemDetails(FeedbackItem item) =>
     item.type == FeedbackType.problem && (item.steps?.isNotEmpty ?? false);
 
-/// 📲 path, the description, "1. … → 2. …" and the device line.
+/// The description ("What went wrong?"), 📲 path, "1. … → 2. …" and the
+/// device line.
 ///
-/// The steps are the card's main text, like an Improvement's. The optional
-/// description is a step down in size, weight and colour, so the two do not
-/// run together (Material type hierarchy:
-/// https://m3.material.io/styles/typography/applying-type).
+/// The optional description comes first, in the main text colour and
+/// Medium, so it stands out from the details below it.
 class _ProblemDetails extends StatelessWidget {
   const _ProblemDetails({required this.item, required this.style});
 
@@ -352,6 +351,17 @@ class _ProblemDetails extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (description != null) ...[
+          Text(
+            description,
+            style: style?.copyWith(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: _stepsGap),
+        ],
         if (path != null) ...[
           Text.rich(
             TextSpan(
@@ -363,17 +373,6 @@ class _ProblemDetails extends StatelessWidget {
             style: style,
           ),
           const SizedBox(height: _pathGap),
-        ],
-        if (description != null) ...[
-          Text(
-            description,
-            style: style?.copyWith(
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-            ),
-          ),
-          const SizedBox(height: _stepsGap),
         ],
         Text.rich(
           TextSpan(
