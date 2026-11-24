@@ -101,7 +101,7 @@ void main() {
     expect(() => CommunityPackage.openNewFeedback(hostContext), throwsStateError);
   });
 
-  testWidgets('opens one New Feedback screen with the topic list open', (tester) async {
+  testWidgets('opens one New Feedback screen with only the topic list, no topic chosen', (tester) async {
     await openFromSettings(tester);
 
     expect(formScreens, findsOneWidget);
@@ -112,8 +112,12 @@ void main() {
     expect(find.text('Improvement'), findsOneWidget);
     expect(find.text('Problem'), findsOneWidget);
     expect(find.text('Idea'), findsOneWidget);
-    expect(find.text('Your improvement idea...'), findsOneWidget);
-    expect(find.text('Agree to Rules'), findsOneWidget);
+    expect(find.descendant(of: find.byType(FeedbackTypeMenu), matching: find.byIcon(Icons.check_rounded)), findsNothing);
+    // The field, the rules link and the buttons wait for a topic.
+    expect(find.byType(TextField), findsNothing);
+    expect(find.text('Agree to Rules'), findsNothing);
+    expect(submit, findsNothing);
+    expect(cancel, findsNothing);
     expect(backend.requests, isEmpty);
   });
 
@@ -184,11 +188,25 @@ void main() {
 
     expect(find.text('Improvement'), findsNothing);
     expect(find.text('Choose Topic'), findsOneWidget); // the closed pill
+    // Still only the pill.
+    expect(find.byType(TextField), findsNothing);
+    expect(find.text('Agree to Rules'), findsNothing);
+    expect(submit, findsNothing);
+  });
+
+  testWidgets('a Problem shows its fields, the rules link and the buttons once chosen', (tester) async {
+    await openFromSettings(tester);
+
+    await tapAndSettle(tester, find.text('Problem'));
+    expect(find.byType(TextField), findsWidgets);
+    expect(find.text('Agree to Rules'), findsOneWidget);
+    expect(submit, findsOneWidget);
+    expect(cancel, findsOneWidget);
   });
 
   testWidgets('✓ works only with a topic and text', (tester) async {
     await openFromSettings(tester);
-    expect(submitEnabled(tester), isFalse);
+    expect(submit, findsNothing);
 
     await tapAndSettle(tester, find.text('Idea'));
     expect(submitEnabled(tester), isFalse);

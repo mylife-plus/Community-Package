@@ -122,26 +122,29 @@ class _Form extends StatelessWidget {
                               ),
                             ),
                           ),
-                          SizedBox(
-                            height: controller.type == FeedbackType.problem ? _pillToProblemField : _pillToField,
-                          ),
-                          if (controller.type == FeedbackType.problem)
-                            ..._problemFields(context, l)
-                          else
-                            CommunityTextField(
-                              controller: controller.textController,
-                              hint: _hint(l, controller.type),
-                              maxLength: NewFeedbackController.maxTextLength,
-                              enabled: !submitting,
+                          // Until a topic is chosen, the picker is all there is.
+                          if (controller.type case final type?) ...[
+                            SizedBox(
+                              height: type == FeedbackType.problem ? _pillToProblemField : _pillToField,
                             ),
-                          const SizedBox(height: _fieldToRules),
-                          Center(
-                            child: _RulesLink(
-                              agreed: controller.rulesAgreed,
-                              onTap: () => gate.openRules(context),
+                            if (type == FeedbackType.problem)
+                              ..._problemFields(context, l)
+                            else
+                              CommunityTextField(
+                                controller: controller.textController,
+                                hint: _hint(l, type),
+                                maxLength: NewFeedbackController.maxTextLength,
+                                enabled: !submitting,
+                              ),
+                            const SizedBox(height: _fieldToRules),
+                            Center(
+                              child: _RulesLink(
+                                agreed: controller.rulesAgreed,
+                                onTap: () => gate.openRules(context),
+                              ),
                             ),
-                          ),
-                          // Similar feedback (S9) goes here.
+                            // Similar feedback (S9) goes here.
+                          ],
                         ],
                       ),
                     ),
@@ -172,15 +175,16 @@ class _Form extends StatelessWidget {
                   ],
                 ),
               ),
-              Padding(
-                padding: _actionsPadding,
-                child: CommunityFormActions(
-                  cancelLabel: l.cancel,
-                  submitLabel: l.submit,
-                  onCancel: submitting ? null : () => _leave(context),
-                  onSubmit: controller.canSubmit ? () => _submit(context) : null,
+              if (controller.type != null)
+                Padding(
+                  padding: _actionsPadding,
+                  child: CommunityFormActions(
+                    cancelLabel: l.cancel,
+                    submitLabel: l.submit,
+                    onCancel: submitting ? null : () => _leave(context),
+                    onSubmit: controller.canSubmit ? () => _submit(context) : null,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -237,10 +241,8 @@ class _Form extends StatelessWidget {
     if (choice != null) controller.chooseScreen(choice);
   }
 
-  static String _hint(CommunityLocalizations l, FeedbackType? type) {
+  static String _hint(CommunityLocalizations l, FeedbackType type) {
     switch (type) {
-      case null:
-        return l.topicHint;
       case FeedbackType.improvement:
         return l.improvementPrompt;
       case FeedbackType.idea:
