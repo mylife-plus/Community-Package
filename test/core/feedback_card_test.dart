@@ -1,4 +1,5 @@
 import 'package:community_package/src/core/theme/community_theme.dart';
+import 'package:community_package/src/core/theme/refresh_style.dart';
 import 'package:community_package/src/core/widgets/feedback_card.dart';
 import 'package:community_package/src/core/widgets/inner_shadow.dart';
 import 'package:community_package/src/data/models/feedback_item.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/feedback_json.dart';
+import '../helpers/host_themes.dart';
 
 Map<String, dynamic> _problem({String? description = 'Nothing happens'}) => {
   ...feedbackJson(21, type: 'problem'),
@@ -55,17 +57,33 @@ void main() {
     expect(spans.firstWhere((s) => s.text == 'Add an item').style?.color, isNull);
   });
 
-  testWidgets('the optional description comes first, in the main text colour and Medium', (tester) async {
+  testWidgets('the optional description comes first, Medium, on a grey box', (tester) async {
     final theme = ThemeData.dark();
     await pumpCard(tester, _problem(), theme: theme);
 
-    final description = tester.widget<Text>(find.text('Nothing happens')).style!;
+    final text = find.text('Nothing happens');
+    final description = tester.widget<Text>(text).style!;
     expect(description.color, theme.colorScheme.onSurface);
     expect(description.fontWeight, FontWeight.w500);
+    final box = find.ancestor(of: text, matching: find.byType(DecoratedBox)).first;
+    final decoration = tester.widget<DecoratedBox>(box).decoration as BoxDecoration;
+    expect(decoration.borderRadius, BorderRadius.circular(12));
+    expect(decoration.color, RefreshColors.field(tester.element(text)));
+    expect(tester.getTopLeft(text).dy - tester.getTopLeft(box).dy, 12);
     final path = richText('Inventory → Sell Item → Add Item').first;
-    expect(tester.getTopLeft(path).dy - tester.getBottomLeft(find.text('Nothing happens')).dy, 6);
+    expect(tester.getTopLeft(path).dy - tester.getBottomLeft(box).dy, 12);
     expect(tester.getTopLeft(richText('1. Tap plus').first).dy, greaterThan(tester.getBottomLeft(path).dy));
   });
+
+  for (final MapEntry(key: name, value: theme) in hostThemes.entries) {
+    testWidgets('$name: the description reads at 4.5:1 on its box', (tester) async {
+      await pumpCard(tester, _problem(), theme: theme);
+      final text = find.text('Nothing happens');
+      final box = find.ancestor(of: text, matching: find.byType(DecoratedBox)).first;
+      final fill = (tester.widget<DecoratedBox>(box).decoration as BoxDecoration).color!;
+      expect(RefreshColors.contrast(tester.widget<Text>(text).style!.color!, fill), greaterThanOrEqualTo(4.5));
+    });
+  }
 
   testWidgets('a Problem without a description shows path and steps', (tester) async {
     await pumpCard(tester, _problem(description: null));

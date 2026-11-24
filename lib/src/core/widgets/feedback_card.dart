@@ -317,7 +317,8 @@ bool _hasProblemDetails(FeedbackItem item) =>
 /// device line.
 ///
 /// The optional description comes first, in the main text colour and
-/// Medium, so it stands out from the details below it.
+/// Medium on a box in the field grey, so it stands out from the details
+/// below it.
 class _ProblemDetails extends StatelessWidget {
   const _ProblemDetails({required this.item, required this.style});
 
@@ -328,7 +329,8 @@ class _ProblemDetails extends StatelessWidget {
   /// line 29 below the steps' last line.
   static const _pathGap = 11.5;
   static const _deviceGap = 9.0;
-  static const _stepsGap = 6.0;
+  static const _descriptionPadding = 12.0;
+  static const _descriptionGap = 12.0;
 
   @override
   Widget build(BuildContext context) {
@@ -352,15 +354,27 @@ class _ProblemDetails extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (description != null) ...[
-          Text(
-            description,
-            style: style?.copyWith(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: theme.colorScheme.onSurface,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: RefreshColors.field(context),
+              borderRadius: BorderRadius.circular(RefreshTokens.controlRadius),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(_descriptionPadding),
+              child: SizedBox(
+                width: double.infinity,
+                child: Text(
+                  description,
+                  style: style?.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: _stepsGap),
+          const SizedBox(height: _descriptionGap),
         ],
         if (path != null) ...[
           Text.rich(
